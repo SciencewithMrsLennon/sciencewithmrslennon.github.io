@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mission: Why Earth? | Habitable Planet Virtual Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070b1f;--panel:#111939;--panel2:#19234d;--line:#2a3670;--ink:#eef2ff;--muted:#a3b2e0;--gold:#ffc83d;--teal:#35e0c0;--pink:#ff6fa5;--blue:#4ea8ff;--good:#3ddc84;--bad:#ff5d5d;--warn:#ffb020}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(ellipse at 15% 10%,rgba(120,60,200,.18),transparent 50%),radial-gradient(ellipse at 85% 80%,rgba(30,140,200,.15),transparent 55%),var(--bg);background-attachment:fixed;color:var(--ink);font-family:'Nunito',system-ui,sans-serif;font-size:15px;line-height:1.45;min-height:100vh}
+#stars,#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+#stars{z-index:0}#fx{z-index:50}
+header,main,footer{position:relative;z-index:1}
+h1,h2,h3,h4{font-family:'Fredoka',sans-serif;font-weight:600}
+header{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 18px;background:rgba(8,12,34,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.brand{font:600 18px 'Fredoka',sans-serif;line-height:1.1}
+.brand small{display:block;font:600 12px 'Nunito',sans-serif;color:var(--muted)}
+nav{display:flex;flex-wrap:wrap;gap:6px;flex:1;justify-content:center}
+.pill{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:6px 12px;font:600 13px 'Fredoka',sans-serif;cursor:pointer}
+.pill.done{color:var(--good);border-color:rgba(61,220,132,.6)}
+.pill.active{background:var(--gold);color:#221a00;border-color:var(--gold)}
+.pill:disabled{opacity:.35;cursor:not-allowed}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.clock{font:600 14px 'Fredoka',sans-serif;color:var(--teal);background:var(--panel);padding:6px 10px;border-radius:10px;border:1px solid var(--line)}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:#221a00;border:none;border-radius:12px;padding:9px 16px;font:600 15px 'Fredoka',sans-serif;cursor:pointer;box-shadow:0 3px 0 #b8860b;transition:transform .08s,filter .2s}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #b8860b}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.btn.teal{background:var(--teal);color:#032a22;box-shadow:0 3px 0 #1b9c84}
+.btn.small{padding:6px 11px;font-size:13px}
+.btn.big{padding:13px 26px;font-size:19px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+main{max-width:1220px;margin:0 auto;padding:18px 16px 40px}
+.screen{display:none}
+.screen.show{display:block;animation:fade .45s ease}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.station-head{display:flex;align-items:center;gap:14px;margin:4px 0 16px}
+.num{width:54px;height:54px;flex:none;border-radius:16px;display:grid;place-items:center;font:700 26px 'Fredoka',sans-serif;background:linear-gradient(135deg,var(--gold),var(--pink));color:#2a1200}
+.station-head h2{margin:0;font-size:28px}
+.station-head p{margin:2px 0 0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:start}
+.grid.even{grid-template-columns:1fr 1fr}
+@media(max-width:920px){.grid,.grid.even{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:16px}
+.card h3{margin:0 0 6px;font-size:19px;display:flex;align-items:center;gap:8px}
+.card .sub{margin:0 0 10px;color:var(--muted);font-size:14px}
+.step{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--blue);color:#06142b;font:700 14px 'Fredoka',sans-serif;flex:none}
+.step.ok{background:var(--good)}
+canvas.viz{width:100%;height:auto;display:block;border-radius:14px;background:#040716;touch-action:none}
+.readouts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:10px}
+.ro{background:var(--panel2);border-radius:12px;padding:8px 11px;border:1px solid transparent}
+.ro span{display:block;font-size:12px;color:var(--muted);font-weight:700}
+.ro b{font:600 17px 'Fredoka',sans-serif}
+.ro.good{border-color:rgba(61,220,132,.7)}.ro.bad{border-color:rgba(255,93,93,.7)}
+.slider-row{margin:10px 0 14px}
+.slider-row label{display:flex;justify-content:space-between;font-weight:800;font-size:14px;margin-bottom:4px}
+.slider-row label em{font-style:normal;color:var(--gold);font-family:'Fredoka',sans-serif}
+input[type=range]{width:100%;accent-color:var(--gold);height:24px}
+input[type=text],input[type=number],textarea{background:#0b1331;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:600 15px 'Nunito',sans-serif;width:100%;margin-top:4px}
+textarea{min-height:88px;resize:vertical;font-weight:500;line-height:1.5}
+input:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row>label{flex:1;min-width:150px;font-weight:800;font-size:13px;color:var(--muted)}
+.lbl{display:block;font-weight:800;font-size:13.5px;margin:12px 0 4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:6px 11px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);cursor:pointer;font:700 13px 'Nunito',sans-serif;color:var(--ink)}
+.chip:hover{border-color:var(--gold)}
+.chip.sel{background:var(--gold);color:#221a00;border-color:var(--gold)}
+.chip.right{background:var(--good);color:#04210f;border-color:var(--good)}
+.chip.wrong{background:rgba(255,93,93,.25);border-color:var(--bad)}
+.seg{display:flex;background:var(--panel2);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;border:none;background:transparent;color:var(--muted);font:700 13px 'Nunito',sans-serif;padding:8px 6px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--gold);color:#221a00}
+table.data{width:100%;border-collapse:collapse;font-size:13px}
+table.data th,table.data td{padding:6px 7px;border-bottom:1px solid var(--line);text-align:left}
+table.data th{color:var(--muted);font-weight:800;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em}
+.empty{color:var(--muted);font-style:italic;font-size:13px;padding:8px 0}
+.mc .q{margin:0 0 6px;font-weight:800}
+.mc .opt{display:block;width:100%;text-align:left;margin:6px 0;padding:9px 12px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font:600 14px 'Nunito',sans-serif;cursor:pointer}
+.mc .opt:hover:not(:disabled){border-color:var(--gold)}
+.mc .opt.right{background:rgba(61,220,132,.2);border-color:var(--good)}
+.mc .opt.wrong{background:rgba(255,93,93,.15);border-color:var(--bad);text-decoration:line-through;opacity:.75}
+.mc .opt.picked{border-color:var(--gold);background:rgba(255,200,61,.15)}
+.mc .opt:disabled{cursor:default}
+.fb{font-size:13.5px;margin-top:6px;min-height:1em}
+.fb.ok{color:var(--good)}.fb.no{color:#ff9a9a}
+.next-bar{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:18px;background:linear-gradient(90deg,rgba(255,200,61,.08),rgba(53,224,192,.08));border:1px dashed var(--line)}
+.checklist{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13.5px;font-weight:700}
+.checklist span{color:var(--muted)}.checklist span.ok{color:var(--good)}
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);font-size:13px;font-weight:800;opacity:.6;flex:1;min-width:170px}
+.badge .bi{font-size:24px;filter:grayscale(1)}
+.badge.on{opacity:1;border-color:var(--gold);background:rgba(255,200,61,.1)}
+.badge.on .bi{filter:none}
+.badge small{display:block;font-weight:600;color:var(--muted);font-size:12px}
+.bins{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media(max-width:640px){.bins{grid-template-columns:1fr}}
+.bin{min-height:140px;border:2px dashed var(--line);border-radius:16px;padding:10px;transition:border-color .2s,background .2s;cursor:pointer}
+.bin h4{margin:0 0 8px;font-size:15px}
+.bin.yes{border-color:rgba(78,168,255,.6)}.bin.no{border-color:rgba(255,111,165,.6)}
+.bin.hot{background:rgba(255,200,61,.08);border-color:var(--gold)}
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:44px}
+.scard{padding:9px 12px;border-radius:12px;background:#24306a;border:1px solid #3a4890;font-weight:700;font-size:13.5px;cursor:grab;user-select:none;max-width:270px}
+.scard.sel{outline:3px solid var(--gold)}
+.bin .scard{cursor:default;background:rgba(61,220,132,.15);border-color:rgba(61,220,132,.5);margin-bottom:6px;max-width:none}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.worlds{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+@media(max-width:820px){.worlds{grid-template-columns:repeat(2,1fr)}}
+.world{background:var(--panel2);border-radius:14px;padding:10px;text-align:center;position:relative;overflow:hidden}
+.world canvas{width:100%;max-width:120px;height:auto;display:block;margin:0 auto}
+.world h4{margin:4px 0 6px;font-size:15px}
+.world h4 small{display:block;font:600 11px 'Nunito',sans-serif;color:var(--muted)}
+.world .res{font-size:12.5px;text-align:left;margin-top:8px}
+.scanline{position:absolute;left:0;right:0;height:4px;background:var(--teal);box-shadow:0 0 16px var(--teal);top:0;animation:scan 1.2s linear forwards}
+@keyframes scan{from{top:0}to{top:100%}}
+.score{display:grid;gap:8px}
+.gauge{display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;background:var(--panel2);border:1px solid var(--line)}
+.gauge .gi{font-size:26px}
+.gauge b{display:block;font-family:'Fredoka',sans-serif;font-size:15px}
+.gauge span{font-size:13px;color:var(--muted)}
+.gauge.ok{border-color:var(--good)}.gauge.no{border-color:var(--bad)}
+.gauge .st{margin-left:auto;font-size:22px}
+.life-banner{text-align:center;padding:10px;border-radius:12px;font:600 17px 'Fredoka',sans-serif;margin-top:10px}
+.life-banner.ok{background:rgba(61,220,132,.15);color:var(--good)}
+.life-banner.no{background:rgba(255,93,93,.12);color:#ff9a9a}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(140px);background:#1e2a5c;border:1px solid var(--gold);color:var(--ink);padding:12px 18px;border-radius:14px;font-weight:700;z-index:60;transition:transform .35s;max-width:92vw;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.modal{position:fixed;inset:0;background:rgba(3,5,15,.72);z-index:40;display:none;align-items:center;justify-content:center;padding:16px}
+.modal.show{display:flex}
+.modal .card{max-width:640px;width:100%;max-height:85vh;overflow:auto;margin:0}
+.terms dt{font:600 16px 'Fredoka',sans-serif;color:var(--gold);margin-top:12px}
+.terms dd{margin:2px 0 0}
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:20px;align-items:center}
+@media(max-width:860px){.hero{grid-template-columns:1fr}}
+.hero h1{font-size:46px;margin:10px 0;line-height:1.05}
+.grad{background:linear-gradient(90deg,var(--gold),var(--pink),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tag{display:inline-block;padding:5px 11px;border-radius:999px;background:rgba(53,224,192,.12);color:var(--teal);font-weight:800;font-size:12.5px}
+.map{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media(max-width:860px){.map{grid-template-columns:1fr 1fr}}
+.mstop{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;text-align:center}
+.mstop .mi{font-size:34px}
+.mstop b{display:block;font-family:'Fredoka',sans-serif;font-size:15px;margin:4px 0}
+.mstop span{font-size:12.5px;color:var(--muted)}
+.wc{font-size:12px;color:var(--muted);text-align:right;margin-top:2px}
+.wc.ok{color:var(--good)}
+.cert{text-align:center;padding:30px 20px;border-radius:20px;border:3px solid var(--gold);background:radial-gradient(circle at 50% 0,rgba(255,200,61,.15),transparent 60%),var(--panel);margin-bottom:16px}
+.cert h2{font-size:34px;margin:6px 0}
+.cert .who{font:600 30px 'Fredoka',sans-serif;color:var(--gold);margin:8px 0}
+.evi{padding-left:18px;margin:0}
+.evi li{margin-bottom:8px;font-size:14px}
+.note{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.hint{background:rgba(78,168,255,.1);border-left:3px solid var(--blue);padding:9px 12px;border-radius:8px;font-size:14px;margin:0 0 14px}
+.qres{padding:10px;border-radius:12px;background:var(--panel2);margin:8px 0;font-size:14px}
+.qres.ok{border-left:4px solid var(--good)}.qres.no{border-left:4px solid var(--bad)}
+.blog{list-style:none;padding:0;margin:10px 0 0}
+.blog li{padding:8px 10px;border-radius:10px;background:var(--panel2);margin-bottom:6px;font-size:13.5px}
+.blog li.ok{border-left:4px solid var(--good)}
+footer{text-align:center;color:var(--muted);font-size:12.5px;padding:10px 20px 30px}
+footer button{background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12.5px}
+.pie-wrap{display:flex;gap:14px;align-items:center;margin-top:12px;background:var(--panel2);border-radius:12px;padding:10px}
+.pie-wrap canvas{width:110px;height:110px;flex:none}
+.pie-legend{font-size:13px;font-weight:700}
+.pie-legend div{display:flex;align-items:center;gap:6px;margin:3px 0}
+.pie-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+#printReport{display:none}
+@media print{
+ body{background:#fff;color:#000}
+ header,main,footer,#stars,#fx,.toast,.modal{display:none!important}
+ #printReport{display:block;font-family:Arial,sans-serif;font-size:12px;color:#000;padding:6px}
+ #printReport h1{font-size:20px;margin:0 0 4px}
+ #printReport h2{font-size:14px;border-bottom:1px solid #999;margin:14px 0 6px;padding-bottom:2px}
+ #printReport table{border-collapse:collapse;width:100%;margin:4px 0}
+ #printReport td,#printReport th{border:1px solid #aaa;padding:3px 5px;text-align:left;font-size:11px}
+ #printReport .ans{border:1px solid #ccc;padding:6px;white-space:pre-wrap;margin:2px 0 8px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<canvas id="fx"></canvas>
+
+<header>
+  <div class="brand">🌍 Mission: Why Earth?<small>Science with Mrs. Lennon · TEKS 7.9C</small></div>
+  <nav id="nav"></nav>
+  <div class="hdr-right">
+    <span class="clock" id="clock">⏱ 0:00</span>
+    <button class="btn small ghost" id="guideBtn">📖 Field Guide</button>
+  </div>
+</header>
+
+<main>
+<!-- ============ BRIEFING ============ -->
+<section class="screen" id="scr0">
+  <div class="card hero">
+    <div>
+      <span class="tag">TEKS 7.9C · Virtual Lab · about 45 minutes</span>
+      <h1>Mission: <span class="grad">Why Earth?</span></h1>
+      <p>Earth is the <b>only place in the universe</b> where we know life exists. The Interplanetary Habitat Agency has hired you as a junior planetary scientist.</p>
+      <p>Your mission: run experiments to discover <b>which characteristics of Earth allow life to exist</b>, so future explorers know what to look for on other worlds.</p>
+      <div class="row" style="margin:16px 0">
+        <label>Scientist name<input type="text" id="stuName" placeholder="First and last name" maxlength="40"></label>
+        <label>Class period<input type="text" id="stuPeriod" placeholder="e.g. 3rd" maxlength="12"></label>
+      </div>
+      <button class="btn big" id="beginBtn">🚀 Begin Mission</button>
+      <p class="note">Your progress saves automatically on this device. Complete every task at a station to unlock the next one.</p>
+    </div>
+    <canvas id="heroC" class="viz" style="background:transparent"></canvas>
+  </div>
+  <div class="map">
+    <div class="mstop"><div class="mi">☀️</div><b>Station 1</b><span>Distance from the Sun</span></div>
+    <div class="mstop"><div class="mi">💧</div><b>Station 2</b><span>The Power of Water</span></div>
+    <div class="mstop"><div class="mi">🌫️</div><b>Station 3</b><span>Atmosphere Lab</span></div>
+    <div class="mstop"><div class="mi">🪐</div><b>Station 4</b><span>Planet Builder</span></div>
+    <div class="mstop"><div class="mi">📝</div><b>Mission Report</b><span>CER + Mission Check</span></div>
+  </div>
+</section>
+
+<!-- ============ STATION 1 ============ -->
+<section class="screen" id="scr1">
+  <div class="station-head"><div class="num">1</div><div><h2>☀️ Distance from the Sun</h2><p>How does a planet's distance from the Sun decide whether it can have liquid water?</p></div></div>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h3>🔭 Orbit Simulator</h3>
+        <p class="sub">Drag the planet along its path (or use the slider). Watch the sunlight spread out as you move away from the Sun.</p>
+        <canvas id="s1orbit" class="viz"></canvas>
+        <div class="slider-row"><label>Distance from the Sun <em id="s1dl">1.00 AU</em></label><input type="range" id="s1d" min="0.3" max="2" step="0.01" value="1"></div>
+        <p class="note">1 AU (astronomical unit) = Earth's distance from the Sun, about 150 million km. This model gives the planet Earth's air and oceans so that only distance changes.</p>
+      </div>
+      <div class="card">
+        <h3>📋 Trial Data Table</h3>
+        <div id="s1table"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3><span class="step" id="s1st1">1</span> Planet Close-Up</h3>
+        <p class="sub">Record at least <b>6 trials</b> at different distances. You need at least one <b>frozen</b>, one <b>liquid</b>, and one <b>boiling</b> planet.</p>
+        <canvas id="s1planet" class="viz" style="max-width:260px;margin:0 auto;background:transparent"></canvas>
+        <div class="readouts">
+          <div class="ro"><span>Sunlight received</span><b id="s1sun">100%</b></div>
+          <div class="ro"><span>Avg. temperature</span><b id="s1temp">15 °C</b></div>
+          <div class="ro" id="s1stbox"><span>Water is…</span><b id="s1state">Liquid</b></div>
+        </div>
+        <div class="row" style="margin-top:12px"><button class="btn teal" id="s1rec">📝 Record Trial</button><div class="chips" id="s1stchips"></div></div>
+      </div>
+      <div class="card">
+        <h3><span class="step" id="s1st2">2</span> Find the Goldilocks Zone</h3>
+        <p class="sub">Use the simulator to find the distances where water is <b>just barely</b> liquid. Enter them to 2 decimal places.</p>
+        <div class="row">
+          <label>Inner edge (water boils if closer)<input type="number" id="s1in" step="0.01" min="0.3" max="2" placeholder="_.__ AU"></label>
+          <label>Outer edge (water freezes if farther)<input type="number" id="s1out" step="0.01" min="0.3" max="2" placeholder="_.__ AU"></label>
+        </div>
+        <button class="btn small" id="s1edgeBtn" style="margin-top:10px">Check my edges</button>
+        <div class="fb" id="s1edgeFb"></div>
+      </div>
+      <div class="card">
+        <h3><span class="step" id="s1st3">3</span> Classify Earth's neighbors</h3>
+        <p class="sub">Teleport to each planet's orbit, read the temperature, then classify it.</p>
+        <div id="s1sort"></div>
+      </div>
+      <div class="card"><h3><span class="step" id="s1st4">4</span> Think like a scientist</h3><div id="s1mc"></div></div>
+    </div>
+  </div>
+  <div class="next-bar"><div class="checklist" id="s1check"></div><button class="btn" id="s1next" disabled>Next Station ➜</button></div>
+</section>
+
+<!-- ============ STATION 2 ============ -->
+<section class="screen" id="scr2">
+  <div class="station-head"><div class="num">2</div><div><h2>💧 The Power of Water</h2><p>Why is liquid water so important for life, and where in the solar system can we find it?</p></div></div>
+  <div class="grid">
+    <div class="card">
+      <h3><span class="step" id="s2st1">1</span> 24-Hour Temperature Test</h3>
+      <p class="sub">Two planets, same distance from the Sun, same air. <b>Dusty</b> is dry rock. <b>Oceanus</b> is covered in water. Which keeps a steadier temperature?</p>
+      <canvas id="s2pl" class="viz"></canvas>
+      <canvas id="s2graph" class="viz" style="margin-top:10px"></canvas>
+      <div class="row" style="margin-top:10px"><button class="btn teal" id="s2run">▶ Run 24-hour test</button><span class="note" style="flex:1">After the test, slide your pointer or finger across the graph to read exact temperatures.</span></div>
+    </div>
+    <div>
+      <div class="card">
+        <h3><span class="step" id="s2st2">2</span> Analyze the graph</h3>
+        <p class="sub"><b>Temperature swing</b> = highest temperature − lowest temperature.</p>
+        <div class="row"><label>🏜️ Dusty swing (°C)<input type="number" id="s2dus"></label><label>🌊 Oceanus swing (°C)<input type="number" id="s2oce"></label></div>
+        <button class="btn small" id="s2chk" style="margin-top:10px">Check</button><div class="fb" id="s2fb"></div>
+      </div>
+      <div class="card"><h3><span class="step" id="s2st3">3</span> Explain it</h3><div id="s2mc"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3><span class="step" id="s2st4">4</span> Water's Jobs: Sort it out</h3>
+    <p class="sub">Drag each card into a bin (or tap a card, then tap a bin). Which jobs does <b>liquid water</b> do for living things?</p>
+    <div class="pool" id="s2pool"></div>
+    <div class="bins">
+      <div class="bin yes" data-bin="1"><h4>💧 Water does this for life</h4><div class="bin-items"></div></div>
+      <div class="bin no" data-bin="0"><h4>🚫 Not water's job (something else does this)</h4><div class="bin-items"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3><span class="step" id="s2st5">5</span> Water Scanner</h3>
+    <p class="sub">Scan each world for water and read every result.</p>
+    <div class="worlds" id="s2worlds"></div>
+    <div id="s2scanQ" style="margin-top:14px"></div>
+  </div>
+  <div class="next-bar"><div class="checklist" id="s2check"></div><button class="btn" id="s2next" disabled>Next Station ➜</button></div>
+</section>
+
+<!-- ============ STATION 3 ============ -->
+<section class="screen" id="scr3">
+  <div class="station-head"><div class="num">3</div><div><h2>🌫️ Atmosphere Lab</h2><p>How does the composition of the air around a planet make life possible?</p></div></div>
+  <div class="hint">🧪 Every atmosphere in this lab is placed on a planet at <b>Earth's distance from the Sun</b> (1 AU), so any difference you see is caused by the atmosphere alone.</div>
+  <div class="grid">
+    <div class="card">
+      <h3>🛰️ Atmosphere Simulator</h3>
+      <canvas id="s3c" class="viz"></canvas>
+      <div class="readouts" id="s3ro"></div>
+      <div class="pie-wrap"><canvas id="s3pie"></canvas><div><b style="font-family:Fredoka">Air composition</b><div class="pie-legend" id="s3leg"></div></div></div>
+    </div>
+    <div>
+      <div class="card">
+        <h3><span class="step" id="s3st1">1</span> Atmosphere swap</h3>
+        <p class="sub">Load each planet's type of atmosphere, then click <b>Record</b> for all three.</p>
+        <div class="chips" id="s3presets"></div>
+        <div class="slider-row" style="margin-top:14px"><label>Thickness (air pressure) <em id="s3thl">Earth-like</em></label><input type="range" id="s3th" min="0" max="5" step="1" value="0"></div>
+        <span class="lbl">Carbon dioxide (CO₂) level</span>
+        <div class="seg" id="s3co2"><button data-v="low">Low</button><button data-v="earth">Earth-like</button><button data-v="rich">CO₂-rich</button></div>
+        <div class="slider-row" style="margin-top:14px"><label>Oxygen (O₂) <em id="s3o2l">21%</em></label><input type="range" id="s3o2" min="0" max="35" step="1" value="21"></div>
+        <button class="btn teal" id="s3rec">📝 Record this atmosphere</button>
+      </div>
+      <div class="card"><h3><span class="step" id="s3st2">2</span> Design challenges</h3><p class="sub">Adjust the controls to earn all 5 badges.</p><div class="badges" id="s3badges"></div></div>
+    </div>
+  </div>
+  <div class="grid even">
+    <div class="card"><h3>📋 Atmosphere Data Table</h3><div id="s3table"></div></div>
+    <div class="card"><h3><span class="step" id="s3st3">3</span> Think like a scientist</h3><div id="s3mc1"></div><hr style="border:none;border-top:1px solid var(--line);margin:14px 0"><div id="s3mc2"></div></div>
+  </div>
+  <div class="next-bar"><div class="checklist" id="s3check"></div><button class="btn" id="s3next" disabled>Next Station ➜</button></div>
+</section>
+
+<!-- ============ STATION 4 ============ -->
+<section class="screen" id="scr4">
+  <div class="station-head"><div class="num">4</div><div><h2>🪐 Planet Builder</h2><p>Put it all together: build a world that can support life, then break it!</p></div></div>
+  <div class="grid">
+    <div class="card">
+      <canvas id="s4c" class="viz"></canvas>
+      <div class="life-banner" id="s4banner"></div>
+      <div class="score" id="s4score" style="margin-top:10px"></div>
+    </div>
+    <div>
+      <div class="card">
+        <h3>🎛️ Build Controls</h3>
+        <div class="slider-row"><label>Distance from the Sun <em id="s4dl">1.00 AU</em></label><input type="range" id="s4d" min="0.3" max="2" step="0.01" value="1.6"></div>
+        <span class="lbl">💧 Water</span>
+        <div class="seg" id="s4water"><button data-v="none">None</button><button data-v="lakes">Some lakes</button><button data-v="oceans">Oceans</button></div>
+        <span class="lbl">🌫️ Atmosphere</span>
+        <div class="seg" id="s4atm"><button data-v="none">None</button><button data-v="thin">Thin CO₂</button><button data-v="earth">Earth-like</button><button data-v="thick">Thick CO₂</button></div>
+      </div>
+      <div class="card">
+        <h3><span class="step" id="s4st1">1</span> Build a habitable world</h3>
+        <p class="sub">Turn all three life-support checks green, name your planet, then save it as your <b>Home Base</b>.</p>
+        <input type="text" id="s4name" placeholder="Name your planet (optional)" maxlength="30">
+        <button class="btn teal" id="s4save" style="margin-top:10px">🏠 Save as Home Base</button>
+        <div class="fb" id="s4homefb"></div>
+      </div>
+      <div class="card">
+        <h3><span class="step" id="s4st2">2</span> Break it 3 ways</h3>
+        <p class="sub">Starting from Home Base, change <b>only ONE factor</b> so life can't survive. Do it once for <b>distance</b>, once for <b>water</b>, and once for <b>atmosphere</b>.</p>
+        <div id="s4status" class="hint" style="margin-bottom:10px"></div>
+        <div class="row"><button class="btn small" id="s4log">🔨 Log broken planet</button><button class="btn small ghost" id="s4reset">↩ Back to Home Base</button></div>
+        <div id="s4explain" style="margin-top:12px"></div>
+        <ul class="blog" id="s4blog"></ul>
+      </div>
+    </div>
+  </div>
+  <div class="next-bar"><div class="checklist" id="s4check"></div><button class="btn" id="s4next" disabled>Mission Report ➜</button></div>
+</section>
+
+<!-- ============ REPORT ============ -->
+<section class="screen" id="scr5">
+  <div class="station-head"><div class="num">📝</div><div><h2>Mission Report</h2><p>Use YOUR evidence to explain why Earth can support life.</p></div></div>
+  <div class="grid">
+    <div class="card"><h3>🗂️ Your Evidence Bank</h3><p class="sub">This is data you collected at each station. Use it in your report!</p><ul class="evi" id="s5evi"></ul></div>
+    <div class="card">
+      <h3><span class="step" id="s5st1">1</span> Claim · Evidence · Reasoning</h3>
+      <p class="sub"><b>Question:</b> Why can Earth support life when Venus and Mars cannot?</p>
+      <span class="lbl">Claim: answer the question in one sentence.</span>
+      <textarea id="s5c" placeholder="Earth can support life because…"></textarea><div class="wc" id="s5cw"></div>
+      <span class="lbl">Evidence: use data from at least TWO stations.</span>
+      <textarea id="s5e" placeholder="In Station 1, I found that… In Station 3, when I…"></textarea><div class="wc" id="s5ew"></div>
+      <span class="lbl">Reasoning: explain HOW your evidence supports your claim.</span>
+      <textarea id="s5r" placeholder="This shows that… because…"></textarea><div class="wc" id="s5rw"></div>
+      <button class="btn" id="s5lock" style="margin-top:10px">Lock in my report ✔</button>
+      <div class="fb" id="s5lockfb"></div>
+    </div>
+  </div>
+  <div class="card" id="s5quizCard" style="display:none">
+    <h3><span class="step" id="s5st2">2</span> Mission Check</h3>
+    <p class="sub">7 questions · one try · your score goes on your certificate.</p>
+    <div id="s5quiz"></div>
+    <button class="btn" id="s5submit" style="margin-top:8px">Submit answers</button>
+    <div id="s5result"></div>
+  </div>
+  <div id="s5cert"></div>
+</section>
+</main>
+
+<footer>© Science with Mrs. Lennon · Licensed for use by the purchasing teacher and their students. · <button id="resetBtn">Start over (clear my progress)</button></footer>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="guide"><div class="card">
+  <h3>📖 Field Guide</h3>
+  <dl class="terms">
+    <dt>Habitable (Goldilocks) Zone</dt><dd>The range of distances from a star where a planet is not too hot and not too cold for liquid water.</dd>
+    <dt>Astronomical Unit (AU)</dt><dd>Earth's average distance from the Sun, about 150 million km.</dd>
+    <dt>Liquid water</dt><dd>Every living thing we know needs it. It dissolves nutrients, carries materials, holds heat, and is where cell reactions happen.</dd>
+    <dt>Atmosphere</dt><dd>The layer of gases surrounding a planet. Its thickness (air pressure) and composition matter.</dd>
+    <dt>Composition</dt><dd>What something is made of. Earth's air is about 78% nitrogen, 21% oxygen, and 1% other gases like argon and carbon dioxide.</dd>
+    <dt>Greenhouse effect</dt><dd>Gases like carbon dioxide (CO₂) trap heat near a planet's surface. A little keeps Earth warm; a lot makes a planet like Venus scorching.</dd>
+    <dt>Ozone layer</dt><dd>A layer of ozone gas (made from oxygen) high in Earth's atmosphere that absorbs harmful ultraviolet (UV) rays.</dd>
+    <dt>Air pressure</dt><dd>The push of the atmosphere on the surface. If it is too low, liquid water quickly turns to vapor and escapes.</dd>
+  </dl>
+  <button class="btn" id="guideClose" style="margin-top:14px">Got it</button>
+</div></div>
+<div id="printReport"></div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const KEY='whyEarthLab_v1';
+function fresh(){return{v:1,name:'',period:'',started:null,elapsed:0,unlocked:0,current:0,
+  s1:{trials:[],edges:null,sort:{},mc:false},
+  s2:{ran:false,swing:null,mc:false,order:null,sorted:[],scanned:[],scanQ:false},
+  s3:{rec:[],presets:{},badges:{},mc1:false,mc2:false},
+  s4:{home:null,broken:{},planetName:''},
+  s5:{c:'',e:'',r:'',locked:false,quiz:null},
+  first:{}};}
+let S=fresh();
+try{const L=JSON.parse(localStorage.getItem(KEY));if(L&&L.v===1){for(const k in S){if(L[k]===undefined)continue;if(S[k]&&typeof S[k]==='object'&&!Array.isArray(S[k]))S[k]=Object.assign(S[k],L[k]);else S[k]=L[k];}}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+/* ---------- helpers ---------- */
+let toastT;
+function toast(m){const t=$('#toast');t.innerHTML=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3400);}
+function setup(c,w,h){const d=Math.min(2,window.devicePixelRatio||1);c.width=w*d;c.height=h*d;const x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);c._w=w;c._h=h;return x;}
+function ptr(c,e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*c._w,y:(e.clientY-r.top)/r.height*c._h};}
+const fmtT=T=>`${Math.round(T)} °C`;
+function checklist(el,items){el.innerHTML=items.map(([ok,t])=>`<span class="${ok?'ok':''}">${ok?'✅':'⬜'} ${t}</span>`).join('');}
+$$('.step').forEach(e=>e.dataset.n=e.textContent);
+function stepOk(id,ok){const e=$(id);if(!e)return;e.classList.toggle('ok',!!ok);e.textContent=ok?'✓':e.dataset.n;}
+function words(s){return (s.trim().match(/\S+/g)||[]).length;}
+
+function mc(el,q,key,isDone,onRight){
+  el.classList.add('mc');
+  el.innerHTML=`<p class="q">${q.q}</p>`+q.o.map((o,i)=>`<button class="opt" data-i="${i}">${o}</button>`).join('')+`<div class="fb"></div>`;
+  const fb=el.querySelector('.fb'),btns=Array.from(el.querySelectorAll('.opt'));
+  const finish=()=>{btns.forEach(b=>b.disabled=true);btns[q.a].classList.add('right');fb.className='fb ok';fb.innerHTML='✅ '+q.w;};
+  if(isDone){finish();return;}
+  btns.forEach(b=>b.onclick=()=>{const i=+b.dataset.i;
+    if(i===q.a){if(S.first[key]===undefined)S.first[key]=true;finish();onRight();save();}
+    else{b.classList.add('wrong');b.disabled=true;fb.className='fb no';fb.textContent='Not quite. '+(q.h||'Look back at your data and try again.');if(S.first[key]===undefined)S.first[key]=false;save();}
+  });
+}
+
+/* ---------- background + confetti ---------- */
+const sc=$('#stars'),sx=sc.getContext('2d'),fx=$('#fx'),fxc=fx.getContext('2d');
+let stars=[],conf=[];
+function sizeBg(){sc.width=innerWidth;sc.height=innerHeight;fx.width=innerWidth;fx.height=innerHeight;stars=Array.from({length:Math.round(innerWidth*innerHeight/5500)},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.3+.2,p:Math.random()*6}));}
+sizeBg();addEventListener('resize',sizeBg);
+function drawStars(t){sx.clearRect(0,0,sc.width,sc.height);sx.fillStyle='#fff';for(const s of stars){sx.globalAlpha=.3+.35*Math.sin(t/900+s.p);sx.beginPath();sx.arc(s.x,s.y,s.r,0,7);sx.fill();}sx.globalAlpha=1;}
+function confetti(n=150){for(let i=0;i<n;i++)conf.push({x:innerWidth/2+(Math.random()-.5)*200,y:innerHeight*.3,vx:(Math.random()-.5)*15,vy:-Math.random()*13-3,c:['#ffc83d','#ff6fa5','#35e0c0','#4ea8ff','#3ddc84'][i%5],r:Math.random()*7+4,a:Math.random()*6,l:130});}
+function drawFx(){if(!conf.length&&!fx._dirty)return;fxc.clearRect(0,0,fx.width,fx.height);fx._dirty=conf.length>0;conf=conf.filter(p=>p.l-->0);for(const p of conf){p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.a+=.2;fxc.save();fxc.translate(p.x,p.y);fxc.rotate(p.a);fxc.fillStyle=p.c;fxc.globalAlpha=Math.min(1,p.l/40);fxc.fillRect(-p.r/2,-p.r/4,p.r,p.r/2);fxc.restore();}}
+
+/* ---------- planet renderer ---------- */
+const BLOBS=[[-.5,-.3,.3],[-.25,-.5,.2],[.35,.1,.33],[.55,-.38,.2],[-.6,.35,.24],[.1,.55,.2],[-.05,.02,.16],[.85,.4,.2],[-.95,-.05,.18],[1.15,-.2,.25],[-1.25,.3,.22]];
+const LIFE=[[-.45,-.25,'🌳'],[.35,.12,'🌲'],[-.55,.35,'🦌'],[.15,-.55,'🐦'],[-.1,.45,'🐟'],[.6,.5,'🐋'],[.5,-.35,'🌻'],[-.8,.0,'🐟']];
+function drawPlanet(c,cx,cy,r,o,t){
+  o=Object.assign({base:'#1f6fd1',land:'#4f9a45',ice:0,cloud:0,cloudColor:'#ffffff',glow:0,glowColor:'rgba(110,180,255,.6)',life:false,tint:null},o);
+  if(o.glow>0){const g=c.createRadialGradient(cx,cy,r*.92,cx,cy,r+o.glow);g.addColorStop(0,o.glowColor);g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.beginPath();c.arc(cx,cy,r+o.glow,0,7);c.fill();}
+  c.save();c.beginPath();c.arc(cx,cy,r,0,7);c.clip();
+  c.fillStyle=o.base;c.fillRect(cx-r,cy-r,2*r,2*r);
+  const off=(t*0.00004)%2.8;
+  c.fillStyle=o.land;
+  for(const [bx,by,br] of BLOBS){let x=bx+off;if(x>1.4)x-=2.8;c.beginPath();c.arc(cx+x*r,cy+by*r,br*r,0,7);c.arc(cx+(x+br*.6)*r,cy+(by+br*.3)*r,br*.7*r,0,7);c.arc(cx+(x-br*.5)*r,cy+(by+br*.4)*r,br*.6*r,0,7);c.fill();}
+  if(o.ice>0){c.fillStyle='rgba(240,248,255,.95)';const h=o.ice*r*1.05+r*.04;c.beginPath();c.ellipse(cx,cy-r,r*1.15,h,0,0,7);c.fill();c.beginPath();c.ellipse(cx,cy+r,r*1.15,h,0,0,7);c.fill();}
+  if(o.life){c.font=`${Math.round(r*.2)}px serif`;c.textAlign='center';c.textBaseline='middle';for(const [lx,ly,e] of LIFE){let x=lx+off;if(x>1.4)x-=2.8;if(Math.abs(x)<.85)c.fillText(e,cx+x*r,cy+ly*r);}}
+  if(o.tint){c.fillStyle=o.tint;c.fillRect(cx-r,cy-r,2*r,2*r);}
+  if(o.cloud>0){c.fillStyle=o.cloudColor;c.globalAlpha=o.cloud;for(let i=0;i<16;i++){let x=((i*.37+off*1.5)%2.8)-1.4;const y=Math.sin(i*1.7)*.85;c.beginPath();c.ellipse(cx+x*r,cy+y*r,r*.38,r*.08,0,0,7);c.fill();}c.globalAlpha=1;}
+  const sh=c.createRadialGradient(cx-r*.4,cy-r*.4,r*.1,cx,cy,r*1.05);sh.addColorStop(0,'rgba(255,255,255,.2)');sh.addColorStop(.55,'rgba(0,0,0,0)');sh.addColorStop(1,'rgba(0,0,0,.6)');c.fillStyle=sh;c.fillRect(cx-r,cy-r,2*r,2*r);
+  c.restore();
+}
+function lookT(T,water){
+  const o={glow:10,glowColor:'rgba(110,180,255,.6)'};
+  if(water==='none'){if(T>100)Object.assign(o,{base:'#b05a2e',land:'#7c3a1c'});else if(T<0)Object.assign(o,{base:'#9aa4ad',land:'#c9d2d9',ice:.15});else Object.assign(o,{base:'#9b8a78',land:'#6e6052'});}
+  else if(T<0)Object.assign(o,{base:'#bfe0f5',land:'#e8f3fa',ice:Math.min(1,.35+(-T)/150),cloud:.15});
+  else if(T>100)Object.assign(o,{base:'#b5552a',land:'#7a3418',cloud:Math.min(.85,.4+(T-100)/300),cloudColor:'#e6d6c8'});
+  else{const ice=Math.max(.03,Math.min(.3,(25-T)/70));if(water==='lakes')Object.assign(o,{base:'#7f8f4c',land:'#2f7fd6'});else Object.assign(o,{base:'#1f6fd1',land:T>45?'#a8964a':'#4f9a45'});Object.assign(o,{ice,cloud:.35+(T>60?(T-60)/90:0)});}
+  return o;
+}
+const MARSLOOK={base:'#b5643a',land:'#8f4a2a',ice:.08,glow:4,glowColor:'rgba(255,160,120,.35)'};
+
+/* ---------- navigation ---------- */
+const NAMES=['Briefing','1 · Distance','2 · Water','3 · Atmosphere','4 · Builder','Report'];
+const doneFns=[()=>!!S.started,()=>s1Done(),()=>s2Done(),()=>s3Done(),()=>s4Done(),()=>!!S.s5.quiz];
+function renderNav(){
+  $('#nav').innerHTML=NAMES.map((n,i)=>`<button class="pill ${i===S.current?'active':''} ${doneFns[i]()?'done':''}" data-i="${i}" ${i>S.unlocked?'disabled':''}>${i>S.unlocked?'🔒 ':''}${n}</button>`).join('');
+  $$('#nav .pill').forEach(b=>b.onclick=()=>go(+b.dataset.i));
+}
+function go(i){if(i>S.unlocked)return;S.current=i;save();$$('.screen').forEach((s,k)=>s.classList.toggle('show',k===i));renderNav();window.scrollTo({top:0,behavior:'smooth'});if(i===5)renderS5();}
+function unlock(n,msg){if(S.unlocked<n){S.unlocked=n;save();confetti();toast(msg);renderNav();}}
+
+setInterval(()=>{if(S.started&&!S.s5.quiz&&document.visibilityState==='visible'){S.elapsed++;if(S.elapsed%10===0)save();}const m=Math.floor(S.elapsed/60),s=S.elapsed%60;$('#clock').textContent=`⏱ ${m}:${String(s).padStart(2,'0')}`;},1000);
+
+$('#guideBtn').onclick=()=>$('#guide').classList.add('show');
+$('#guideClose').onclick=()=>$('#guide').classList.remove('show');
+$('#guide').onclick=e=>{if(e.target.id==='guide')$('#guide').classList.remove('show');};
+$('#resetBtn').onclick=()=>{if(confirm('This erases ALL of your lab progress on this device. Are you sure?')){try{localStorage.removeItem(KEY)}catch(e){}location.reload();}};
+
+/* ---------- BRIEFING ---------- */
+const heroC=$('#heroC'),hx=setup(heroC,420,360);
+$('#stuName').value=S.name;$('#stuPeriod').value=S.period;
+$('#beginBtn').onclick=()=>{const n=$('#stuName').value.trim();if(!n){toast('✏️ Enter your name to begin the mission.');$('#stuName').focus();return;}
+  S.name=n;S.period=$('#stuPeriod').value.trim();if(!S.started)S.started=Date.now();unlock(1,'🚀 Mission started! Head to Station 1.');save();go(1);};
+function drawHero(t){hx.clearRect(0,0,420,360);const g=hx.createRadialGradient(400,20,5,400,20,160);g.addColorStop(0,'rgba(255,220,120,.9)');g.addColorStop(1,'rgba(255,160,40,0)');hx.fillStyle=g;hx.fillRect(0,0,420,360);
+  drawPlanet(hx,200,190,125,Object.assign(lookT(15,'oceans'),{glow:22,life:true}),t);
+  const a=t/3000,mx=200+Math.cos(a)*170,my=190+Math.sin(a)*45;{hx.fillStyle='#cfd3da';hx.beginPath();hx.arc(mx,my,14,0,7);hx.fill();}}
+
+/* ---------- STATION 1 ---------- */
+const s1={d:1};
+const c1o=$('#s1orbit'),x1o=setup(c1o,760,260),c1p=$('#s1planet'),x1p=setup(c1p,260,260);
+const T1=d=>288/d-273.15, st1=T=>T<0?'ice':T>100?'steam':'liquid';
+const STL={ice:'❄️ Frozen',liquid:'💧 Liquid',steam:'♨️ Boiling away'};
+const SUNX=-10,SUNY=130;
+const dToX=d=>120+(d-0.3)/1.7*610, xToD=x=>Math.min(2,Math.max(0.3,0.3+(x-120)/610*1.7));
+const rays=[];function newRay(rand){return{a:(Math.random()-.5)*1.3,r:rand?Math.random()*800:60,v:1.4+Math.random()*1.4};}
+for(let i=0;i<170;i++)rays.push(newRay(true));
+function s1Update(){const d=s1.d,T=T1(d),st=st1(T);$('#s1dl').textContent=d.toFixed(2)+' AU';$('#s1sun').textContent=Math.round(100/(d*d))+'% of Earth';$('#s1temp').textContent=fmtT(T);$('#s1state').textContent=STL[st];$('#s1stbox').className='ro '+(st==='liquid'?'good':'bad');$('#s1d').value=d;}
+$('#s1d').oninput=e=>{s1.d=+e.target.value;s1Update();};
+let drag1=false;
+c1o.addEventListener('pointerdown',e=>{drag1=true;try{c1o.setPointerCapture(e.pointerId)}catch(_){ }mv1(e);});
+c1o.addEventListener('pointermove',e=>{if(drag1)mv1(e);});
+c1o.addEventListener('pointerup',()=>drag1=false);c1o.addEventListener('pointercancel',()=>drag1=false);
+function mv1(e){const p=ptr(c1o,e);s1.d=Math.round(xToD(p.x)*100)/100;s1Update();}
+function drawS1(t){
+  const c=x1o,W=760,H=260;c.fillStyle='#040716';c.fillRect(0,0,W,H);
+  if(S.s1.edges){const r1=dToX(0.772)-SUNX,r2=dToX(1.055)-SUNX;c.beginPath();c.arc(SUNX,SUNY,r2,-1.2,1.2);c.arc(SUNX,SUNY,r1,1.2,-1.2,true);c.closePath();c.fillStyle='rgba(61,220,132,.17)';c.fill();c.fillStyle='#3ddc84';c.font='600 13px Fredoka, sans-serif';c.textAlign='center';c.fillText('GOLDILOCKS ZONE',(dToX(0.772)+dToX(1.055))/2,H-30);}
+  for(const p of rays){p.r+=p.v*2;if(p.r>820)Object.assign(p,newRay(false));const x=SUNX+Math.cos(p.a)*p.r,y=SUNY+Math.sin(p.a)*p.r;c.globalAlpha=Math.min(.95,14000/(p.r*p.r)+.07);c.fillStyle='#ffd866';c.fillRect(x,y,2.2,2.2);}c.globalAlpha=1;
+  c.textAlign='center';c.font='600 12px Nunito, sans-serif';
+  [['Venus',0.72],['Earth',1],['Mars',1.52]].forEach(([n,d])=>{const rr=dToX(d)-SUNX;c.strokeStyle='rgba(163,178,224,.3)';c.setLineDash([4,6]);c.beginPath();c.arc(SUNX,SUNY,rr,-1.2,1.2);c.stroke();c.setLineDash([]);c.fillStyle='rgba(163,178,224,.85)';c.fillText(n+"'s orbit",dToX(d),16);});
+  const g=c.createRadialGradient(SUNX,SUNY,10,SUNX,SUNY,115);g.addColorStop(0,'#fff6c8');g.addColorStop(.35,'#ffc83d');g.addColorStop(.62,'rgba(255,140,40,.45)');g.addColorStop(1,'rgba(255,120,0,0)');c.fillStyle=g;c.beginPath();c.arc(SUNX,SUNY,115,0,7);c.fill();
+  c.fillStyle='rgba(163,178,224,.7)';[0.5,1,1.5,2].forEach(d=>c.fillText(d.toFixed(1)+' AU',Math.min(dToX(d),W-24),H-8));
+  const px=dToX(s1.d),T=T1(s1.d),st=st1(T);
+  c.beginPath();c.arc(px,SUNY,22+Math.sin(t/300)*3,0,7);c.strokeStyle='rgba(255,200,61,.5)';c.lineWidth=2;c.stroke();c.lineWidth=1;
+  c.beginPath();c.arc(px,SUNY,13,0,7);c.fillStyle={ice:'#dff1ff',liquid:'#3a8ee6',steam:'#d9733a'}[st];c.fill();
+  if(!S.s1.trials.length){c.fillStyle='#ffc83d';c.font='700 12px Nunito, sans-serif';c.fillText('⟵ drag me ⟶',px,SUNY+42);}
+  x1p.clearRect(0,0,260,260);drawPlanet(x1p,130,130,100,lookT(T,'oceans'),t);
+}
+$('#s1rec').onclick=()=>{const d=s1.d;if(S.s1.trials.some(x=>Math.abs(x.d-d)<0.015))return toast(`You already tested ${d.toFixed(2)} AU. Try a new distance!`);if(S.s1.trials.length>=12)return toast('Your data table is full (12 trials). Great work!');const T=T1(d);S.s1.trials.push({d:+d.toFixed(2),sun:Math.round(100/d/d),T:Math.round(T),st:st1(T)});S.s1.trials.sort((a,b)=>a.d-b.d);save();refresh1();toast('📝 Trial recorded!');};
+const NEI=[['Venus',0.72,'hot'],['Earth',1.00,'right'],['Mars',1.52,'cold']];
+function renderSort1(){
+  $('#s1sort').innerHTML=NEI.map(([n,d])=>`<div style="margin-bottom:10px"><button class="btn small ghost" data-tp="${d}">🛸 Teleport to ${n} (${d.toFixed(2)} AU)</button><div class="chips" data-n="${n}" style="margin-top:6px">${[['hot','🔥 Too hot'],['right','✅ Just right'],['cold','🧊 Too cold']].map(([k,l])=>`<button class="chip ${S.s1.sort[n]===k?'right':''}" data-k="${k}">${l}</button>`).join('')}</div></div>`).join('');
+  $$('#s1sort [data-tp]').forEach(b=>b.onclick=()=>{s1.d=+b.dataset.tp;s1Update();c1o.scrollIntoView({behavior:'smooth',block:'center'});});
+  $$('#s1sort .chips').forEach(row=>{const n=row.dataset.n,ans=NEI.find(x=>x[0]===n)[2];row.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{if(S.s1.sort[n])return;if(ch.dataset.k===ans){S.s1.sort[n]=ans;save();refresh1();toast(`✅ ${n} classified!`);}else{ch.classList.add('wrong');toast(`Teleport to ${n} and check its temperature and water first!`);}});});
+}
+$('#s1edgeBtn').onclick=()=>{const a=parseFloat($('#s1in').value),b=parseFloat($('#s1out').value),fb=$('#s1edgeFb');
+  if(!a||!b){fb.className='fb no';fb.textContent='Enter both distances.';return;}
+  const okA=Math.abs(a-0.77)<=0.04,okB=Math.abs(b-1.05)<=0.04;
+  if(okA&&okB){S.s1.edges={a,b};save();refresh1();confetti(60);}
+  else{fb.className='fb no';fb.textContent=(!okA?'Inner edge is off: move toward the Sun until water just starts to boil (100 °C). ':'')+(!okB?'Outer edge is off: move away until water just freezes (0 °C).':'');}};
+const Q1={q:'Why does a planet get colder the farther it is from the Sun?',o:["The Sun's energy spreads out over a bigger area, so less of it reaches the planet",'Planets that are farther away are always bigger','Space has more air farther from the Sun','The Sun only shines in one direction'],a:0,h:'Watch the yellow sunlight dots in the simulator as you move farther away.',w:'Right! Sunlight spreads out as it travels, so a farther planet receives less energy (see the "Sunlight received" readout).'};
+function s1Done(){const t=S.s1.trials,sts=new Set(t.map(x=>x.st));return t.length>=6&&sts.size===3&&!!S.s1.edges&&Object.keys(S.s1.sort).length===3&&S.s1.mc;}
+function refresh1(){
+  const t=S.s1.trials;
+  $('#s1table').innerHTML=t.length?`<table class="data"><tr><th>#</th><th>Distance</th><th>Sunlight</th><th>Temp</th><th>Water</th></tr>${t.map((x,i)=>`<tr><td>${i+1}</td><td>${x.d.toFixed(2)} AU</td><td>${x.sun}%</td><td>${x.T} °C</td><td>${STL[x.st]}</td></tr>`).join('')}</table>`:'<div class="empty">No trials yet. Move the planet and click Record Trial.</div>';
+  const sts=new Set(t.map(x=>x.st));
+  $('#s1stchips').innerHTML=['ice','liquid','steam'].map(k=>`<span class="chip ${sts.has(k)?'right':''}" style="cursor:default">${STL[k]}</span>`).join('')+`<span class="chip" style="cursor:default">${t.length}/6 trials</span>`;
+  if(S.s1.edges){$('#s1in').value=S.s1.edges.a;$('#s1out').value=S.s1.edges.b;$('#s1in').disabled=$('#s1out').disabled=$('#s1edgeBtn').disabled=true;const fb=$('#s1edgeFb');fb.className='fb ok';fb.textContent='✅ Nice! The green band in the simulator is the Habitable (Goldilocks) Zone: not too hot, not too cold for liquid water.';}
+  renderSort1();
+  const a=t.length>=6&&sts.size===3,b=!!S.s1.edges,c=Object.keys(S.s1.sort).length===3,d=S.s1.mc;
+  stepOk('#s1st1',a);stepOk('#s1st2',b);stepOk('#s1st3',c);stepOk('#s1st4',d);
+  checklist($('#s1check'),[[a,'6 trials (all 3 water states)'],[b,'Zone edges'],[c,'Classify neighbors'],[d,'Explain']]);
+  $('#s1next').disabled=!s1Done();
+  if(s1Done())unlock(2,'🎉 Station 1 complete! Station 2 unlocked.');
+  renderNav();
+}
+mc($('#s1mc'),Q1,'s1mc',S.s1.mc,()=>{S.s1.mc=true;refresh1();});
+$('#s1next').onclick=()=>go(2);
+
+/* ---------- STATION 2 ---------- */
+const c2p=$('#s2pl'),x2p=setup(c2p,680,170),c2g=$('#s2graph'),x2g=setup(c2g,680,320);
+let run2={p:S.s2.ran?1:0,start:null},hoverH=null;
+const dusty=h=>15+45*Math.sin(2*Math.PI*(h-9)/24),ocean=h=>15+6*Math.sin(2*Math.PI*(h-9)/24);
+const gx=h=>60+h/24*600,gy=T=>40+(70-T)/110*240;
+const hrLabel=h=>{const hh=Math.floor(h)%24;const ap=hh<12?'AM':'PM';const h12=hh%12===0?12:hh%12;return h12+' '+ap;};
+$('#s2run').onclick=()=>{run2.start=performance.now();run2.p=0;hoverH=null;};
+c2g.addEventListener('pointermove',e=>{if(!S.s2.ran||run2.start!=null)return;const p=ptr(c2g,e);hoverH=Math.max(0,Math.min(24,(p.x-60)/600*24));});
+c2g.addEventListener('pointerdown',e=>{if(!S.s2.ran||run2.start!=null)return;const p=ptr(c2g,e);hoverH=Math.max(0,Math.min(24,(p.x-60)/600*24));});
+c2g.addEventListener('pointerleave',()=>hoverH=null);
+function thermo(c,x,y,T){c.fillStyle='#1a2350';c.fillRect(x,y,14,110);const f=Math.max(0,Math.min(1,(T+40)/110));c.fillStyle=T>35?'#ff8a3d':T<0?'#7fc8ff':'#3ddc84';c.fillRect(x,y+110*(1-f),14,110*f);c.strokeStyle='#4a5a9a';c.strokeRect(x,y,14,110);c.beginPath();c.arc(x+7,y+118,10,0,7);c.fill();}
+function drawS2(t){
+  if(run2.start!=null){run2.p=Math.min(1,(t-run2.start)/6500);if(run2.p>=1){run2.start=null;if(!S.s2.ran){S.s2.ran=true;save();refresh2();toast('📈 Test complete! Read the graph to find each swing.');}}}
+  const h=run2.start!=null?run2.p*24:(hoverH!=null?hoverH:(S.s2.ran?15:12));
+  const c=x2p;c.fillStyle='#040716';c.fillRect(0,0,680,170);
+  const day=h>=6&&h<18;c.font='22px serif';c.textAlign='center';c.fillText(day?'☀️':'🌙',340,30);c.font='700 14px Nunito, sans-serif';c.fillStyle='#a3b2e0';c.fillText(hrLabel(h),340,54);
+  const dT=dusty(h),oT=ocean(h);
+  drawPlanet(c,100,90,62,{base:'#a8794f',land:'#7d5634',glow:8,glowColor:'rgba(110,180,255,.45)',tint:dT>35?`rgba(255,80,0,${Math.min(.4,(dT-35)/60)})`:dT<0?`rgba(120,190,255,${Math.min(.45,-dT/60)})`:null},t);
+  drawPlanet(c,580,90,62,Object.assign(lookT(15,'oceans'),{glow:8}),t);
+  thermo(c,180,25,dT);thermo(c,486,25,oT);
+  c.fillStyle='#eef2ff';c.font='600 15px Fredoka, sans-serif';c.textAlign='left';c.fillText('🏜️ Dusty',204,40);c.fillText(fmtT(dT),204,62);c.textAlign='right';c.fillText('Oceanus 🌊',478,40);c.fillText(fmtT(oT),478,62);
+  const g=x2g;g.fillStyle='#040716';g.fillRect(0,0,680,320);
+  g.fillStyle='rgba(20,30,80,.55)';g.fillRect(gx(0),40,gx(6)-gx(0),240);g.fillRect(gx(18),40,gx(24)-gx(18),240);
+  g.fillStyle='rgba(255,200,61,.06)';g.fillRect(gx(6),40,gx(18)-gx(6),240);
+  g.strokeStyle='rgba(163,178,224,.15)';g.fillStyle='#a3b2e0';g.font='12px Nunito, sans-serif';g.textAlign='right';
+  for(let T=-40;T<=70;T+=10){g.beginPath();g.moveTo(60,gy(T));g.lineTo(660,gy(T));g.stroke();g.fillText(T+'°',52,gy(T)+4);}
+  g.strokeStyle='rgba(127,200,255,.5)';g.beginPath();g.moveTo(60,gy(0));g.lineTo(660,gy(0));g.stroke();
+  g.textAlign='center';for(let hh=0;hh<=24;hh+=3)g.fillText(hrLabel(hh===24?0:hh),gx(hh),300);
+  g.fillText('Time of day',360,316);g.save();g.translate(14,160);g.rotate(-Math.PI/2);g.fillText('Temperature (°C)',0,0);g.restore();
+  const hMax=24*run2.p;
+  [[dusty,'#ff8a3d'],[ocean,'#4ea8ff']].forEach(([f,col])=>{g.strokeStyle=col;g.lineWidth=3;g.beginPath();for(let hh=0;hh<=hMax;hh+=0.1){const x=gx(hh),y=gy(f(hh));hh===0?g.moveTo(x,y):g.lineTo(x,y);}g.stroke();g.lineWidth=1;});
+  g.textAlign='left';g.font='700 13px Nunito, sans-serif';g.fillStyle='#ff8a3d';g.fillText('━ Dusty (dry rock)',70,24);g.fillStyle='#4ea8ff';g.fillText('━ Oceanus (water world)',230,24);
+  if(run2.p===0){g.fillStyle='rgba(255,200,61,.9)';g.font='600 18px Fredoka, sans-serif';g.textAlign='center';g.fillText('Press ▶ Run 24-hour test',360,170);}
+  if(hoverH!=null&&S.s2.ran&&run2.start==null){const x=gx(hoverH);g.strokeStyle='#ffc83d';g.beginPath();g.moveTo(x,40);g.lineTo(x,280);g.stroke();
+    [[dusty,'#ff8a3d'],[ocean,'#4ea8ff']].forEach(([f,col])=>{g.fillStyle=col;g.beginPath();g.arc(x,gy(f(hoverH)),5,0,7);g.fill();});
+    const bx=Math.min(x+10,520);g.fillStyle='rgba(17,25,57,.95)';g.fillRect(bx,48,140,62);g.strokeStyle='#2a3670';g.strokeRect(bx,48,140,62);g.textAlign='left';g.fillStyle='#eef2ff';g.font='700 12px Nunito, sans-serif';g.fillText('🕐 '+hrLabel(hoverH),bx+8,66);g.fillStyle='#ff8a3d';g.fillText('Dusty: '+fmtT(dusty(hoverH)),bx+8,84);g.fillStyle='#4ea8ff';g.fillText('Oceanus: '+fmtT(ocean(hoverH)),bx+8,102);}
+  WORLDS.forEach((w,i)=>{const cx=wctx[i];if(!cx)return;cx.clearRect(0,0,120,120);drawPlanet(cx,60,60,46,w.look,t+i*9000);});
+}
+$('#s2chk').onclick=()=>{const fb=$('#s2fb');if(!S.s2.ran){fb.className='fb no';fb.textContent='Run the 24-hour test first!';return;}
+  const a=parseFloat($('#s2dus').value),b=parseFloat($('#s2oce').value);if(isNaN(a)||isNaN(b)){fb.className='fb no';fb.textContent='Enter both swings.';return;}
+  const okA=Math.abs(a-90)<=5,okB=Math.abs(b-12)<=4;
+  if(okA&&okB){S.s2.swing={a,b};save();refresh2();}else{fb.className='fb no';fb.textContent=(!okA?'Check Dusty: find its highest point and lowest point on the graph, then subtract. ':'')+(!okB?'Check Oceanus the same way.':'');}};
+const Q2={q:'Why does Oceanus have a much smaller temperature swing than Dusty?',o:['Oceanus is closer to the Sun','Water absorbs heat during the day and releases it slowly at night','Oceanus spins faster than Dusty','Rock reflects all sunlight back into space'],a:1,h:'Both planets are the same distance from the Sun, so what is different about them?',w:"Correct! Water stores heat and releases it slowly, keeping temperatures steady. That's why living things in and near water don't get fried by day or frozen at night."};
+mc($('#s2mc'),Q2,'s2mc',S.s2.mc,()=>{S.s2.mc=true;refresh2();});
+const CARDS=[
+ {t:'Dissolves nutrients so living things can use them',ok:1},
+ {t:'Keeps temperatures from changing too fast',ok:1},
+ {t:'Provides a habitat (home) for many organisms',ok:1},
+ {t:'Carries materials through the bodies of plants and animals',ok:1},
+ {t:'Needed for the chemical reactions inside every cell',ok:1},
+ {t:'Blocks harmful UV rays from the Sun',ok:0,why:"That's the ozone layer in the atmosphere. You'll test it in Station 3!"},
+ {t:'Provides the light energy most life depends on',ok:0,why:'That energy comes from the Sun.'},
+ {t:'Keeps the planet in its orbit around the Sun',ok:0,why:'Gravity does that job.'}];
+if(!S.s2.order){S.s2.order=CARDS.map((_,i)=>i).sort(()=>Math.random()-.5);save();}
+let sel2=null;
+function place2(i,bin){const card=CARDS[i];const el=document.querySelector(`.scard[data-i="${i}"]`);
+  if(card.ok===bin){S.s2.sorted.push(i);sel2=null;save();refresh2();toast('✅ Correct!');}
+  else{if(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');}toast('❌ '+(card.ok?'Liquid water really does this! Think about how your own body uses water.':card.why));}}
+function renderSort2(){
+  $('#s2pool').innerHTML=S.s2.order.filter(i=>!S.s2.sorted.includes(i)).map(i=>`<div class="scard ${sel2===i?'sel':''}" draggable="true" data-i="${i}">${CARDS[i].t}</div>`).join('')||'<div class="empty">All cards sorted! 🎉</div>';
+  $$('.bin').forEach(b=>{const bin=+b.dataset.bin;b.querySelector('.bin-items').innerHTML=S.s2.sorted.filter(i=>CARDS[i].ok===bin).map(i=>`<div class="scard">✔ ${CARDS[i].t}</div>`).join('');});
+  $$('#s2pool .scard').forEach(el=>{const i=+el.dataset.i;el.onclick=e=>{e.stopPropagation();sel2=sel2===i?null:i;renderSort2();};el.ondragstart=e=>{e.dataTransfer.setData('text/plain',String(i));sel2=i;};});
+}
+$$('.bin').forEach(b=>{b.onclick=()=>{if(sel2!=null)place2(sel2,+b.dataset.bin);else toast('Tap a card first, then tap a bin.');};
+  b.ondragover=e=>{e.preventDefault();b.classList.add('hot');};b.ondragleave=()=>b.classList.remove('hot');
+  b.ondrop=e=>{e.preventDefault();b.classList.remove('hot');const i=parseInt(e.dataTransfer.getData('text/plain'));if(!isNaN(i))place2(i,+b.dataset.bin);};});
+const WORLDS=[
+ {n:'Mercury',look:{base:'#8f8a85',land:'#6d6863'},r:'❌ No liquid water. With no atmosphere to hold heat, it is about 430 °C in the day and −180 °C at night. A little ice may hide in dark craters at the poles.'},
+ {n:'Venus',look:{base:'#d9a95b',land:'#c48a3e',cloud:.85,cloudColor:'#f2d9a0',glow:12,glowColor:'rgba(255,200,110,.6)'},r:'❌ No liquid water. The surface is about 465 °C, so any water boiled away long ago.'},
+ {n:'Earth',look:{base:'#1f6fd1',land:'#4f9a45',ice:.12,cloud:.4,glow:9,glowColor:'rgba(110,180,255,.6)'},r:'✅ Liquid water! Oceans cover about 71% of the surface.'},
+ {n:'Mars',look:MARSLOOK,r:'🧊 Water is frozen in ice caps and underground. The air is too thin and cold for liquid water to last on the surface.'},
+ {n:'Europa',sub:"Jupiter's moon",look:{base:'#e8dcc8',land:'#c99b6d'},r:'🧊 Covered by a thick shell of ice. Scientists think a liquid ocean may be hidden deep under the ice!'}];
+const wctx=[];
+$('#s2worlds').innerHTML=WORLDS.map((w,i)=>`<div class="world" id="w${i}"><canvas></canvas><h4>${w.n}${w.sub?`<small>${w.sub}</small>`:''}</h4><button class="btn small teal" data-w="${i}">📡 Scan</button><div class="res"></div></div>`).join('');
+WORLDS.forEach((w,i)=>{wctx[i]=setup($(`#w${i} canvas`),120,120);});
+$$('#s2worlds [data-w]').forEach(b=>b.onclick=()=>{const i=+b.dataset.w,box=$('#w'+i);b.disabled=true;const sl=document.createElement('div');sl.className='scanline';box.appendChild(sl);setTimeout(()=>{sl.remove();if(!S.s2.scanned.includes(i))S.s2.scanned.push(i);save();refresh2();},1200);});
+const Q2b={q:'Based on your scans, which world has stable liquid water ON its surface right now?',o:['Mercury','Venus','Earth','Mars','Europa'],a:2,h:'Re-read the scan results. Frozen or underground water does not count.',w:'Only Earth! It has the right temperature AND enough air pressure to keep water liquid on the surface.'};
+let q2bRendered=false;
+function s2Done(){return !!S.s2.swing&&S.s2.mc&&S.s2.sorted.length===CARDS.length&&S.s2.scanned.length===5&&S.s2.scanQ;}
+function refresh2(){
+  if(S.s2.swing){$('#s2dus').value=S.s2.swing.a;$('#s2oce').value=S.s2.swing.b;$('#s2dus').disabled=$('#s2oce').disabled=$('#s2chk').disabled=true;const fb=$('#s2fb');fb.className='fb ok';fb.textContent='✅ Correct! Dusty swings about 90 °C, but Oceanus only about 12 °C.';}
+  renderSort2();
+  WORLDS.forEach((w,i)=>{const done=S.s2.scanned.includes(i);const box=$('#w'+i);box.querySelector('.res').innerHTML=done?w.r:'';const b=box.querySelector('button');if(done){b.disabled=true;b.textContent='✓ Scanned';}});
+  if(S.s2.scanned.length===5&&!q2bRendered){q2bRendered=true;mc($('#s2scanQ'),Q2b,'s2scan',S.s2.scanQ,()=>{S.s2.scanQ=true;refresh2();});}
+  const a=S.s2.ran,b=!!S.s2.swing,c=S.s2.mc,d=S.s2.sorted.length===CARDS.length,e=S.s2.scanned.length===5&&S.s2.scanQ;
+  stepOk('#s2st1',a);stepOk('#s2st2',b);stepOk('#s2st3',c);stepOk('#s2st4',d);stepOk('#s2st5',e);
+  checklist($('#s2check'),[[a,'Run test'],[b,'Swings'],[c,'Explain'],[d,`Sort cards (${S.s2.sorted.length}/8)`],[e,`Scan worlds (${S.s2.scanned.length}/5)`]]);
+  $('#s2next').disabled=!s2Done();if(s2Done())unlock(3,'🎉 Station 2 complete! Station 3 unlocked.');renderNav();
+}
+$('#s2next').onclick=()=>go(3);
+
+/* ---------- STATION 3 ---------- */
+const c3=$('#s3c'),x3=setup(c3,520,440),c3pie=$('#s3pie'),x3pie=setup(c3pie,110,110);
+const p3={th:0,co2:'earth',o2:21};
+const TH=['None','Very thin','Thin','Earth-like','Thick','Crushing'],PR=[0,0.006,0.1,1,10,90],TF=[0,0.1,0.35,1,4,14],CF={low:0.5,earth:1,rich:3.2},BP=[0,0,46,100,180,300],GLOW=[0,5,12,22,36,52];
+const CO2L={low:'Low',earth:'Earth-like',rich:'CO₂-rich'},CO2P={low:0.02,earth:0.04,rich:95};
+const WL={thin:'💨 Escapes (air too thin)',ice:'❄️ Frozen',liquid:'💧 Liquid!',steam:'♨️ Boiled away'};
+const PRESETS={mars:{th:1,co2:'rich',o2:0,l:'🔴 Mars-type'},earth:{th:3,co2:'earth',o2:21,l:'🌍 Earth-type'},venus:{th:5,co2:'rich',o2:0,l:'🟡 Venus-type'}};
+function atm(p){const P=PR[p.th];const TK=Math.min(760,255+33*TF[p.th]*CF[p.co2]);const T=TK-273.15;let water;if(P<0.05)water='thin';else if(T<0)water='ice';else if(T>BP[p.th])water='steam';else water='liquid';const o2=p.co2==='rich'?Math.min(p.o2,3):p.o2;const uv=p.th>=2&&o2>=10,met=p.th>=2,breath=p.th===3&&o2>=16&&o2<=30&&T>-10&&T<45;return{P,T,water,o2,uv,met,breath};}
+function presetOf(p){for(const k in PRESETS){const q=PRESETS[k];if(q.th===p.th&&q.co2===p.co2&&q.o2===p.o2)return k;}return null;}
+const BADGES=[
+ ['meteor','☄️','Meteor Shield','Make meteors burn up before they hit',a=>a.met],
+ ['uv','🛡️','UV Shield','Block harmful UV rays at the surface',a=>a.uv],
+ ['freeze','🧊','Deep Freeze','Keep an atmosphere, but freeze all the water',(a,p)=>p.th>=2&&a.water==='ice'],
+ ['runaway','🔥','Runaway Greenhouse','Heat the surface above 300 °C',a=>a.T>300],
+ ['twin','🌍','Earth Twin','Liquid water + breathable air + UV blocked + 5–30 °C',a=>a.water==='liquid'&&a.breath&&a.uv&&a.T>=5&&a.T<=30]];
+$('#s3presets').innerHTML=Object.entries(PRESETS).map(([k,q])=>`<button class="chip" data-p="${k}">${q.l} atmosphere</button>`).join('');
+$$('#s3presets .chip').forEach(b=>b.onclick=()=>{Object.assign(p3,PRESETS[b.dataset.p]);delete p3.l;s3Controls();s3Update();});
+function s3Controls(){$('#s3th').value=p3.th;$('#s3o2').max=p3.co2==='rich'?3:35;if(p3.co2==='rich'&&p3.o2>3)p3.o2=3;$('#s3o2').value=p3.o2;$$('#s3co2 button').forEach(b=>b.classList.toggle('on',b.dataset.v===p3.co2));}
+$('#s3th').oninput=e=>{p3.th=+e.target.value;s3Update();};
+$('#s3o2').oninput=e=>{p3.o2=+e.target.value;s3Update();};
+$$('#s3co2 button').forEach(b=>b.onclick=()=>{p3.co2=b.dataset.v;s3Controls();s3Update();});
+function s3Update(){
+  const a=atm(p3),pk=presetOf(p3);
+  $('#s3thl').textContent=TH[p3.th];$('#s3o2l').textContent=(p3.co2==='rich'?Math.min(p3.o2,3):p3.o2)+'%'+(p3.co2==='rich'?' (max 3% in CO₂-rich air)':'');
+  $$('#s3presets .chip').forEach(b=>b.classList.toggle('sel',b.dataset.p===pk));
+  const ro=[['Air pressure',(a.P===0?'0':a.P<0.05?a.P.toFixed(3):a.P<1?a.P.toFixed(1):a.P)+' atm',null],['Surface temp',fmtT(a.T),a.T>=0&&a.T<=100],['Liquid water?',WL[a.water],a.water==='liquid'],['UV at surface',a.uv?'🛡️ Blocked':'☢️ Dangerous',a.uv],['Meteors',a.met?'🔥 Burn up':'💥 Hit surface',a.met],['Breathable?',a.breath?'✅ Yes':'❌ No',a.breath]];
+  $('#s3ro').innerHTML=ro.map(([l,v,ok])=>`<div class="ro ${ok===null?'':ok?'good':'bad'}"><span>${l}</span><b>${v}</b></div>`).join('');
+  const pie=x3pie;pie.clearRect(0,0,110,110);
+  if(p3.th===0){pie.fillStyle='#2a3670';pie.beginPath();pie.arc(55,55,50,0,7);pie.fill();pie.fillStyle='#a3b2e0';pie.font='700 12px Nunito, sans-serif';pie.textAlign='center';pie.fillText('No air',55,59);$('#s3leg').innerHTML='<div>No atmosphere at all</div>';}
+  else{const co2=CO2P[p3.co2],other=p3.co2==='rich'?2:0.9,n2=Math.max(0,100-a.o2-co2-other);const parts=[['Nitrogen (N₂)',n2,'#4ea8ff'],['Oxygen (O₂)',a.o2,'#3ddc84'],['Carbon dioxide (CO₂)',co2,'#ffb020'],['Other (argon…)',other,'#a3b2e0']];
+    let ang=-Math.PI/2;parts.forEach(([,v,col])=>{const sw=v/100*Math.PI*2;if(sw<=0)return;pie.fillStyle=col;pie.beginPath();pie.moveTo(55,55);pie.arc(55,55,50,ang,ang+Math.max(sw,0.03));pie.closePath();pie.fill();ang+=sw;});
+    $('#s3leg').innerHTML=parts.map(([n,v,col])=>`<div><i style="background:${col}"></i>${n}: ${v<1?v.toFixed(2):Math.round(v)}%</div>`).join('');}
+  let newB=false;if(S.current===3)BADGES.forEach(([k,ic,n,,f])=>{if(!S.s3.badges[k]&&f(a,p3)){S.s3.badges[k]=true;newB=true;toast(`🏅 Badge earned: ${ic} ${n}!`);}});
+  if(newB){save();refresh3();}
+}
+const meteors=[],impacts=[];let lastMet=0;
+function drawS3(t){
+  const c=x3,W=520,H=440,cx=290,cy=265,r=112,a=atm(p3),gl=GLOW[p3.th];
+  c.fillStyle='#040716';c.fillRect(0,0,W,H);
+  const sg=c.createRadialGradient(0,0,5,0,0,150);sg.addColorStop(0,'#fff6c8');sg.addColorStop(.3,'#ffc83d');sg.addColorStop(1,'rgba(255,140,0,0)');c.fillStyle=sg;c.fillRect(0,0,160,160);
+  let look;
+  if(a.water==='liquid')look=lookT(a.T,'oceans');else if(a.water==='ice')look=lookT(a.T,'oceans');else if(a.water==='steam')look=lookT(a.T,'oceans');else look=Object.assign({},MARSLOOK);
+  if(p3.co2==='rich'&&p3.th>=4){look.base='#d9a95b';look.land='#c48a3e';look.cloud=.85;look.cloudColor='#f2d9a0';}
+  look.glow=gl;look.glowColor=p3.co2==='rich'?(p3.th>=4?'rgba(255,190,90,.75)':'rgba(255,160,120,.5)'):'rgba(110,180,255,.7)';
+  drawPlanet(c,cx,cy,r,look,t);
+  for(let i=0;i<5;i++){const sx0=30+i*22,sy0=30+(4-i)*10;const tx=cx+(i-2)*42,ty=cy-(i-2)*20;const dx=tx-sx0,dy=ty-sy0,D=Math.hypot(dx,dy),ux=dx/D,uy=dy/D;
+    const toCenter=Math.hypot(cx-sx0,cy-sy0);const stopR=a.uv?r+gl*.75:r*.92;const L=Math.max(20,toCenter-stopR-Math.abs(i-2)*6);
+    c.strokeStyle='rgba(190,120,255,.85)';c.lineWidth=2;c.beginPath();for(let s=0;s<=L;s+=3){const w=Math.sin(s/7-t/90)*4;const x=sx0+ux*s-uy*w,y=sy0+uy*s+ux*w;s===0?c.moveTo(x,y):c.lineTo(x,y);}c.stroke();c.lineWidth=1;
+    const ex=sx0+ux*L,ey=sy0+uy*L;c.fillStyle=a.uv?'rgba(120,220,255,.9)':'rgba(255,90,200,.95)';c.beginPath();c.arc(ex,ey,a.uv?4+Math.sin(t/100+i)*1.5:3,0,7);c.fill();}
+  c.fillStyle='#d4a8ff';c.font='700 12px Nunito, sans-serif';c.textAlign='left';c.fillText('UV rays',120,40);
+  if(t-lastMet>850){lastMet=t;const sy=Math.random()*180;const tx=cx+(Math.random()-.3)*r*.9,ty=cy+(Math.random()-.6)*r*.9;const dx=tx-(W+10),dy=ty-sy,D=Math.hypot(dx,dy);meteors.push({x:W+10,y:sy,vx:dx/D*3.4,vy:dy/D*3.4,burn:0});}
+  for(let i=meteors.length-1;i>=0;i--){const m=meteors[i];m.x+=m.vx;m.y+=m.vy;const dd=Math.hypot(m.x-cx,m.y-cy);
+    if(a.met&&dd<r+gl)m.burn++;
+    if(m.burn>0){const s=Math.max(0,1-m.burn/26);const gr=c.createLinearGradient(m.x,m.y,m.x-m.vx*10,m.y-m.vy*10);gr.addColorStop(0,`rgba(255,240,180,${s})`);gr.addColorStop(1,'rgba(255,90,0,0)');c.strokeStyle=gr;c.lineWidth=5*s+1;c.beginPath();c.moveTo(m.x,m.y);c.lineTo(m.x-m.vx*10,m.y-m.vy*10);c.stroke();c.lineWidth=1;if(m.burn>26){meteors.splice(i,1);}continue;}
+    if(dd<r){impacts.push({x:m.x,y:m.y,l:34});meteors.splice(i,1);continue;}
+    c.strokeStyle='rgba(220,220,230,.7)';c.lineWidth=2;c.beginPath();c.moveTo(m.x,m.y);c.lineTo(m.x-m.vx*6,m.y-m.vy*6);c.stroke();c.lineWidth=1;c.fillStyle='#9a8f86';c.beginPath();c.arc(m.x,m.y,3.5,0,7);c.fill();}
+  for(let i=impacts.length-1;i>=0;i--){const p=impacts[i];p.l--;const k=1-p.l/34;c.strokeStyle=`rgba(255,180,80,${1-k})`;c.lineWidth=3;c.beginPath();c.arc(p.x,p.y,4+k*18,0,7);c.stroke();c.lineWidth=1;if(p.l<=0)impacts.splice(i,1);}
+  c.fillStyle='#eef2ff';c.font='600 15px Fredoka, sans-serif';c.textAlign='center';c.fillText(`${fmtT(a.T)} · ${WL[a.water]}`,cx,H-14);
+}
+$('#s3rec').onclick=()=>{const a=atm(p3),pk=presetOf(p3);if(S.s3.rec.some(x=>x.th===p3.th&&x.co2===p3.co2&&x.o2===a.o2))return toast('You already recorded this exact atmosphere.');if(S.s3.rec.length>=10)return toast('Data table is full!');
+  S.s3.rec.push({name:pk?PRESETS[pk].l:'🧪 Custom',th:p3.th,co2:p3.co2,o2:a.o2,T:Math.round(a.T),water:a.water,uv:a.uv,met:a.met,breath:a.breath});if(pk)S.s3.presets[pk]=true;save();refresh3();toast('📝 Atmosphere recorded!');};
+const Q3a={q:'Venus is almost twice as far from the Sun as Mercury, but Venus is HOTTER. Based on your atmosphere tests, why?',o:['Venus is bigger, so it absorbs more light','Venus has a thick CO₂ atmosphere that traps heat (greenhouse effect)','Venus has more volcanoes than Mercury','Venus spins faster, which creates heat'],a:1,h:'Look at your Venus-type result. It was at Earth\'s distance, yet what happened to the temperature?',w:'Yes! Even at Earth\'s distance, your Venus-type atmosphere trapped so much heat that the surface was over 400 °C.'};
+const Q3b={q:'What happened to liquid water when the atmosphere was very thin or missing?',o:['It froze into a giant ocean','It escaped as vapor because there was not enough air pressure','It turned into oxygen','Nothing, because water does not need an atmosphere'],a:1,h:'Set thickness to None or Very thin and read the "Liquid water?" box.',w:'Correct! Without enough air pressure, liquid water quickly turns to vapor and escapes. That\'s a big reason Mars is dry today.'};
+mc($('#s3mc1'),Q3a,'s3mc1',S.s3.mc1,()=>{S.s3.mc1=true;refresh3();});
+mc($('#s3mc2'),Q3b,'s3mc2',S.s3.mc2,()=>{S.s3.mc2=true;refresh3();});
+function s3Done(){return Object.keys(S.s3.presets).length===3&&BADGES.every(b=>S.s3.badges[b[0]])&&S.s3.mc1&&S.s3.mc2;}
+function refresh3(){
+  const R=S.s3.rec;
+  $('#s3table').innerHTML=R.length?`<table class="data"><tr><th>Atmosphere</th><th>Thickness</th><th>CO₂</th><th>O₂</th><th>Temp</th><th>Water</th><th>UV</th><th>Meteors</th></tr>${R.map(x=>`<tr><td>${x.name}</td><td>${TH[x.th]}</td><td>${CO2L[x.co2]}</td><td>${x.o2}%</td><td>${x.T} °C</td><td>${WL[x.water]}</td><td>${x.uv?'Blocked':'Reaches'}</td><td>${x.met?'Burn up':'Hit'}</td></tr>`).join('')}</table>`:'<div class="empty">No atmospheres recorded yet.</div>';
+  $('#s3badges').innerHTML=BADGES.map(([k,ic,n,d])=>`<div class="badge ${S.s3.badges[k]?'on':''}"><span class="bi">${ic}</span><div>${n}<small>${d}</small></div></div>`).join('');
+  const a=Object.keys(S.s3.presets).length===3,b=BADGES.every(x=>S.s3.badges[x[0]]),c=S.s3.mc1&&S.s3.mc2;
+  stepOk('#s3st1',a);stepOk('#s3st2',b);stepOk('#s3st3',c);
+  checklist($('#s3check'),[[a,`Record 3 planet atmospheres (${Object.keys(S.s3.presets).length}/3)`],[b,`Badges (${BADGES.filter(x=>S.s3.badges[x[0]]).length}/5)`],[c,'Explain (2)']]);
+  $('#s3next').disabled=!s3Done();if(s3Done())unlock(4,'🎉 Station 3 complete! Station 4 unlocked.');renderNav();
+}
+$('#s3next').onclick=()=>go(4);
+
+/* ---------- STATION 4 ---------- */
+const c4=$('#s4c'),x4=setup(c4,560,400);
+const p4={d:1.6,water:'oceans',atm:'none'};
+const ATM={none:{l:'None',gh:0,P:0},thin:{l:'Thin CO₂',gh:5,P:.006},earth:{l:'Earth-like',gh:33,P:1},thick:{l:'Thick CO₂',gh:480,P:90}};
+const WAT={none:'None',lakes:'Some lakes',oceans:'Oceans'};
+function eval4(p){const A=ATM[p.atm];const T=Math.min(760,(255+A.gh)/p.d)-273.15;const bp=A.P>=90?300:A.P>=1?100:0;const tempOk=T>=0&&T<=100;
+  let wOk=false,wMsg;if(p.water==='none')wMsg='No water at all';else if(A.P<0.5)wMsg='Water escapes: air too thin to keep it liquid';else if(T<0)wMsg='All the water is frozen solid';else if(T>bp)wMsg='The water boiled away';else{wOk=true;wMsg='Liquid water is stable on the surface';}
+  const aOk=p.atm==='earth';const aMsg={none:'No air: no UV shield, meteors hit, nothing to breathe',thin:'Too thin: UV rays and meteors reach the surface',earth:'Blocks UV & meteors, holds just enough heat, has oxygen',thick:'Crushing pressure, traps far too much heat'}[p.atm];
+  return{T,tempOk,tMsg:tempOk?`${fmtT(T)}: just right for liquid water`:(T>100?`${fmtT(T)}: too hot`:`${fmtT(T)}: too cold`),wOk,wMsg,aOk,aMsg,hab:tempOk&&wOk&&aOk};}
+$('#s4d').value=p4.d;
+$('#s4d').oninput=e=>{p4.d=+e.target.value;s4Update();};
+function s4Seg(){$$('#s4water button').forEach(b=>b.classList.toggle('on',b.dataset.v===p4.water));$$('#s4atm button').forEach(b=>b.classList.toggle('on',b.dataset.v===p4.atm));}
+$$('#s4water button').forEach(b=>b.onclick=()=>{p4.water=b.dataset.v;s4Seg();s4Update();});
+$$('#s4atm button').forEach(b=>b.onclick=()=>{p4.atm=b.dataset.v;s4Seg();s4Update();});
+let pending4=null,wasHab=false;
+function diffs4(){const h=S.s4.home,f=[];if(!h)return f;if(Math.abs(p4.d-h.d)>0.03)f.push('distance');if(p4.water!==h.water)f.push('water');if(p4.atm!==h.atm)f.push('atmosphere');return f;}
+function s4Update(){
+  const e=eval4(p4);$('#s4dl').textContent=p4.d.toFixed(2)+' AU';
+  $('#s4score').innerHTML=[['☀️','Temperature',e.tempOk,e.tMsg],['💧','Liquid water',e.wOk,e.wMsg],['🌫️','Protective atmosphere',e.aOk,e.aMsg]].map(([i,n,ok,m])=>`<div class="gauge ${ok?'ok':'no'}"><span class="gi">${i}</span><div><b>${n}</b><span>${m}</span></div><span class="st">${ok?'✅':'❌'}</span></div>`).join('');
+  const bn=$('#s4banner');bn.className='life-banner '+(e.hab?'ok':'no');bn.textContent=e.hab?'🌱 LIFE CAN THRIVE HERE!':'☠️ Life as we know it could not survive here';
+  if(e.hab&&!wasHab&&!S.s4.home)toast('🌱 All three checks are green! Name your planet and save it as Home Base.');wasHab=e.hab;
+  const st=$('#s4status'),lg=$('#s4log');lg.disabled=true;
+  if(!S.s4.home)st.textContent='Save a habitable Home Base first.';
+  else if(Object.keys(S.s4.broken).length===3)st.textContent='🎉 You broke your planet all three ways. Station complete!';
+  else if(pending4)st.textContent='Answer the question below to log this broken planet.';
+  else if(e.hab)st.textContent='Your planet can still support life. Change ONE factor to break it.';
+  else{const f=diffs4();if(f.length!==1)st.textContent=`You changed ${f.length} factors. Change only ONE at a time (use "Back to Home Base" to start over).`;
+    else if(S.s4.broken[f[0]])st.textContent=`You already broke it by changing ${f[0]}. Try a different factor!`;
+    else{st.innerHTML=`💥 Life can't survive. You changed only the <b>${f[0]}</b>. Click "Log broken planet."`;lg.disabled=false;}}
+}
+function drawS4(t){
+  const c=x4,W=560,H=400,e=eval4(p4),A=ATM[p4.atm];
+  c.fillStyle='#040716';c.fillRect(0,0,W,H);
+  const R=Math.min(190,62/p4.d);const sg=c.createRadialGradient(10,200,R*.2,10,200,R*1.6);sg.addColorStop(0,'#fff6c8');sg.addColorStop(.4,'#ffc83d');sg.addColorStop(.7,'rgba(255,140,40,.35)');sg.addColorStop(1,'rgba(255,120,0,0)');c.fillStyle=sg;c.beginPath();c.arc(10,200,R*1.6,0,7);c.fill();
+  c.strokeStyle=`rgba(255,216,102,${Math.min(.5,.25/(p4.d*p4.d))})`;c.lineWidth=2;for(let i=-3;i<=3;i++){const off=((t/12)%40);c.setLineDash([10,30]);c.lineDashOffset=-off;c.beginPath();c.moveTo(R*.8+10,200+i*18);c.lineTo(270,200+i*30);c.stroke();}c.setLineDash([]);c.lineWidth=1;
+  let look;
+  if(e.wOk||p4.water==='none')look=lookT(e.T,e.wOk?p4.water:'none');
+  else if(A.P<0.5)look=Object.assign({},MARSLOOK,e.T>100?{base:'#a8603a'}:{});
+  else look=lookT(e.T,p4.water);
+  look.glow={none:0,thin:5,earth:16,thick:40}[p4.atm];look.glowColor=p4.atm==='earth'?'rgba(110,180,255,.7)':p4.atm==='thick'?'rgba(255,190,90,.75)':'rgba(255,160,120,.4)';
+  if(p4.atm==='thick'){look.cloud=.85;look.cloudColor='#f2d9a0';}
+  look.life=e.hab;
+  drawPlanet(c,400,200,118,look,t);
+  if(e.hab){c.fillStyle=`rgba(61,220,132,${.6+.4*Math.sin(t/300)})`;c.font='600 16px Fredoka, sans-serif';c.textAlign='center';c.fillText('✨ Life detected ✨',400,48);}
+  c.fillStyle='#eef2ff';c.font='600 14px Fredoka, sans-serif';c.textAlign='center';c.fillText(`${(S.s4.planetName&&S.s4.home)?S.s4.planetName+' · ':''}${p4.d.toFixed(2)} AU · ${fmtT(e.T)}`,400,H-14);
+}
+$('#s4save').onclick=()=>{const e=eval4(p4),fb=$('#s4homefb');if(!e.hab){fb.className='fb no';fb.textContent='Not yet! All three life-support checks must be green.';return;}
+  if(Object.keys(S.s4.broken).length){fb.className='fb no';fb.textContent='Your Home Base is already set.';return;}
+  S.s4.home={d:+p4.d.toFixed(2),water:p4.water,atm:p4.atm};S.s4.planetName=$('#s4name').value.trim()||'Planet X';save();confetti(80);refresh4();toast(`🏠 ${esc(S.s4.planetName)} saved as Home Base!`);};
+$('#s4reset').onclick=()=>{if(!S.s4.home)return toast('Save a Home Base first.');Object.assign(p4,S.s4.home);$('#s4d').value=p4.d;s4Seg();s4Update();};
+const OPT4=['It moved too close to the Sun, so the water boiled away','It moved too far from the Sun, so the water froze','There is no liquid water for living things to use','The atmosphere cannot protect life or keep the temperature right'];
+$('#s4log').onclick=()=>{const f=diffs4();if(f.length!==1)return;const h=S.s4.home,factor=f[0],e=eval4(p4);let desc,ans;
+  if(factor==='distance'){desc=`Distance: ${h.d.toFixed(2)} → ${p4.d.toFixed(2)} AU (${fmtT(e.T)})`;ans=p4.d<h.d?0:1;}
+  else if(factor==='water'){desc=`Water: ${WAT[h.water]} → ${WAT[p4.water]}`;ans=2;}
+  else{desc=`Atmosphere: ${ATM[h.atm].l} → ${ATM[p4.atm].l}`;ans=3;}
+  pending4={factor,desc};s4Update();
+  const box=$('#s4explain');box.innerHTML='<div></div>';
+  mc(box.firstChild,{q:`🔨 ${desc}. What made your planet unable to support life?`,o:OPT4,a:ans,h:'Look at which life-support check turned red.',w:'Logged!'},'s4_'+factor,false,()=>{S.s4.broken[factor]={desc,why:OPT4[ans]};pending4=null;save();setTimeout(()=>{box.innerHTML='';},900);refresh4();toast('🔨 Broken planet logged!');});
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});};
+function s4Done(){return !!S.s4.home&&Object.keys(S.s4.broken).length===3;}
+function refresh4(){
+  if(S.s4.home){$('#s4name').value=S.s4.planetName;$('#s4name').disabled=true;const fb=$('#s4homefb');fb.className='fb ok';fb.textContent=`✅ Home Base: ${S.s4.planetName} (${S.s4.home.d.toFixed(2)} AU, ${WAT[S.s4.home.water]}, ${ATM[S.s4.home.atm].l} atmosphere)`;$('#s4save').disabled=Object.keys(S.s4.broken).length>0;}
+  $('#s4blog').innerHTML=['distance','water','atmosphere'].map(f=>{const b=S.s4.broken[f];return `<li class="${b?'ok':''}">${b?'✅':'⬜'} <b>${f[0].toUpperCase()+f.slice(1)}</b>${b?`: ${esc(b.desc)}. <i>${b.why}.</i>`:''}</li>`;}).join('');
+  const a=!!S.s4.home,b=Object.keys(S.s4.broken).length===3;stepOk('#s4st1',a);stepOk('#s4st2',b);
+  checklist($('#s4check'),[[a,'Habitable Home Base'],[b,`Break it 3 ways (${Object.keys(S.s4.broken).length}/3)`]]);
+  $('#s4next').disabled=!s4Done();if(s4Done())unlock(5,'🎉 Station 4 complete! Time for your Mission Report.');
+  s4Update();renderNav();
+}
+$('#s4next').onclick=()=>go(5);
+
+/* ---------- REPORT ---------- */
+const MINW={c:8,e:30,r:25};
+const QUIZ=[
+ {q:'If Earth suddenly moved much closer to the Sun, what would most likely happen to its oceans?',o:['They would freeze solid','They would heat up and boil away','They would stay exactly the same','They would turn into rock'],a:1,w:'Closer to the Sun means more energy. In Station 1, water boiled away closer than about 0.77 AU.'},
+ {q:'Which of these is NOT one of the main characteristics that allow life to exist on Earth?',o:['Its distance from the Sun','Its liquid water','Its protective atmosphere','Its tall mountain ranges'],a:3,w:'Distance from the Sun, liquid water, and the atmosphere are the key factors you tested.'},
+ {q:"Mars has frozen water. Why can't liquid water last on its surface?",o:['Mars is too close to the Sun','Mars has no gravity','Mars is very cold and its atmosphere is too thin','Mars is made of gas'],a:2,w:"Mars is farther from the Sun (cold), and its thin air can't keep water liquid."},
+ {q:"Earth's atmosphere is mostly made of which gas?",o:['Oxygen','Carbon dioxide','Nitrogen','Hydrogen'],a:2,w:'About 78% nitrogen, 21% oxygen, and about 1% other gases like argon and CO₂.'},
+ {q:'A planet is inside the Goldilocks Zone but has NO atmosphere. Could it support life like Earth?',o:['Yes, being in the Goldilocks Zone is all that matters',"No. Without air, water can't stay liquid, and UV rays and meteors reach the surface",'Yes, as long as it has a big moon','No, because it would be too close to the Sun'],a:1,w:"All three factors work together. Distance alone isn't enough."},
+ {q:'Why do places near the ocean usually have milder temperatures than deserts?',o:['Water absorbs heat and releases it slowly','Oceans make the Sun shine less','Deserts are closer to the Sun','Water makes oxygen that cools the air'],a:0,w:'Remember Oceanus vs. Dusty: the water world kept a steady temperature.'},
+ {q:"Which gas in Earth's atmosphere do animals breathe, and also forms the ozone layer that blocks UV rays?",o:['Nitrogen','Oxygen','Carbon dioxide','Helium'],a:1,w:'Animals breathe oxygen (O₂), and ozone (O₃) is made from oxygen.'}];
+let qAns=new Array(QUIZ.length).fill(null);
+['c','e','r'].forEach(k=>{const ta=$('#s5'+k);ta.value=S.s5[k];ta.oninput=()=>{S.s5[k]=ta.value;save();wc5();};});
+function wc5(){let all=true;['c','e','r'].forEach(k=>{const n=words(S.s5[k]),ok=n>=MINW[k];if(!ok)all=false;const el=$('#s5'+k+'w');el.textContent=`${n} / ${MINW[k]} words minimum`;el.className='wc'+(ok?' ok':'');});return all;}
+$('#s5lock').onclick=()=>{const fb=$('#s5lockfb');if(!wc5()){fb.className='fb no';fb.textContent='Each part needs the minimum number of words. Use your Evidence Bank!';return;}if(!confirm('Lock in your report? You won\'t be able to change it.'))return;S.s5.locked=true;save();renderS5();$('#s5quizCard').scrollIntoView({behavior:'smooth'});};
+function evidence(){const L=[];
+  if(S.s1.edges)L.push(`☀️ <b>Distance:</b> Liquid water was only possible between about ${S.s1.edges.a} and ${S.s1.edges.b} AU. At Venus's orbit (0.72 AU) it was about ${Math.round(T1(.72))} °C (too hot); at Mars's orbit (1.52 AU) about ${Math.round(T1(1.52))} °C (too cold); at Earth's orbit, 15 °C.`);
+  if(S.s2.swing)L.push(`💧 <b>Water & temperature:</b> Dry Dusty had a temperature swing of about ${S.s2.swing.a} °C, but water-covered Oceanus swung only about ${S.s2.swing.b} °C.`);
+  L.push('💧 <b>Water scan:</b> Only Earth has stable liquid water on its surface. Mars\'s water is frozen, and Venus\'s boiled away.');
+  const byP={};S.s3.rec.forEach(x=>{for(const k in PRESETS)if(x.name===PRESETS[k].l)byP[k]=x;});
+  ['venus','mars','earth'].forEach(k=>{const x=byP[k];if(x)L.push(`🌫️ <b>${PRESETS[k].l} atmosphere at Earth's distance:</b> ${x.T} °C, water ${WL[x.water].replace(/^\S+\s/,'').toLowerCase()}, UV ${x.uv?'blocked':'reaches the surface'}, meteors ${x.met?'burn up':'hit the surface'}.`);});
+  if(S.s4.home){L.push(`🪐 <b>Planet Builder:</b> ${esc(S.s4.planetName)} supported life at ${S.s4.home.d.toFixed(2)} AU with ${WAT[S.s4.home.water].toLowerCase()} and an ${ATM[S.s4.home.atm].l.toLowerCase()} atmosphere.`);
+    Object.values(S.s4.broken).forEach(b=>L.push(`🔨 ${esc(b.desc)}: ${b.why.toLowerCase()}.`));}
+  return L;}
+function renderS5(){
+  $('#s5evi').innerHTML=evidence().map(x=>`<li>${x}</li>`).join('');
+  wc5();const lk=S.s5.locked;['c','e','r'].forEach(k=>$('#s5'+k).readOnly=lk);$('#s5lock').disabled=lk;if(lk){$('#s5lockfb').className='fb ok';$('#s5lockfb').textContent='✅ Report locked in.';}
+  stepOk('#s5st1',lk);
+  $('#s5quizCard').style.display=lk?'block':'none';
+  const qz=S.s5.quiz;
+  $('#s5quiz').innerHTML=QUIZ.map((q,i)=>`<div class="mc" style="margin-bottom:14px" data-q="${i}"><p class="q">${i+1}. ${q.q}</p>${q.o.map((o,j)=>{let cls='';if(qz){if(j===q.a)cls='right';else if(qz.ans[i]===j)cls='wrong';}else if(qAns[i]===j)cls='picked';return `<button class="opt ${cls}" data-j="${j}" ${qz?'disabled':''}>${o}</button>`;}).join('')}${qz?`<div class="fb ${qz.ans[i]===q.a?'ok':'no'}">${qz.ans[i]===q.a?'✅':'❌'} ${q.w}</div>`:''}</div>`).join('');
+  if(!qz)$$('#s5quiz .mc').forEach(d=>{const i=+d.dataset.q;d.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{qAns[i]=+b.dataset.j;d.querySelectorAll('.opt').forEach(x=>x.classList.toggle('picked',x===b));});});
+  $('#s5submit').style.display=qz?'none':'';stepOk('#s5st2',!!qz);
+  $('#s5result').innerHTML=qz?`<div class="hint" style="margin-top:10px">🎯 Mission Check score: <b>${qz.score} / ${QUIZ.length}</b></div>`:'';
+  if(qz){const m=Math.round(S.elapsed/60);$('#s5cert').innerHTML=`<div class="cert"><div style="font-size:54px">🏅</div><p style="margin:0;color:var(--muted);font-weight:800;letter-spacing:.1em">INTERPLANETARY HABITAT AGENCY</p><h2>Certified Planetary Scientist</h2><div class="who">${esc(S.name)}</div><p>has completed <b>Mission: Why Earth?</b> and explained how Earth's distance from the Sun, liquid water, and atmosphere allow life to exist.</p><p style="color:var(--muted)">${S.period?'Period '+esc(S.period)+' · ':''}Mission Check: ${qz.score}/${QUIZ.length} · Time: ${m} min · ${new Date(qz.at).toLocaleDateString()}${S.s4.planetName?' · Discovered: '+esc(S.s4.planetName):''}</p><button class="btn big" id="printBtn">🖨️ Print / Save PDF Report</button><p class="note">Turn in your report the way your teacher tells you (printed, or saved as a PDF).</p></div>`;$('#printBtn').onclick=()=>{buildPrint();window.print();};}
+}
+$('#s5submit').onclick=()=>{if(qAns.some(a=>a===null))return toast('Answer all 7 questions before submitting.');if(!confirm('Submit your answers? You only get one try.'))return;const score=QUIZ.reduce((s,q,i)=>s+(qAns[i]===q.a?1:0),0);S.s5.quiz={ans:qAns.slice(),score,at:Date.now()};save();confetti(220);renderS5();renderNav();$('#s5cert').scrollIntoView({behavior:'smooth'});};
+function buildPrint(){
+  const t=S.s1.trials,first=Object.values(S.first),ft=first.filter(Boolean).length;
+  const tbl=(head,rows)=>`<table><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>`;
+  const qz=S.s5.quiz;
+  $('#printReport').innerHTML=`<h1>Mission: Why Earth? Lab Report (TEKS 7.9C)</h1>
+  <p><b>Name:</b> ${esc(S.name)} &nbsp; <b>Period:</b> ${esc(S.period)} &nbsp; <b>Date:</b> ${new Date().toLocaleDateString()} &nbsp; <b>Time in lab:</b> ${Math.round(S.elapsed/60)} min &nbsp; <b>Mission Check:</b> ${qz?qz.score+'/'+QUIZ.length:'not taken'} &nbsp; <b>Station questions right on 1st try:</b> ${ft}/${first.length}</p>
+  <h2>Station 1: Distance from the Sun</h2>${tbl(['#','Distance (AU)','Sunlight','Temp (°C)','Water'],t.map((x,i)=>[i+1,x.d.toFixed(2),x.sun+'%',x.T,STL[x.st].replace(/^\S+\s/,'')]))}<p>Goldilocks Zone edges: ${S.s1.edges?S.s1.edges.a+' AU to '+S.s1.edges.b+' AU':'—'}</p>
+  <h2>Station 2: The Power of Water</h2><p>Temperature swing: Dusty ${S.s2.swing?S.s2.swing.a:'—'} °C · Oceanus ${S.s2.swing?S.s2.swing.b:'—'} °C. Water jobs sorted: ${S.s2.sorted.length}/8. Worlds scanned: ${S.s2.scanned.length}/5.</p>
+  <h2>Station 3: Atmosphere Lab</h2>${tbl(['Atmosphere','Thickness','CO₂','O₂','Temp (°C)','Water','UV','Meteors'],S.s3.rec.map(x=>[x.name.replace(/^\S+\s/,''),TH[x.th],CO2L[x.co2],x.o2+'%',x.T,WL[x.water].replace(/^\S+\s/,''),x.uv?'Blocked':'Reaches',x.met?'Burn up':'Hit']))}<p>Badges: ${BADGES.filter(b=>S.s3.badges[b[0]]).map(b=>b[2]).join(', ')||'—'}</p>
+  <h2>Station 4: Planet Builder</h2><p>Home Base: ${S.s4.home?`${esc(S.s4.planetName)} (${S.s4.home.d} AU, ${WAT[S.s4.home.water]}, ${ATM[S.s4.home.atm].l} atmosphere)`:'—'}</p><ul>${Object.values(S.s4.broken).map(b=>`<li>${esc(b.desc)}: ${b.why}</li>`).join('')}</ul>
+  <h2>Claim · Evidence · Reasoning</h2><p><b>Claim:</b></p><div class="ans">${esc(S.s5.c)}</div><p><b>Evidence:</b></p><div class="ans">${esc(S.s5.e)}</div><p><b>Reasoning:</b></p><div class="ans">${esc(S.s5.r)}</div>
+  <h2>Mission Check</h2>${qz?tbl(['#','Question','Student answer','Result'],QUIZ.map((q,i)=>[i+1,q.q,q.o[qz.ans[i]],qz.ans[i]===q.a?'✔ Correct':'✘ (Correct: '+q.o[q.a]+')'])):'<p>Not taken.</p>'}
+  <p style="margin-top:14px;font-size:10px;color:#555">© Science with Mrs. Lennon</p>`;
+}
+window.addEventListener('beforeprint',buildPrint);
+
+/* ---------- main loop ---------- */
+let fr=0;
+function frame(t){fr++;if(fr%2===0)drawStars(t);drawFx();
+  const c=S.current;if(c===0)drawHero(t);else if(c===1)drawS1(t);else if(c===2)drawS2(t);else if(c===3)drawS3(t);else if(c===4)drawS4(t);
+  requestAnimationFrame(frame);}
+
+/* ---------- init ---------- */
+s1Update();refresh1();refresh2();s3Controls();s3Update();refresh3();s4Seg();refresh4();
+if(S.current>S.unlocked)S.current=S.unlocked;
+go(S.current);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
