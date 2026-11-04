@@ -1,0 +1,592 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Mass Detective Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&family=Space+Mono:wght@700&display=swap">
+<style>
+/* Layout: a chemistry bench console — mission card on top, a live lab bench with a digital scale beside a zoomed-in atom view, and a bank of switches below. Single dark console theme to match the other labs. */
+:root{
+  color-scheme:dark;
+  --bg:#0c0b1f; --panel:#16153a; --panel2:#201f50; --line:#34327a; --ink:#f2f0ff; --muted:#b1acdf;
+  --gold:#ffd23f; --teal:#2ee6c6; --sky:#4cc9f0; --orange:#ff8a3d; --lime:#7cf29c; --violet:#a46bff; --red:#ff5470; --pink:#ff4fa3;
+  --f-display:"Fredoka",ui-rounded,system-ui,sans-serif;
+  --f-body:"Nunito",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"Space Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:radial-gradient(900px 500px at 0% -10%,rgba(46,230,198,.18),transparent 60%),radial-gradient(800px 500px at 100% 0%,rgba(164,107,255,.22),transparent 60%),var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:20px 60px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,6vw,54px);line-height:1;margin:4px 0 0;background:linear-gradient(90deg,var(--teal),var(--sky) 35%,var(--violet) 65%,var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.score{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:10px 16px;min-width:220px;display:flex;flex-direction:column;gap:6px}
+.score b{font-family:var(--f-display);font-size:22px;color:var(--gold)}
+.score .bar{height:10px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.score .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--violet),var(--pink));transition:width .5s}
+.intro{margin:0;color:var(--muted);max-width:78ch}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{font:700 16px var(--f-display);border:2px solid var(--line);background:var(--panel);color:var(--muted);padding:10px 16px;border-radius:14px;cursor:pointer}
+.tab[aria-selected="true"]{color:#0c0b1f;border-color:transparent}
+#t0[aria-selected="true"]{background:var(--teal)}
+#t1[aria-selected="true"]{background:var(--violet)}
+#t2[aria-selected="true"]{background:var(--gold)}
+#t3[aria-selected="true"]{background:var(--pink)}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.btn{font:700 15px var(--f-display);border:2px solid var(--line);background:var(--panel2);color:var(--ink);padding:9px 14px;border-radius:12px;cursor:pointer;transition:transform .1s}
+.btn:active{transform:scale(.96)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.go{background:linear-gradient(90deg,var(--teal),var(--sky));color:#0c0b1f;border-color:transparent}
+.btn.pinkgo{background:linear-gradient(90deg,var(--pink),var(--violet));border-color:transparent}
+.btn.finish{background:linear-gradient(90deg,var(--lime),var(--teal));color:#0c0b1f;border-color:transparent}
+.sep{flex:1}
+.mbox{background:var(--panel);border:3px solid var(--gold);border-radius:22px;overflow:hidden;box-shadow:0 0 30px rgba(255,210,63,.14)}
+.mnav{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;background:linear-gradient(90deg,rgba(46,230,198,.14),rgba(164,107,255,.14));border-bottom:2px solid var(--line)}
+.mlabel{font:700 13px var(--f-display);text-transform:uppercase;letter-spacing:.06em;padding:4px 12px;border-radius:99px;color:#0c0b1f}
+.mcount{font-family:var(--f-display);font-size:20px}
+.mdots,.dots{display:flex;flex-wrap:wrap;gap:6px}
+.mdots button,.dots button{width:18px;height:18px;border-radius:50%;background:var(--panel2);border:2px solid var(--line);padding:0;cursor:pointer}
+.mdots button.ok,.dots .ok{background:var(--lime);border-color:var(--lime)}
+.mdots button.cur,.dots .cur{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,210,63,.35)}
+.mnext.ready{background:linear-gradient(90deg,var(--lime),var(--teal));color:#0c0b1f;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.mission{padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.mcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.mcols{grid-template-columns:1fr}}
+.mcols>div{display:flex;flex-direction:column;gap:10px;min-width:0}
+.mission h3{font-family:var(--f-display);font-size:20px;margin:0;line-height:1.15}
+.do{background:var(--panel2);border-radius:12px;padding:10px 12px;font-size:14px}
+.do>b{color:var(--gold);font-family:var(--f-display);font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+.do ol{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.do li{display:flex;gap:8px;align-items:flex-start}
+.do li b{color:var(--teal)}
+.ck{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--muted);margin-top:1px;display:grid;place-items:center;font-size:12px;font-weight:900;color:#0c0b1f}
+.do li.ok .ck{background:var(--lime);border-color:var(--lime)}
+.do li.ok .ck::after{content:'✓'}
+.do li.ok{color:#c8ffd6}
+.do li.next .ck{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,210,63,.3)}
+.lock{background:rgba(164,107,255,.16);border:2px dashed var(--violet);border-radius:12px;padding:8px 12px;font-size:14px;font-weight:800;color:#e3d6ff}
+.q{margin:0;font-weight:800}
+.q span{color:var(--teal);font-family:var(--f-display);text-transform:uppercase;font-size:13px;letter-spacing:.06em;margin-right:6px}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{font:600 15px var(--f-body);text-align:left;border:2px solid var(--line);background:var(--panel2);color:var(--ink);padding:9px 12px;border-radius:12px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--violet)}
+.opt.right{background:rgba(124,242,156,.18);border-color:var(--lime)}
+.opt.wrong{background:rgba(255,84,112,.15);border-color:var(--red);animation:shake .35s}
+.opt:disabled{cursor:default}
+.opt:disabled:not(.right):not(.wrong){opacity:.4;cursor:not-allowed}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.fb{font-size:14px;border-radius:12px;padding:10px 12px}
+.fb.good{background:rgba(124,242,156,.14);color:#c8ffd6}
+.fb.bad{background:rgba(255,84,112,.14);color:#ffd0d8}
+.pool,.slots{display:flex;flex-wrap:wrap;gap:6px}
+.slots{min-height:44px;background:var(--panel2);border-radius:12px;padding:8px;border:2px dashed var(--line)}
+.card-s{font:600 14px var(--f-display);padding:7px 11px;border-radius:10px;border:2px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.slots .card-s{cursor:default}
+.slots .card-s.ok{border-color:var(--lime)}
+.slots .card-s.no{border-color:var(--red)}
+.empty{color:var(--muted);font-size:14px}
+.task{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.clue{background:linear-gradient(90deg,rgba(255,79,163,.18),rgba(164,107,255,.12));border:2px solid var(--pink);border-radius:14px;padding:12px 14px;font-family:var(--f-display);font-size:20px;font-weight:600}
+/* balancer */
+.eq{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;font-family:var(--f-display);font-size:24px;padding:10px;background:var(--panel2);border-radius:16px}
+.term{display:flex;align-items:center;gap:4px;background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:6px 8px}
+.term .coef{font-family:var(--f-mono);font-size:22px;color:var(--gold);min-width:20px;text-align:center}
+.term button{width:30px;height:30px;border-radius:8px;border:2px solid var(--line);background:var(--panel2);color:var(--ink);font:700 18px var(--f-display);cursor:pointer;padding:0}
+.eq .op{color:var(--muted)}
+.ctab{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.ctab th,.ctab td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:center}
+.ctab th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.ctab td.okc{color:var(--lime);font-weight:900}
+.ctab td.noc{color:#ff9aaa;font-weight:900}
+.beam{height:120px;position:relative}
+/* sim */
+.bench{background:var(--panel);border:2px solid var(--line);border-radius:22px;overflow:hidden}
+.simgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+@media (max-width:860px){.simgrid{grid-template-columns:1fr}}
+.screen{position:relative;background:#07061a;min-width:0}
+canvas{display:block;width:100%}
+.pill{position:absolute;top:12px;left:12px;font:700 13px var(--f-display);background:rgba(12,11,31,.8);border:1px solid var(--line);padding:4px 10px;border-radius:99px}
+.readout{padding:16px;display:flex;flex-direction:column;gap:10px;border-left:2px solid var(--line);min-width:0}
+@media (max-width:860px){.readout{border-left:0;border-top:2px solid var(--line)}}
+.rgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.rg{background:var(--panel2);border-radius:12px;padding:8px 10px;min-width:0}
+.rg .k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}
+.rg .v{font-family:var(--f-mono);font-size:18px;font-variant-numeric:tabular-nums}
+.explain{font-size:14px;background:rgba(46,230,198,.1);border:2px solid rgba(46,230,198,.4);border-radius:12px;padding:10px 12px}
+.rxpick{display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px;border-top:2px solid var(--line);align-items:center}
+.rxb{font:700 14px var(--f-display);border:2px solid var(--line);background:var(--panel2);color:var(--ink);padding:8px 12px;border-radius:12px;cursor:pointer}
+.rxb[aria-pressed="true"]{background:var(--gold);color:#0c0b1f;border-color:transparent}
+.clab{font:700 13px var(--f-display);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.switches{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;padding:0 16px 14px}
+.sw{display:flex;align-items:center;gap:10px;background:var(--panel2);border:2px solid var(--line);border-radius:14px;padding:10px 12px;cursor:pointer;color:var(--ink);font:700 15px var(--f-display);text-align:left}
+.sw .knob{flex:none;width:46px;height:26px;border-radius:99px;background:#3a3870;position:relative;transition:background .2s}
+.sw .knob::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s}
+.sw[aria-pressed="true"]{border-color:var(--c)}
+.sw[aria-pressed="true"] .knob{background:var(--c)}
+.sw[aria-pressed="true"] .knob::after{left:23px}
+.sw small{display:block;font:600 12px var(--f-body);color:var(--muted)}
+.runrow{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 14px}
+/* results */
+.modal{position:fixed;inset:0;z-index:40;background:rgba(5,4,18,.85);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px}
+.mcard{width:100%;max-width:640px;background:var(--panel);border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:14px;border:4px solid transparent;background-image:linear-gradient(var(--panel),var(--panel)),linear-gradient(90deg,var(--teal),var(--sky),var(--violet),var(--pink));background-origin:border-box;background-clip:padding-box,border-box}
+.mcard h2{font-family:var(--f-display);font-size:30px;margin:0}
+.field{display:flex;flex-direction:column;gap:4px;font-weight:800}
+.field input{font:600 17px var(--f-body);padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--panel2);color:var(--ink)}
+.err{color:#ffb3c0;font-size:14px;margin:0}
+.who{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:15px}
+.who b{font-family:var(--f-display);font-size:22px;color:var(--gold)}
+.big{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.big div{background:var(--panel2);border-radius:14px;padding:12px 14px}
+.big .k{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}
+.big .v{font-family:var(--f-display);font-size:34px;line-height:1.1}
+.sec{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center;font-size:14px}
+@media (max-width:520px){.sec{grid-template-columns:1fr auto}.sec .rdots{grid-column:1/-1}}
+.rdots{display:flex;flex-wrap:wrap;gap:5px}
+.rdots i{width:16px;height:16px;border-radius:5px;background:var(--panel2);border:2px solid var(--line)}
+.rdots i.g{background:var(--lime);border-color:var(--lime)}
+.rdots i.y{background:var(--gold);border-color:var(--gold)}
+.rdots i.r{background:var(--red);border-color:var(--red)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.turnin{background:linear-gradient(90deg,rgba(124,242,156,.18),rgba(46,230,198,.14));border:3px solid var(--lime);border-radius:16px;padding:14px 16px;font-size:15px}
+.turnin .tt{font-family:var(--f-display);font-weight:700;font-size:22px;color:var(--lime)}
+.turnin ol{margin:8px 0;padding-left:22px;display:flex;flex-direction:column;gap:5px}
+.turnin b{color:var(--gold)}
+.turnin p{margin:0;font-weight:800;color:#ffd0d8}
+.clock{font-family:var(--f-mono);font-size:14px;color:var(--teal)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:50;width:100%;height:100%}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<canvas id="confetti"></canvas>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Grade 8 Science · TEKS 8.6E · STAAR Review</div>
+      <h1>Mass Detective Lab</h1>
+    </div>
+    <div class="score" aria-live="polite">
+      <div>Lab points: <b id="pts">0</b> / <span id="tot">0</span></div>
+      <div class="bar"><i id="ptsBar"></i></div>
+      <button class="btn finish" id="finBtn">Finish ★ See my results</button>
+    </div>
+  </header>
+  <p class="intro">Plan on about 45 minutes. Is mass ever really lost or gained? Run real reactions on a digital scale, seal or open the container, and zoom in to watch the atoms rearrange. Your mission is at the top of each tab. The answers stay <b>locked 🔒</b> until you do every <b>Do this</b> step in order. Each step gets a green ✓ when the lab sees you did it.</p>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t0" aria-selected="true">1 · Open vs. Closed</button>
+    <button class="tab" role="tab" id="t1" aria-selected="false">2 · Atom View</button>
+    <button class="tab" role="tab" id="t2" aria-selected="false">3 · Equation Balancer</button>
+    <button class="tab" role="tab" id="t3" aria-selected="false">4 · STAAR Challenge</button>
+  </div>
+
+  <section id="p0"><div class="mbox" id="mA"></div></section>
+  <section id="p1" hidden><div class="mbox" id="mB"></div></section>
+  <section id="p2" hidden>
+    <div class="mbox" style="border-color:var(--gold)">
+      <div class="task">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="mlabel" style="background:var(--gold)">Equation Balancer</span>
+          <b style="font-family:var(--f-display);font-size:20px" id="bN">Equation 1 of 8</b>
+          <div class="dots" id="bDots"></div>
+        </div>
+        <div class="do"><b>Do this</b><ol>
+          <li><span>1.</span><span>Click <b>+</b> and <b>−</b> to change the big number (coefficient) in front of each substance. You may NOT change the small numbers.</span></li>
+          <li><span>2.</span><span>Watch the atom count table. Every element needs the SAME number of atoms on both sides. The scale levels out when it is balanced.</span></li>
+          <li><span>3.</span><span>Click <b>Check my equation</b>. If it is wrong, read the hint and try again.</span></li>
+          <li><span>4.</span><span>When it is right, click <b>Next equation ▶</b>.</span></li>
+        </ol></div>
+        <div class="eq" id="bEq"></div>
+        <div class="mcols">
+          <div><table class="ctab" id="bTab"></table></div>
+          <div><canvas id="beam" height="140" aria-label="Balance scale showing atoms on each side"></canvas></div>
+        </div>
+        <div class="fb" id="bFb" hidden></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pinkgo" id="bCheck">Check my equation</button><button class="btn" id="bPrev">◀ Previous</button><button class="btn mnext" id="bNext" disabled>Next equation ▶</button></div>
+      </div>
+    </div>
+  </section>
+  <section id="p3" hidden>
+    <div class="mbox" style="border-color:var(--pink)">
+      <div class="task">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="mlabel" style="background:var(--pink)">STAAR Challenge</span>
+          <b style="font-family:var(--f-display);font-size:20px" id="cN">Challenge 1 of 10</b>
+          <div class="dots" id="cDots"></div>
+        </div>
+        <div class="clue" id="cClue"></div>
+        <div class="do"><b>Do this</b><ol>
+          <li><span>1.</span><span>Read the challenge in the pink box.</span></li>
+          <li><span>2.</span><span>Pick a reaction, set the switches, and press <b>▶ Start reaction</b>. Wait for it to finish.</span></li>
+          <li><span>3.</span><span>When the lab bench matches the challenge, click <b>Check my setup</b>. If not, read the hint and try again.</span></li>
+          <li><span>4.</span><span>When it is right, click <b>Next challenge ▶</b>.</span></li>
+        </ol></div>
+        <div class="fb" id="cFb" hidden></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pinkgo" id="cCheck">Check my setup</button><button class="btn" id="cPrev">◀ Previous</button><button class="btn mnext" id="cNext" disabled>Next challenge ▶</button></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="bench" id="benchBox">
+    <div class="simgrid">
+      <div class="screen"><canvas id="sim" height="420" aria-label="Lab bench with a digital scale and a zoomed-in atom view"></canvas><span class="pill" id="simPill">Baking soda + vinegar</span></div>
+      <div class="readout">
+        <div class="eyebrow" id="rType">Chemical change</div>
+        <div style="font-family:var(--f-display);font-size:18px" id="rEq"></div>
+        <div class="rgrid">
+          <div class="rg"><div class="k">Start mass</div><div class="v" id="rStart">0 g</div></div>
+          <div class="rg"><div class="k">Mass now</div><div class="v" id="rNow">0 g</div></div>
+          <div class="rg"><div class="k">Change</div><div class="v" id="rChg">0 g</div></div>
+        </div>
+        <div id="countBox" hidden><table class="ctab" id="rCount"></table></div>
+        <div class="explain" id="rWhy"></div>
+      </div>
+    </div>
+    <div class="rxpick"><span class="clab">Reaction:</span>
+      <button class="rxb" data-rx="soda">🧪 Baking soda + vinegar</button>
+      <button class="rxb" data-rx="steel">🔥 Burning steel wool</button>
+      <button class="rxb" data-rx="photo">🌱 Photosynthesis</button>
+      <button class="rxb" data-rx="ice">🧊 Melting ice</button>
+    </div>
+    <div class="switches">
+      <button class="sw" data-k="sealed" style="--c:var(--gold)"><span class="knob"></span><span>🔒 Seal the container<small id="sSeal">OPEN system: matter can get in or out</small></span></button>
+      <button class="sw" data-k="atoms" style="--c:var(--violet)"><span class="knob"></span><span>⚛️ Show atoms<small>Zoom in to the particle level</small></span></button>
+      <button class="sw" data-k="count" style="--c:var(--teal)"><span class="knob"></span><span>🧮 Count atoms<small>Table of atoms before and after</small></span></button>
+      <button class="sw" data-k="labels" style="--c:var(--sky)"><span class="knob"></span><span>🏷️ Show labels<small>Name the reactants and products</small></span></button>
+    </div>
+    <div class="runrow"><button class="btn go" id="runBtn">▶ Start reaction</button><button class="btn" id="resetBtn">↺ Reset</button><span class="empty" id="runMsg" style="align-self:center"></span></div>
+  </div>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="mcard" id="mcard"></div></div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PAL=['#2ee6c6','#4cc9f0','#a46bff','#ff4fa3','#ffd23f','#7cf29c'];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function hexA(h,a){const n=parseInt(h.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const R=rng(9);
+const EL={H:{c:'#f4f6ff',r:7,n:'Hydrogen'},O:{c:'#ff4d5e',r:9,n:'Oxygen'},C:{c:'#55565e',r:9,n:'Carbon'},Na:{c:'#a46bff',r:10,n:'Sodium'},Fe:{c:'#d9822b',r:11,n:'Iron'},N:{c:'#3a86ff',r:9,n:'Nitrogen'},Mg:{c:'#7cf29c',r:10,n:'Magnesium'},Cl:{c:'#2ee6c6',r:10,n:'Chlorine'},Al:{c:'#c9ced8',r:10,n:'Aluminum'}};
+function parse(f){const out=[];const re=/([A-Z][a-z]?)(\d*)/g;let m;while((m=re.exec(f)))if(m[1])for(let i=0;i<(+m[2]||1);i++)out.push(m[1]);return out;}
+const sub=f=>f.replace(/([A-Za-z\)])(\d+)/g,'$1<sub>$2</sub>');
+
+/* ================= REACTIONS ================= */
+const RX={
+ soda:{name:'Baking soda + vinegar',type:'Chemical change',eq:'NaHCO3 + HC2H3O2 → NaC2H3O2 + H2O + CO2',
+   R:['NaHCO3','HC2H3O2'],P:['NaC2H3O2','H2O','CO2'],gasOut:['CO2'],gasIn:[],
+   m0:{open:205.0,sealed:206.0},delta:-2.6,dur:7,
+   rNames:['Baking soda','Vinegar'],pNames:['Sodium acetate','Water','Carbon dioxide gas'],
+   why:{open:'Carbon dioxide GAS formed and escaped out of the open flask into the air. The scale lost that mass, but the atoms were not destroyed.',sealed:'The balloon trapped the carbon dioxide gas. Nothing left the closed system, so the mass stayed the same.'}},
+ steel:{name:'Burning steel wool',type:'Chemical change',eq:'4Fe + 3O2 → 2Fe2O3',
+   R:['Fe','Fe','Fe','Fe','O2','O2','O2'],P:['Fe2O3','Fe2O3'],gasOut:[],gasIn:['O2'],
+   m0:{open:50.0,sealed:170.5},delta:4.3,dur:8,
+   rNames:['Iron (steel wool)','Oxygen gas'],pNames:['Iron oxide (rust)'],
+   why:{open:'Oxygen atoms from the AIR joined the iron to make iron oxide. The open system gained that mass from the air.',sealed:'The jar already held the oxygen. Atoms only rearranged inside the closed system, so the mass stayed the same.'}},
+ photo:{name:'Photosynthesis',type:'Chemical change',eq:'6CO2 + 6H2O → C6H12O6 + 6O2',
+   R:['CO2','CO2','CO2','CO2','CO2','CO2','H2O','H2O','H2O','H2O','H2O','H2O'],P:['C6H12O6','O2','O2','O2','O2','O2','O2'],gasOut:['O2'],gasIn:['CO2'],
+   m0:{open:500.0,sealed:650.0},delta:1.2,dur:10,
+   rNames:['Carbon dioxide','Water'],pNames:['Glucose (sugar)','Oxygen gas'],
+   why:{open:'The plant took in carbon dioxide from the air and gave off oxygen. More mass came in than went out, so the open pot gained a little mass.',sealed:'In the sealed jar, the plant used carbon dioxide and water already inside and made glucose and oxygen. The atoms rearranged, so the mass stayed the same.'}},
+ ice:{name:'Melting ice',type:'Physical change',eq:'H2O (solid) → H2O (liquid)',
+   R:['H2O','H2O','H2O','H2O','H2O','H2O'],P:['H2O','H2O','H2O','H2O','H2O','H2O'],gasOut:[],gasIn:[],
+   m0:{open:150.0,sealed:160.0},delta:0,dur:8,
+   rNames:['Ice (solid water)'],pNames:['Liquid water'],
+   why:{open:'Melting is a physical change. The water molecules only moved apart. No new substance formed and no matter escaped, so the mass stayed the same.',sealed:'Melting is a physical change. The same water molecules are still there, so the mass stayed the same.'}},
+};
+const S={rx:'soda',sealed:false,atoms:false,count:false,labels:false,p:0,running:false,ran:{}};
+const done=()=>S.p>=1;
+function massNow(){const r=RX[S.rx];const m0=r.m0[S.sealed?'sealed':'open'];const d=S.sealed?0:r.delta;return m0+d*S.p;}
+/* atom layout */
+function molLayout(f){const at=parse(f);const pts=[];const n=at.length;if(n===1)pts.push([0,0]);else if(n===2)pts.push([-9,0],[9,0]);else if(n===3&&at[0]!=='H'&&f!=='H2O')pts.push([0,0],[-17,0],[17,0]);else if(f==='H2O')pts.push([0,0],[-13,9],[13,9]);
+  else{pts.push([0,0]);let k=1,ring=1;while(k<n){const cnt=Math.min(n-k,6*ring);for(let i=0;i<cnt;i++){const a=i/cnt*Math.PI*2+ring*.4;pts.push([Math.cos(a)*15*ring,Math.sin(a)*15*ring]);}k+=cnt;ring++;}}
+  return at.map((e,i)=>({e,dx:pts[i][0],dy:pts[i][1]}));}
+let ATOMS=[];
+function buildAtoms(){const r=RX[S.rx];const side=(list,x0,x1)=>{const out=[];const n=list.length;const cols=Math.ceil(Math.sqrt(n*1.3));const rows=Math.ceil(n/cols);
+  list.forEach((f,i)=>{const cx=x0+(x1-x0)*((i%cols)+.5)/cols,cy=.18+.62*(Math.floor(i/cols)+.5)/rows;out.push({f,cx,cy,atoms:molLayout(f)});});return out;};
+  const RM=side(r.R,.02,.48),PM=side(r.P,.52,.98);
+  const ra=[],pa=[];RM.forEach((m,mi)=>m.atoms.forEach(a=>ra.push({e:a.e,mx:m.cx,my:m.cy,dx:a.dx,dy:a.dy,f:m.f,mi})));PM.forEach((m,mi)=>m.atoms.forEach(a=>pa.push({e:a.e,mx:m.cx,my:m.cy,dx:a.dx,dy:a.dy,f:m.f,mi})));
+  const used=new Set();ATOMS=ra.map(a=>{const j=pa.findIndex((b,k)=>!used.has(k)&&b.e===a.e);used.add(j);return {e:a.e,from:a,to:pa[j],ph:R()*6};});
+  S.RM=RM;S.PM=PM;}
+function counts(list){const c={};list.forEach(f=>parse(f).forEach(e=>c[e]=(c[e]||0)+1));return c;}
+
+/* ================= DRAW ================= */
+const cv=$('sim');let X=null,W=0,Hh=0;
+function resize(){const w=cv.getBoundingClientRect().width;if(!w)return;const h=Math.round(Math.max(330,Math.min(470,w*.62)));const d=Math.min(2,devicePixelRatio||1);cv.width=w*d;cv.height=h*d;cv.style.height=h+'px';X=cv.getContext('2d');X.setTransform(d,0,0,d,0,0);W=w;Hh=h;bResize();}
+function txt(x,s,px,py,col,size,al){x.font=`700 ${size||13}px Fredoka, sans-serif`;x.textAlign=al||'center';x.lineWidth=4;x.lineJoin='round';x.strokeStyle='rgba(7,6,26,.85)';x.strokeText(s,px,py);x.fillStyle=col||'#fff';x.fillText(s,px,py);}
+const BUB=[...Array(40)].map(()=>({x:R(),y:R(),s:.5+R()*.8}));
+const GAS=[...Array(24)].map(()=>({x:R(),y:R(),s:.5+R()*.8}));
+function atomDot(x,e,px,py,s){const E=EL[e];const r=E.r*s;const g=x.createRadialGradient(px-r*.35,py-r*.35,r*.1,px,py,r);g.addColorStop(0,'#ffffff');g.addColorStop(.25,E.c);g.addColorStop(1,hexA(E.c,.85));x.fillStyle=g;x.beginPath();x.arc(px,py,r,0,7);x.fill();x.strokeStyle='rgba(0,0,0,.35)';x.lineWidth=1;x.stroke();}
+function drawBench(x,x0,w,h,t){const cx=x0+w/2,gy=h*.82;const r=RX[S.rx],p=S.p;
+  // table
+  x.fillStyle='#3a2d22';x.fillRect(x0,gy+28,w,h-gy-28);x.fillStyle='#4a3a2c';x.fillRect(x0,gy+28,w,6);
+  // scale
+  x.fillStyle='#c9ced8';x.beginPath();x.roundRect(cx-w*.3,gy,w*.6,30,8);x.fill();x.fillStyle='#9aa1b0';x.fillRect(cx-w*.26,gy-6,w*.52,8);
+  x.fillStyle='#0d1a12';x.beginPath();x.roundRect(cx-60,gy+5,120,22,5);x.fill();x.font='700 16px Space Mono, monospace';x.textAlign='center';x.fillStyle='#7cf29c';x.fillText(massNow().toFixed(1)+' g',cx,gy+22);
+  const base=gy-6;
+  if(S.rx==='soda'){const fw=w*.2,fh=h*.42;// flask
+    x.fillStyle='rgba(180,220,255,.12)';x.strokeStyle='rgba(200,230,255,.8)';x.lineWidth=2.5;x.beginPath();x.moveTo(cx-14,base-fh);x.lineTo(cx-14,base-fh*.62);x.lineTo(cx-fw,base);x.lineTo(cx+fw,base);x.lineTo(cx+14,base-fh*.62);x.lineTo(cx+14,base-fh);x.closePath();x.fill();x.stroke();
+    const lv=base-fh*.28-(S.running||p>0?Math.sin(t*12)*2*p*(1-p)*4:0);x.fillStyle='rgba(255,240,200,.55)';x.beginPath();const ww=fw*(1-(base-lv)/(fh*.62)*0.75);x.moveTo(cx-ww,lv);x.lineTo(cx-fw+2,base-2);x.lineTo(cx+fw-2,base-2);x.lineTo(cx+ww,lv);x.fill();
+    if(p>0&&p<1){x.fillStyle='rgba(255,255,255,.8)';for(const b of BUB){const yy=base-((b.y+t*b.s)%1)*(base-lv);const xx=cx+(b.x-.5)*fw*1.2*((yy-lv)/(base-lv)+.3);x.beginPath();x.arc(xx,yy,2+b.s*2,0,7);x.stroke();}}
+    if(p===0){x.fillStyle='#f4f4f4';x.beginPath();x.ellipse(cx+fw+30,base-6,18,6,0,0,7);x.fill();if(S.labels)txt(x,'baking soda',cx+fw+30,base-16,'#fff',12);}
+    if(S.sealed){const br=6+p*fw*.9;x.fillStyle='rgba(255,79,163,.85)';x.beginPath();x.ellipse(cx,base-fh-br*.9,br*.8+6,br+4,0,0,7);x.fill();x.fillStyle='#ff4fa3';x.fillRect(cx-15,base-fh-4,30,8);if(S.labels)txt(x,'balloon traps the gas',cx,base-fh-br*1.9-10,'#ffd0e6',12);}
+    else if(p>0){x.fillStyle='rgba(230,240,255,.75)';for(const g of GAS){const k=(g.y+t*.4*g.s)%1;if(k>p*1.1)continue;x.beginPath();x.arc(cx+(g.x-.5)*40+Math.sin(t*2+g.x*9)*8*k,base-fh-k*h*.35,3,0,7);x.fill();}if(S.labels)txt(x,'CO₂ gas escapes ↑',cx+60,base-fh-30,'#dff3ff',12);}
+    if(S.labels)txt(x,'vinegar',cx,base-14,'#3a2d22',12);}
+  else if(S.rx==='steel'){x.fillStyle='#8c95a6';x.beginPath();x.ellipse(cx,base-6,w*.18,10,0,0,7);x.fill();
+    const col=p<.05?'#9aa3b5':`rgb(${Math.round(154+(140-154)*p)},${Math.round(163-(163-70)*p)},${Math.round(181-(181-40)*p)})`;
+    x.strokeStyle=col;x.lineWidth=2;for(let i=0;i<40;i++){x.beginPath();const a=i*.7;x.ellipse(cx+Math.cos(a)*w*.06,base-24+Math.sin(a*1.3)*8,w*.08,12,a,0,4);x.stroke();}
+    if(p>0&&p<1){for(let i=0;i<14;i++){const a=t*6+i;x.fillStyle=hexA(['#ffd23f','#ff8a3d','#fff3c4'][i%3],.9);x.beginPath();x.arc(cx+Math.cos(a)*w*.1*(.4+(i%5)/5),base-26+Math.sin(a*1.7)*16,2.5,0,7);x.fill();}}
+    if(S.sealed){x.strokeStyle='rgba(200,230,255,.8)';x.fillStyle='rgba(180,220,255,.1)';x.lineWidth=2.5;x.beginPath();x.moveTo(cx-w*.2,base-2);x.lineTo(cx-w*.2,base-h*.34);x.quadraticCurveTo(cx,base-h*.5,cx+w*.2,base-h*.34);x.lineTo(cx+w*.2,base-2);x.fill();x.stroke();if(S.labels)txt(x,'sealed jar of air',cx,base-h*.47,'#dff3ff',12);}
+    else if(p>0){x.fillStyle='rgba(255,140,140,.8)';for(const g of GAS){const k=(g.y+t*.35*g.s)%1;if(k<1-p)continue;const yy=base-h*.5+k*h*.4;x.beginPath();x.arc(cx+(g.x-.5)*w*.4,yy,3,0,7);x.fill();}if(S.labels)txt(x,'O₂ from the air joins in ↓',cx,base-h*.52,'#ffd0d0',12);}
+    if(S.labels)txt(x,p>.5?'rust (iron oxide)':'steel wool (iron)',cx,base+18-26,'#fff',12);}
+  else if(S.rx==='photo'){x.fillStyle='#b3542e';x.beginPath();x.moveTo(cx-w*.12,base-60);x.lineTo(cx+w*.12,base-60);x.lineTo(cx+w*.09,base);x.lineTo(cx-w*.09,base);x.fill();x.fillStyle='#5a3a22';x.fillRect(cx-w*.12,base-66,w*.24,8);
+    const gr=1+p*.35;x.strokeStyle='#3f8f4a';x.lineWidth=4;x.beginPath();x.moveTo(cx,base-64);x.lineTo(cx,base-64-60*gr);x.stroke();x.fillStyle='#57c46b';
+    for(let i=0;i<5;i++){const yy=base-80-i*12*gr,s=i%2?1:-1;x.beginPath();x.ellipse(cx+s*16*gr,yy,16*gr,7*gr,s*.5,0,7);x.fill();}
+    x.fillStyle='#ffd23f';x.beginPath();x.arc(x0+28,h*.14,16,0,7);x.fill();if(p>0&&p<1){x.strokeStyle='rgba(255,210,63,.5)';x.lineWidth=2;for(let i=0;i<4;i++){x.beginPath();x.moveTo(x0+44,h*.16+i*6);x.lineTo(cx-20,base-100+i*14);x.stroke();}}
+    if(S.sealed){x.strokeStyle='rgba(200,230,255,.8)';x.fillStyle='rgba(180,220,255,.1)';x.lineWidth=2.5;x.beginPath();x.moveTo(cx-w*.2,base-2);x.lineTo(cx-w*.2,base-h*.52);x.quadraticCurveTo(cx,base-h*.66,cx+w*.2,base-h*.52);x.lineTo(cx+w*.2,base-2);x.fill();x.stroke();if(S.labels)txt(x,'sealed jar',cx,base-h*.62,'#dff3ff',12);}
+    else if(p>0&&S.labels){txt(x,'CO₂ in ↓',cx-w*.2,base-h*.45,'#dff3ff',12);txt(x,'O₂ out ↑',cx+w*.2,base-h*.45,'#ffd0d0',12);}
+    if(S.labels)txt(x,'plant + pot + soil',cx,base-14,'#fff',12);}
+  else{const bw=w*.18,bh=h*.34;x.fillStyle='rgba(180,220,255,.1)';x.strokeStyle='rgba(200,230,255,.8)';x.lineWidth=2.5;x.beginPath();x.rect(cx-bw,base-bh,bw*2,bh);x.fill();x.stroke();
+    const wl=bh*.35*p;x.fillStyle='rgba(76,160,255,.55)';x.fillRect(cx-bw+2,base-2-wl,bw*2-4,wl);
+    const cube=(1-p)*26+2;for(let i=0;i<4;i++){x.fillStyle='rgba(225,245,255,.9)';x.beginPath();x.roundRect(cx-bw+12+i*(bw*.45),base-4-wl-cube,cube,cube,4);x.fill();}
+    if(S.sealed){x.fillStyle='#9aa1b0';x.fillRect(cx-bw-6,base-bh-8,bw*2+12,10);if(S.labels)txt(x,'lid',cx,base-bh-14,'#fff',12);}
+    if(S.labels)txt(x,p>.5?'liquid water':'ice cubes',cx,base-bh-28,'#dff3ff',12);}
+  txt(x,S.sealed?'CLOSED SYSTEM':'OPEN SYSTEM',x0+w-12,26,S.sealed?'#ffd23f':'#4cc9f0',15,'right');}
+function drawAtoms(x,x0,w,h,t){const r=RX[S.rx];x.fillStyle='rgba(20,18,60,.9)';x.fillRect(x0,0,w,h);x.strokeStyle='#34327a';x.lineWidth=2;x.beginPath();x.moveTo(x0,0);x.lineTo(x0,h);x.stroke();
+  txt(x,'ATOM VIEW',x0+w/2,22,'#c9b8ff',14);txt(x,'Reactants',x0+w*.25,42,'#b1acdf',12);txt(x,'Products',x0+w*.75,42,'#b1acdf',12);
+  x.strokeStyle='rgba(255,255,255,.15)';x.setLineDash([4,6]);x.beginPath();x.moveTo(x0+w/2,50);x.lineTo(x0+w/2,h-30);x.stroke();x.setLineDash([]);txt(x,'→',x0+w/2,h*.5,'#ffd23f',22);
+  const p=S.p,s=Math.min(1,w/360)*(r.R.length>8?.72:1);const k=p<.25?0:p>.8?1:(p-.25)/.55;const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+  const gasOut=!S.sealed&&r.gasOut.length,gasIn=!S.sealed&&r.gasIn.length;
+  for(const a of ATOMS){const fx=x0+a.from.mx*w+a.from.dx*s,fy=a.from.my*h+a.from.dy*s;let tx=x0+a.to.mx*w+a.to.dx*s,ty=a.to.my*h+a.to.dy*s;
+    let sx=fx,sy=fy;if(gasIn&&r.gasIn.includes(a.from.f)){sy=fy-h*.55*(1-Math.min(1,p*4));}
+    let px=sx+(tx-sx)*e,py=sy+(ty-sy)*e;if(p>0&&p<1&&k<1){px+=Math.sin(t*9+a.ph)*2;py+=Math.cos(t*8+a.ph)*2;}
+    if(gasOut&&r.gasOut.includes(a.to.f)&&p>.8){py-= (p-.8)/.2*h*.6;}
+    if(py<-20)continue;atomDot(x,a.e,px,py,s);}
+  if(S.labels){(p<.5?S.RM:S.PM).forEach(m=>txt(x,m.f.replace(/\d/g,d=>'₀₁₂₃₄₅₆₇₈₉'[d]),x0+m.cx*w,m.cy*h+(m.atoms.length>6?40:24)*s,'#fff',11));}
+  if(gasOut&&p>=1)txt(x,`${r.gasOut[0]} molecules left the open container ↑`,x0+w/2,h-12,'#ffd0d0',12);
+  if(gasIn&&p<.3&&p>0)txt(x,`${r.gasIn[0]} comes in from the air ↓`,x0+w/2,h-12,'#dff3ff',12);
+  // legend
+  const els=[...new Set(ATOMS.map(a=>a.e))];els.forEach((el,i)=>{const lx=x0+12+i*(w-24)/els.length;atomDot(x,el,lx+8,h-34,.7);x.font='700 11px Nunito, sans-serif';x.textAlign='left';x.fillStyle='#d9d5ff';x.fillText(EL[el].n,lx+18,h-30);});}
+function draw(t){if(!X)return;const x=X,w=W,h=Hh;const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#141238');g.addColorStop(1,'#0a0920');x.fillStyle=g;x.fillRect(0,0,w,h);
+  if(S.atoms&&w>=520){drawBench(x,0,w*.5,h,t);drawAtoms(x,w*.5,w*.5,h,t);}else if(S.atoms){drawAtoms(x,0,w,h,t);}else drawBench(x,0,w,h,t);}
+
+/* ================= CONTROLS ================= */
+function sync(){document.querySelectorAll('.rxb').forEach(b=>b.setAttribute('aria-pressed',b.dataset.rx===S.rx));
+  document.querySelectorAll('.sw').forEach(b=>b.setAttribute('aria-pressed',!!S[b.dataset.k]));
+  $('sSeal').textContent=S.sealed?'CLOSED system: nothing gets in or out':'OPEN system: matter can get in or out';
+  const r=RX[S.rx];$('simPill').textContent=r.name;$('rType').textContent=r.type;$('rEq').innerHTML=sub(r.eq);
+  $('runBtn').disabled=S.running||done();$('runMsg').textContent=S.running?'Reacting…':done()?'Done! Press ↺ Reset to run it again.':'Ready. Press ▶ Start reaction.';
+  $('countBox').hidden=!S.count;}
+function reset(){S.p=0;S.running=false;buildAtoms();sync();readouts();}
+document.querySelectorAll('.rxb').forEach(b=>b.onclick=()=>{S.rx=b.dataset.rx;reset();});
+document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{const k=b.dataset.k;S[k]=!S[k];if(k==='sealed')reset();else{sync();readouts();}});
+$('runBtn').onclick=()=>{if(done())return;S.running=true;sync();};
+$('resetBtn').onclick=reset;
+function readouts(){const r=RX[S.rx];const m0=r.m0[S.sealed?'sealed':'open'],m=massNow(),d=m-m0;
+  $('rStart').textContent=m0.toFixed(1)+' g';$('rNow').textContent=m.toFixed(1)+' g';$('rChg').textContent=(d>0.05?'+':d<-0.05?'−':'')+Math.abs(d).toFixed(1)+' g';
+  $('rChg').style.color=Math.abs(d)<.05?'var(--lime)':d>0?'var(--gold)':'var(--red)';
+  $('rWhy').textContent=S.p===0?`Press ▶ Start reaction and watch the scale. ${S.sealed?'The container is sealed.':'The container is open to the air.'}`:S.p<1?'The reaction is happening. Watch the scale and the atoms.':r.why[S.sealed?'sealed':'open'];
+  if(S.count){const cR=counts(r.R),cP=counts(r.P);const els=Object.keys(cR);const out=!S.sealed&&S.p>=1?counts(r.gasOut.flatMap(f=>r.P.filter(x=>x===f))):{};const inn=!S.sealed?counts(r.gasIn.flatMap(f=>r.R.filter(x=>x===f))):{};
+    let html='<tr><th>Element</th><th>Before</th><th>After</th>'+(!S.sealed&&(r.gasOut.length||r.gasIn.length)?'<th>Left in or out</th>':'')+'</tr>';
+    els.forEach(e=>{const after=S.p>=1?cP[e]||0:'?';const note=!S.sealed&&(r.gasOut.length||r.gasIn.length)?`<td>${S.p>=1?(out[e]?`${out[e]} escaped`:'')+(inn[e]?`${out[e]?' · ':''}${inn[e]} from air`:''):''}</td>`:'';
+      html+=`<tr><td style="text-align:left">${EL[e].n} (${e})</td><td>${cR[e]}</td><td class="${S.p>=1?(after===cR[e]?'okc':'noc'):''}">${after}</td>${note}</tr>`;});
+    $('rCount').innerHTML=html;}}
+
+/* ================= POINTS & CONFETTI ================= */
+const earned=new Set(),tried=new Set(),firstTry=new Set();let TOTAL=0;var NAV={};
+function attempt(id,ok){if(tried.has(id))return;tried.add(id);if(ok)firstTry.add(id);}
+function award(id){if(earned.has(id))return;earned.add(id);$('pts').textContent=earned.size;$('ptsBar').style.width=(earned.size/TOTAL*100)+'%';Object.values(NAV).forEach(f=>f());
+  if(earned.size===TOTAL)setTimeout(()=>{for(let i=0;i<6;i++)setTimeout(()=>burst(innerWidth*(.15+.7*Math.random()),innerHeight*.4),i*220);},300);}
+const cf=$('confetti'),cx2=cf.getContext('2d');let parts=[];
+function sizeCF(){const d=devicePixelRatio||1;cf.width=innerWidth*d;cf.height=innerHeight*d;cx2.setTransform(d,0,0,d,0,0);}
+function burst(x,y){if(reduce)return;for(let i=0;i<70;i++)parts.push({x,y,vx:(Math.random()-.5)*10,vy:-Math.random()*10-3,life:1,c:PAL[i%PAL.length],s:5+Math.random()*6,rot:Math.random()*6,vr:(Math.random()-.5)*.4});}
+function drawCF(){cx2.clearRect(0,0,innerWidth,innerHeight);parts=parts.filter(p=>p.life>0);for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.rot+=p.vr;p.life-=.012;cx2.save();cx2.globalAlpha=Math.max(0,p.life);cx2.translate(p.x,p.y);cx2.rotate(p.rot);cx2.fillStyle=p.c;cx2.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cx2.restore();}}
+
+/* ================= MISSIONS ================= */
+const B=s=>`<b>${s}</b>`;
+const on=k=>()=>S[k];
+const is=(rx,sealed)=>()=>S.rx===rx&&S.sealed===sealed;
+const fresh=(rx,sealed)=>()=>S.rx===rx&&S.sealed===sealed&&S.p===0;
+const fin=(rx,sealed)=>()=>S.rx===rx&&S.sealed===sealed&&S.p>=1;
+const MA=[
+ {t:'Bubbles on a scale',steps:[[`Click ${B('🧪 Baking soda + vinegar')}. Make sure ${B('🔒 Seal the container')} is OFF (open).`,fresh('soda',false)],[`Read the ${B('Start mass')}. Then press ${B('▶ Start reaction')}.`,()=>S.rx==='soda'&&!S.sealed&&S.p>0],[`Wait until the reaction is done and read the scale.`,fin('soda',false)]],q:'What happened to the mass on the scale in the OPEN flask?',o:['It went up','It went down','It stayed exactly the same','It went to zero'],a:1,right:'The scale went down by 2.6 g in the open flask.',hint:'Compare Start mass and Mass now.'},
+ {t:'Where did the mass go?',steps:[[`Turn ${B('⚛️ Show atoms')} ON and ${B('🏷️ Show labels')} ON.`,()=>S.atoms&&S.labels],[`Press ${B('↺ Reset')}, keep the flask OPEN, and press ${B('▶ Start reaction')}.`,()=>S.rx==='soda'&&!S.sealed&&S.p>0],[`Wait until it finishes. Watch the atoms on the Products side.`,fin('soda',false)]],q:'Why did the open flask lose mass?',o:['The atoms were destroyed','Carbon dioxide gas formed and escaped into the air','The vinegar turned into nothing','The scale broke'],a:1,right:'The CO₂ gas floated out of the open flask. The atoms still exist; they are just in the air now, not on the scale.',hint:'Watch which molecules float out of the Atom View.'},
+ {t:'Put a balloon on it',steps:[[`Turn ${B('🔒 Seal the container')} ON. A balloon goes on the flask.`,fresh('soda',true)],[`Press ${B('▶ Start reaction')}.`,()=>S.rx==='soda'&&S.sealed&&S.p>0],[`Wait until it finishes. Watch the balloon and the scale.`,fin('soda',true)]],q:'With the balloon sealing the flask, what happened to the mass?',o:['It went down by 2.6 g','It stayed the same','It went up by 2.6 g','It doubled'],a:1,right:'The balloon trapped the gas. Nothing left, so the total mass stayed the same. Mass is conserved!',hint:'Read the Change box.'},
+ {t:'Open vs. closed systems',steps:[[`Run baking soda + vinegar OPEN and let it finish.`,fin('soda',false)],[`Turn ${B('🔒 Seal the container')} ON, press ${B('▶ Start reaction')}, and let it finish.`,fin('soda',true)]],q:'What is a CLOSED system?',o:['A container where matter cannot get in or out','A container with no air inside','Any glass container','A reaction that is finished'],a:0,right:'In a closed system, no matter can enter or leave. That is why the mass stays the same.',hint:'Read the small words under the 🔒 switch.'},
+ {t:'Burning steel wool',steps:[[`Click ${B('🔥 Burning steel wool')}. Keep the container OPEN.`,fresh('steel',false)],[`Press ${B('▶ Start reaction')} and wait until it finishes.`,fin('steel',false)]],q:'What happened to the mass of the steel wool in the OPEN dish?',o:['It went down','It went up','It stayed the same','It disappeared'],a:1,right:'It went UP by 4.3 g. Burning steel wool gains mass!',hint:'Look at the Change box. Is it plus or minus?'},
+ {t:'Mass from the air',steps:[[`Turn ${B('⚛️ Show atoms')} ON.`,on('atoms')],[`Press ${B('↺ Reset')} and run the OPEN steel wool reaction again. Watch the red oxygen atoms.`,fin('steel',false)]],q:'Why did the steel wool GAIN mass?',o:['Iron atoms were created','Oxygen atoms from the air joined the iron to make iron oxide','Fire adds mass','The dish got heavier'],a:1,right:'Oxygen from the air combined with the iron. The product (iron oxide) includes those oxygen atoms, so it weighs more.',hint:'Where did the red atoms come from?'},
+ {t:'Steel wool in a jar',steps:[[`Click ${B('🔥 Burning steel wool')} and turn ${B('🔒 Seal the container')} ON.`,fresh('steel',true)],[`Press ${B('▶ Start reaction')} and wait until it finishes.`,fin('steel',true)]],q:'In the sealed jar of air, what happened to the mass?',o:['It went up','It went down','It stayed the same','It doubled'],a:2,right:'The oxygen was already in the jar. The atoms only rearranged, so the total mass stayed the same.',hint:'Read the Change box for the closed system.'},
+ {t:'Melting ice',steps:[[`Click ${B('🧊 Melting ice')}. Keep it OPEN.`,fresh('ice',false)],[`Press ${B('▶ Start reaction')} and wait until all the ice melts.`,fin('ice',false)]],q:'Ice melts in an open beaker. What happens to the mass?',o:['It goes down because water is lighter','It stays the same','It goes up','It turns into gas and disappears'],a:1,right:'Melting is a physical change. The same water molecules are there, so the mass stays the same.',hint:'Read the Change box.'},
+ {t:'A plant in a sealed jar',steps:[[`Click ${B('🌱 Photosynthesis')} and turn ${B('🔒 Seal the container')} ON.`,fresh('photo',true)],[`Press ${B('▶ Start reaction')} and wait until it finishes.`,fin('photo',true)]],q:'A plant does photosynthesis in a sealed jar. What happens to the total mass?',o:['It increases because the plant grows','It decreases because oxygen is made','It stays the same because atoms are only rearranged','It doubles'],a:2,right:'The plant uses CO₂ and water already in the jar to make glucose and oxygen. No atoms enter or leave, so the mass stays the same.',hint:'Read the Change box for the sealed jar.'},
+ {type:'order',t:'Plan a fair test',how:['Put the steps of a conservation of mass test in order, from FIRST to LAST.','Click a card to move it into the dashed box.',`If you make a mistake, click ${B('Start over')}.`],order:['Measure the starting mass','Seal the container','Let the reaction happen','Measure the final mass','Compare the two masses'],done:'Measure, seal, react, measure again, compare. That is how scientists test conservation of mass.',miss:'You must measure before AND after, and seal it before the reaction starts.'},
+];
+const MB=[
+ {t:'Count the atoms',steps:[[`Click ${B('🧪 Baking soda + vinegar')} and turn ${B('🧮 Count atoms')} ON.`,()=>S.rx==='soda'&&S.count],[`Press ${B('↺ Reset')}, then ${B('▶ Start reaction')}, and wait until it finishes.`,()=>S.rx==='soda'&&S.count&&S.p>=1]],q:'Compare the Before and After columns. What do you notice?',o:['There are more atoms after','There are fewer atoms after','The number of each kind of atom is the same','All the atoms changed into new elements'],a:2,right:'Every element has the same number of atoms before and after. Atoms are not created or destroyed.',hint:'Look for the green numbers in the After column.'},
+ {t:'What really happens in a reaction?',steps:[[`Turn ${B('⚛️ Show atoms')} ON with any chemical reaction.`,()=>S.atoms&&S.rx!=='ice'],[`Run the reaction and watch the atoms move.`,()=>S.atoms&&S.rx!=='ice'&&S.p>=1]],q:'During a chemical reaction, atoms are…',o:['created from energy','destroyed by heat','rearranged to form new substances','turned into different elements'],a:2,right:'Atoms break apart from their old partners and join new ones. The same atoms make new substances.',hint:'Did any atom disappear or appear in the Atom View?'},
+ {t:'Count oxygen in rust',steps:[[`Click ${B('🔥 Burning steel wool')}. Turn ${B('🧮 Count atoms')} and ${B('⚛️ Show atoms')} ON.`,()=>S.rx==='steel'&&S.count&&S.atoms],[`Run the reaction until it finishes.`,()=>S.rx==='steel'&&S.p>=1]],q:'How many oxygen atoms are in the products (2Fe₂O₃)?',o:['3','2','6','4'],a:2,right:'2 × 3 = 6 oxygen atoms, the same 6 oxygen atoms from the 3 O₂ molecules.',hint:'Read the Oxygen row of the table.'},
+ {t:'Photosynthesis atoms',steps:[[`Click ${B('🌱 Photosynthesis')}. Turn ${B('🧮 Count atoms')} ON.`,()=>S.rx==='photo'&&S.count],[`Run it until it finishes.`,()=>S.rx==='photo'&&S.p>=1]],q:'How many carbon atoms are on EACH side of the photosynthesis equation?',o:['1','6','12','18'],a:1,right:'6 carbon atoms go in (in 6CO₂) and 6 come out (in C₆H₁₂O₆).',hint:'Read the Carbon row.'},
+ {t:'What does the plant make?',steps:[[`Turn ${B('🏷️ Show labels')} and ${B('⚛️ Show atoms')} ON with ${B('🌱 Photosynthesis')}.`,()=>S.rx==='photo'&&S.labels&&S.atoms],[`Run it and read the product labels.`,()=>S.rx==='photo'&&S.p>=1]],q:'What are the products of photosynthesis?',o:['Carbon dioxide and water','Glucose (sugar) and oxygen','Iron oxide','Only water'],a:1,right:'Plants rearrange carbon dioxide and water into glucose (C₆H₁₂O₆) and oxygen (O₂).',hint:'Read the labels on the Products side.'},
+ {t:'Physical or chemical?',steps:[[`Click ${B('🧊 Melting ice')} and turn ${B('⚛️ Show atoms')} ON.`,()=>S.rx==='ice'&&S.atoms],[`Run it and compare the molecules before and after.`,()=>S.rx==='ice'&&S.p>=1]],q:'Why is melting ice a PHYSICAL change?',o:['New substances form','The same water molecules are there; they just move apart','The atoms are destroyed','It gives off a gas'],a:1,right:'Every molecule is still H₂O. No new substance formed, so it is a physical change, and mass is still conserved.',hint:'Are the molecules on both sides the same?'},
+ {t:'Atoms that left',steps:[[`Click ${B('🧪 Baking soda + vinegar')}, keep it OPEN, and turn ${B('🧮 Count atoms')} ON.`,()=>S.rx==='soda'&&!S.sealed&&S.count],[`Run it until it finishes. Read the "Left in or out" column.`,fin('soda',false)]],q:'The atom count is the same before and after, but the scale went DOWN. Why?',o:['The scale only weighs atoms still in the flask, and some atoms escaped as gas','Atoms got lighter','The count is wrong','Mass is not conserved'],a:0,right:'The total number of atoms never changed. Some of them (in CO₂) just left the open flask, so the scale could not weigh them.',hint:'Read the last column of the table.'},
+ {t:'Evidence of a new substance',steps:[[`Run ${B('🧪 Baking soda + vinegar')} and watch the flask closely.`,()=>S.rx==='soda'&&S.p>=1]],q:'What evidence showed a NEW substance formed?',o:['The flask stayed clear','Bubbles of gas were produced','The flask got heavier','Nothing changed'],a:1,right:'Gas bubbles are evidence of a chemical reaction. A new substance, carbon dioxide gas, formed.',hint:'What did you see in the liquid?'},
+ {t:'Mass of the rust',steps:[[`Run ${B('🔥 Burning steel wool')} OPEN until it finishes. Read the Change box.`,fin('steel',false)]],q:'10.0 g of iron turned into 14.3 g of iron oxide. Where did the extra 4.3 g come from?',o:['From the fire','From oxygen in the air that joined the iron','From the dish','It was created'],a:1,right:'Mass of iron + mass of oxygen that combined = mass of iron oxide. 10.0 g + 4.3 g = 14.3 g.',hint:'Think about what joined the iron.'},
+ {t:'The rule',steps:[[`Run ANY reaction with ${B('🔒 Seal the container')} ON until it finishes.`,()=>S.sealed&&S.p>=1],[`Read the Change box.`,()=>S.sealed&&S.p>=1]],q:'In a sealed flask, the reactants have a mass of 206.0 g. What is the mass of the products?',o:['Less than 206.0 g','206.0 g','More than 206.0 g','It depends on the color'],a:1,right:'Law of conservation of mass: in a closed system, the mass of the reactants equals the mass of the products.',hint:'What was the Change every time the container was sealed?'},
+];
+function mcHTML(m,id){return `<div class="mission" id="${id}" hidden><div class="mcols"><div><h3>${m.t}</h3>
+  <div class="do"><b>Do this</b><ol>${m.steps.map((s,i)=>`<li class="need" data-i="${i}"><span class="ck"></span><span>${s[0]}</span></li>`).join('')}</ol></div></div>
+  <div><p class="q"><span>Answer</span>${m.q}</p><div class="lock">🔒 The answers unlock when every <b>Do this</b> step has a green ✓. Do the steps in order using the lab bench below.</div>
+  <div class="opts">${m.o.map((o,i)=>`<button class="opt" data-i="${i}">${'ABCD'[i]}. ${o}</button>`).join('')}</div><div class="fb" hidden></div></div></div></div>`;}
+function orderHTML(m,id){return `<div class="mission" id="${id}" hidden><div class="mcols"><div><h3>${m.t}</h3>
+  <div class="do"><b>Do this</b><ol>${m.how.map((s,i)=>`<li><span>${i+1}.</span><span>${s}</span></li>`).join('')}</ol></div></div>
+  <div><div class="pool"></div><div class="slots"></div><div style="display:flex;gap:8px"><button class="btn reset">Start over</button></div><div class="fb" hidden></div></div></div></div>`;}
+function wireMC(el,m,id){const fb=el.querySelector('.fb');el.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;fb.hidden=false;attempt(id,i===m.a);
+  if(i===m.a){b.classList.add('right');el.querySelectorAll('.opt').forEach(x=>x.disabled=true);fb.className='fb good';fb.innerHTML=`<b>Correct!</b> ${m.right}`;award(id);const r=b.getBoundingClientRect();burst(r.left+r.width/2,r.top);}
+  else{b.classList.add('wrong');b.disabled=true;fb.className='fb bad';fb.innerHTML=`<b>Not quite.</b> Hint: ${m.hint}`;}});}
+function shuffle(a){let s;do{s=a.slice().sort(()=>Math.random()-.5);}while(s.join()===a.join());return s;}
+function wireOrder(el,m,id){const pool=el.querySelector('.pool'),slots=el.querySelector('.slots'),fb=el.querySelector('.fb');let picked=[];
+  function render(){pool.innerHTML='';slots.innerHTML=picked.length?'':'<span class="empty">Your order will appear here…</span>';
+    m._sh.forEach(s=>{if(picked.includes(s))return;const b=document.createElement('button');b.className='card-s';b.textContent=s;b.onclick=()=>{picked.push(s);render();check();};pool.appendChild(b);});
+    picked.forEach((s,i)=>{const d=document.createElement('span');d.className='card-s';d.textContent=(i+1)+'. '+s;if(picked.length===m.order.length)d.classList.add(s===m.order[i]?'ok':'no');slots.appendChild(d);});}
+  function check(){if(picked.length<m.order.length)return;fb.hidden=false;const ok=picked.join()===m.order.join();attempt(id,ok);
+    if(ok){fb.className='fb good';fb.innerHTML=`<b>Correct!</b> ${m.done}`;award(id);const r=slots.getBoundingClientRect();burst(r.left+r.width/2,r.top);}
+    else{fb.className='fb bad';fb.innerHTML=`<b>Not quite.</b> The red cards are in the wrong spot. Click <b>Start over</b> and try again. ${m.miss}`;}}
+  el.querySelector('.reset').onclick=()=>{if(earned.has(id))return;picked=[];fb.hidden=true;render();};m._sh=shuffle(m.order);render();}
+const LATCH={};const BOXES=[];
+function lockSync(el,m,id){const L=LATCH[id]||(LATCH[id]=new Set());let ok=true;m.steps.forEach((s,i)=>{const li=el.querySelector(`li[data-i="${i}"]`);const d=L.has(i);li.classList.toggle('ok',d);li.classList.toggle('next',!d&&ok);if(!d)ok=false;});
+  el.querySelector('.lock').hidden=ok||earned.has(id);if(!earned.has(id))el.querySelectorAll('.opt').forEach(b=>{if(!b.classList.contains('wrong'))b.disabled=!ok;});}
+function build(list,box,prefix,col,label,tabIdx){
+  box.innerHTML=`<div class="mnav"><span class="mlabel" style="background:${col}">${label}</span><b class="mcount"></b><div class="mdots"></div><span class="sep"></span>
+    <button class="btn mprev">◀ Previous</button><button class="btn mnext">Next mission ▶</button></div>`+list.map((m,i)=>m.type==='order'?orderHTML(m,prefix+i):mcHTML(m,prefix+i)).join('');
+  list.forEach((m,i)=>{const el=$(prefix+i);m.type==='order'?wireOrder(el,m,prefix+i):wireMC(el,m,prefix+i);});
+  const st={cur:0};const prev=box.querySelector('.mprev'),next=box.querySelector('.mnext'),dots=box.querySelector('.mdots');
+  function update(){list.forEach((m,i)=>{$(prefix+i).hidden=i!==st.cur;});const dn=earned.has(prefix+st.cur),last=st.cur===list.length-1;
+    box.querySelector('.mcount').textContent=`Mission ${st.cur+1} of ${list.length}`;
+    dots.innerHTML=list.map((m,i)=>`<button data-i="${i}" class="${earned.has(prefix+i)?'ok':''} ${i===st.cur?'cur':''}" aria-label="Go to mission ${i+1}"></button>`).join('');
+    dots.querySelectorAll('button').forEach(b=>b.onclick=()=>{st.cur=+b.dataset.i;update();});
+    prev.disabled=st.cur===0;next.disabled=last;next.classList.toggle('ready',dn&&!last);
+    next.textContent=last?(list.every((m,i)=>earned.has(prefix+i))?'All missions done ★':'Last mission'):(dn?'Next mission ▶':'Skip for now ▶');
+    const m=list[st.cur];if(m.type!=='order')lockSync($(prefix+st.cur),m,prefix+st.cur);}
+  prev.onclick=()=>{if(st.cur>0){st.cur--;update();}};next.onclick=()=>{if(st.cur<list.length-1){st.cur++;update();box.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});}};
+  NAV[prefix]=update;BOXES.push({list,prefix,st,tabIdx,update});update();}
+function tickLatch(){const b=BOXES.find(x=>x.tabIdx===tab);if(!b)return;const m=b.list[b.st.cur];if(!m||m.type==='order')return;const id=b.prefix+b.st.cur;if(earned.has(id))return;
+  const L=LATCH[id]||(LATCH[id]=new Set());let changed=false;for(let i=0;i<m.steps.length;i++){if(L.has(i))continue;if(m.steps[i][1]()){L.add(i);changed=true;}break;}
+  if(changed)lockSync($(id),m,id);}
+
+/* ================= BALANCER ================= */
+const EQS=[
+ {L:['H2','O2'],R:['H2O'],hint:'Start with oxygen: 2 on the left, so you need 2 water molecules. Then fix hydrogen.'},
+ {L:['N2','H2'],R:['NH3'],hint:'You need 2 nitrogen atoms on the right, so try 2 NH₃. Then count hydrogen.'},
+ {L:['Mg','O2'],R:['MgO'],hint:'O₂ has 2 oxygens, so you need 2 MgO. Then fix magnesium.'},
+ {L:['Na','Cl2'],R:['NaCl'],hint:'Cl₂ has 2 chlorines, so you need 2 NaCl. Then fix sodium.'},
+ {L:['CH4','O2'],R:['CO2','H2O'],hint:'Balance C first, then H (4 H means 2 H₂O), then count oxygen on the right and fix O₂.'},
+ {L:['Fe','O2'],R:['Fe2O3'],hint:'Oxygen: 2 on the left and 3 on the right. Use 3 O₂ and 2 Fe₂O₃ (6 each). Then fix iron.'},
+ {L:['Al','O2'],R:['Al2O3'],hint:'It works just like the iron one: 3 O₂ and 2 Al₂O₃. Then fix aluminum.'},
+ {L:['CO2','H2O'],R:['C6H12O6','O2'],hint:'This is photosynthesis. Glucose has 6 C, so you need 6 CO₂. It has 12 H, so 6 H₂O. Then count oxygen and fix O₂.'},
+];
+let bi=0;const bSolved=new Set();const BC=EQS.map(e=>[...e.L,...e.R].map(()=>1));
+function bCounts(){const e=EQS[bi],c=BC[bi];const L={},Rr={};e.L.forEach((f,i)=>parse(f).forEach(a=>L[a]=(L[a]||0)+c[i]));e.R.forEach((f,i)=>parse(f).forEach(a=>Rr[a]=(Rr[a]||0)+c[e.L.length+i]));return [L,Rr];}
+function bBalanced(){const [L,Rr]=bCounts();return Object.keys({...L,...Rr}).every(k=>L[k]===Rr[k]);}
+function renderB(msg){const e=EQS[bi],c=BC[bi];const terms=[...e.L,...e.R];
+  $('bN').textContent=`Equation ${bi+1} of ${EQS.length}`;
+  $('bDots').innerHTML=EQS.map((_,i)=>`<button data-i="${i}" class="${bSolved.has(i)?'ok':''} ${i===bi?'cur':''}" aria-label="Go to equation ${i+1}"></button>`).join('');
+  $('bDots').querySelectorAll('button').forEach(b=>b.onclick=()=>{bi=+b.dataset.i;renderB();});
+  $('bEq').innerHTML=terms.map((f,i)=>`${i===e.L.length?'<span class="op">→</span>':i>0?'<span class="op">+</span>':''}<span class="term"><button data-i="${i}" data-d="-1" aria-label="Fewer">−</button><span class="coef">${c[i]}</span><span>${sub(f)}</span><button data-i="${i}" data-d="1" aria-label="More">+</button></span>`).join('');
+  $('bEq').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(bSolved.has(bi))return;const i=+b.dataset.i;c[i]=clamp(c[i]+ +b.dataset.d,1,9);renderB();});
+  const [L,Rr]=bCounts();$('bTab').innerHTML='<tr><th>Element</th><th>Left (reactants)</th><th>Right (products)</th></tr>'+Object.keys({...L,...Rr}).map(k=>{const ok=L[k]===Rr[k];return `<tr><td style="text-align:left">${EL[k].n} (${k})</td><td class="${ok?'okc':'noc'}">${L[k]||0}</td><td class="${ok?'okc':'noc'}">${Rr[k]||0}</td></tr>`;}).join('');
+  const dn=bSolved.has(bi),last=bi===EQS.length-1;$('bNext').disabled=!dn||last;$('bNext').classList.toggle('ready',dn&&!last);$('bPrev').disabled=bi===0;$('bCheck').disabled=dn;
+  if(!msg){$('bFb').hidden=!dn;if(dn){$('bFb').className='fb good';$('bFb').innerHTML='<b>Balanced!</b> Click <b>Next equation ▶</b>.';}}
+  drawBeam();}
+$('bCheck').onclick=e=>{const ok=bBalanced();attempt('e'+bi,ok);$('bFb').hidden=false;
+  if(ok){bSolved.add(bi);award('e'+bi);$('bFb').className='fb good';$('bFb').innerHTML='<b>Balanced!</b> Same number of each kind of atom on both sides. Mass is conserved.';burst(e.clientX,e.clientY);}
+  else{$('bFb').className='fb bad';$('bFb').innerHTML=`<b>Not balanced yet.</b> Look for the red numbers. <b>Hint:</b> ${EQS[bi].hint}`;}renderB(true);};
+$('bNext').onclick=()=>{if(bi<EQS.length-1){bi++;renderB();}};$('bPrev').onclick=()=>{if(bi>0){bi--;renderB();}};
+const bcv=$('beam');let BX=null,BW=0,BH=140;
+function bResize(){const w=bcv.getBoundingClientRect().width;if(!w)return;const d=Math.min(2,devicePixelRatio||1);bcv.width=w*d;bcv.height=BH*d;bcv.style.height=BH+'px';BX=bcv.getContext('2d');BX.setTransform(d,0,0,d,0,0);BW=w;drawBeam();}
+function drawBeam(){if(!BX)return;const x=BX,w=BW,h=BH;x.clearRect(0,0,w,h);const [L,Rr]=bCounts();const nl=Object.values(L).reduce((a,b)=>a+b,0),nr=Object.values(Rr).reduce((a,b)=>a+b,0);
+  const bal=bBalanced();const ang=bal?0:clamp((nr-nl)*.04,-.25,.25);const cx=w/2,cy=42;
+  x.fillStyle='#9aa1b0';x.beginPath();x.moveTo(cx-14,h-8);x.lineTo(cx+14,h-8);x.lineTo(cx,cy);x.fill();
+  x.save();x.translate(cx,cy);x.rotate(ang);x.strokeStyle=bal?'#7cf29c':'#ffd23f';x.lineWidth=5;x.beginPath();x.moveTo(-w*.4,0);x.lineTo(w*.4,0);x.stroke();
+  const pan=(sx,counts)=>{let k=0;Object.entries(counts).forEach(([el,n])=>{for(let i=0;i<n&&k<36;i++,k++){const col=k%9,row=Math.floor(k/9);const px=sx-w*.13+col*(w*.26/9)+6,py=-10-row*12;x.fillStyle=EL[el].c;x.beginPath();x.arc(px,py,5,0,7);x.fill();}});};
+  pan(-w*.3,L);pan(w*.3,Rr);x.restore();
+  x.font='700 13px Fredoka, sans-serif';x.textAlign='center';x.fillStyle=bal?'#7cf29c':'#ffd23f';x.fillText(bal?'Balanced: atoms in = atoms out':'Not balanced yet',cx,h-10);
+  x.fillStyle='#b1acdf';x.fillText('Reactants',w*.2,h-30);x.fillText('Products',w*.8,h-30);}
+
+/* ================= CHALLENGE ================= */
+const CH=[
+ {clue:'Show a reaction where the scale reading goes DOWN.',test:()=>S.rx==='soda'&&!S.sealed&&S.p>=1,hint:'You need a reaction that makes a gas, in an OPEN container, run all the way to the end.'},
+ {clue:'Show a reaction where the scale reading goes UP.',test:()=>S.rx==='steel'&&!S.sealed&&S.p>=1,hint:'Which reaction takes in something from the air? Keep it open and run it to the end.'},
+ {clue:'Prove mass is conserved in a reaction that makes a GAS.',test:()=>S.rx==='soda'&&S.sealed&&S.p>=1,hint:'The gas must not escape. Seal the flask, then run baking soda + vinegar to the end.'},
+ {clue:'Show that mass is conserved in a PHYSICAL change.',test:()=>S.rx==='ice'&&S.p>=1,hint:'Which choice is a physical change, not a chemical one? Run it to the end.'},
+ {clue:'Show the atoms rearranging during photosynthesis, with the atom count table showing.',test:()=>S.rx==='photo'&&S.atoms&&S.count&&S.p>=1,hint:'Pick photosynthesis, turn on Show atoms AND Count atoms, then run it to the end.'},
+ {clue:'Show iron rusting in a CLOSED system.',test:()=>S.rx==='steel'&&S.sealed&&S.p>=1,hint:'Seal the jar before you start the steel wool reaction.'},
+ {clue:'Show carbon dioxide atoms escaping into the air in the Atom View.',test:()=>S.rx==='soda'&&!S.sealed&&S.atoms&&S.p>=1,hint:'Open flask, baking soda + vinegar, Show atoms ON, run it to the end.'},
+ {clue:'Show an OPEN container where the mass stays the same.',test:()=>S.rx==='ice'&&!S.sealed&&S.p>=1,hint:'Nothing should enter or leave, even with the lid off. Which change does not involve a gas?'},
+ {clue:'Show an open pot where a plant GAINS mass.',test:()=>S.rx==='photo'&&!S.sealed&&S.p>=1,hint:'Plants take in CO₂ from the air. Keep it open and run photosynthesis to the end.'},
+ {clue:'Use a balloon to trap the gas, with labels showing.',test:()=>S.rx==='soda'&&S.sealed&&S.labels&&S.p>=1,hint:'Baking soda + vinegar, Seal ON, Show labels ON, run it to the end.'},
+];
+let ci=0;const solved=new Set();
+function renderCh(msg){$('cN').textContent=`Challenge ${ci+1} of ${CH.length}`;$('cClue').textContent=CH[ci].clue;
+  $('cDots').innerHTML=CH.map((_,i)=>`<button data-i="${i}" class="${solved.has(i)?'ok':''} ${i===ci?'cur':''}" aria-label="Go to challenge ${i+1}"></button>`).join('');
+  $('cDots').querySelectorAll('button').forEach(b=>b.onclick=()=>{ci=+b.dataset.i;renderCh();});
+  const dn=solved.has(ci),last=ci===CH.length-1;$('cNext').disabled=!dn||last;$('cNext').classList.toggle('ready',dn&&!last);$('cPrev').disabled=ci===0;$('cCheck').disabled=dn;
+  if(!msg){$('cFb').hidden=!dn;if(dn){$('cFb').className='fb good';$('cFb').innerHTML='<b>Already solved!</b> Click <b>Next challenge ▶</b>.';}}}
+const setupWord=()=>`${RX[S.rx].name}, ${S.sealed?'sealed':'open'}, ${S.p>=1?'finished':S.p>0?'still reacting':'not started'} (change ${$('rChg').textContent})`;
+$('cCheck').onclick=e=>{const ok=CH[ci].test();attempt('c'+ci,ok);$('cFb').hidden=false;
+  if(ok){solved.add(ci);award('c'+ci);$('cFb').className='fb good';$('cFb').innerHTML=`<b>Correct!</b> ${setupWord()}.`;burst(e.clientX,e.clientY);}
+  else{$('cFb').className='fb bad';$('cFb').innerHTML=`<b>Not yet.</b> Right now: ${setupWord()}. <b>Hint:</b> ${CH[ci].hint}`;}renderCh(true);};
+$('cNext').onclick=()=>{if(ci<CH.length-1){ci++;renderCh();}};$('cPrev').onclick=()=>{if(ci>0){ci--;renderCh();}};
+NAV.c=()=>renderCh(true);NAV.e=()=>renderB(true);
+
+/* ================= FINISH / RESULTS ================= */
+const student={name:'',period:''};let clockTimer=null;
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function openModal(html){$('mcard').innerHTML=html;$('modal').hidden=false;$('modal').scrollTop=0;}
+function closeModal(){$('modal').hidden=true;clearInterval(clockTimer);}
+function askName(){openModal(`<h2 id="modalTitle">Finish and see my results</h2><p style="margin:0">Type your name and class period. Then click <b>Show my results</b>.</p>
+  <label class="field" for="fName">First and last name<input id="fName" autocomplete="name" value="${esc(student.name)}"></label>
+  <label class="field" for="fPer">Class period<input id="fPer" value="${esc(student.period)}"></label><p class="err" id="fErr" hidden></p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn finish" id="fGo">Show my results</button><button class="btn" id="fCancel">Back to missions</button></div>`);
+  $('fName').focus();$('fGo').onclick=()=>{const n=$('fName').value.trim(),p=$('fPer').value.trim();if(!n||!p){$('fErr').hidden=false;$('fErr').textContent=!n?'Type your first and last name.':'Type your class period.';return;}student.name=n;student.period=p;showResults();};$('fCancel').onclick=closeModal;}
+function secRow(label,ids,col){const d=ids.filter(id=>earned.has(id)).length;return `<div class="sec"><b style="color:${col}">${label}</b><div class="rdots">${ids.map((id,i)=>`<i class="${firstTry.has(id)?'g':earned.has(id)?'y':tried.has(id)?'r':''}" title="${i+1}"></i>`).join('')}</div><b>${d} / ${ids.length}</b></div>`;}
+function showResults(){const a=MA.map((m,i)=>'a'+i),b=MB.map((m,i)=>'b'+i),e=EQS.map((m,i)=>'e'+i),c=CH.map((m,i)=>'c'+i);
+  const skipped=[...a.map((id,i)=>[id,'Open/Closed '+(i+1)]),...b.map((id,i)=>[id,'Atoms '+(i+1)]),...e.map((id,i)=>[id,'Equation '+(i+1)]),...c.map((id,i)=>[id,'Challenge '+(i+1)])].filter(([id])=>!earned.has(id));
+  const pct=Math.round(earned.size/TOTAL*100);
+  openModal(`<h2 id="modalTitle">Mass Detective Lab Results</h2>
+  <div class="turnin"><div class="tt">Last step: turn in your results!</div><ol>
+    <li><b>Take a screenshot</b> that shows your name, your scores, and the colored squares.<br>Chromebook: <b>Ctrl + Shift + Show windows</b> (the key with the boxes). Windows: <b>Windows key + Shift + S</b>. Mac: <b>Command + Shift + 4</b>. Then drag a box around this card.</li>
+    <li><b>Go to Google Classroom</b> and open the Mass Detective Lab assignment.</li>
+    <li>Click <b>+ Add or create</b>, then <b>File</b>, and choose your screenshot (look in your Downloads folder).</li>
+    <li>Click <b>Turn in</b>.</li></ol><p>Do not close or refresh this page until you have turned it in. Your results disappear if you do.</p></div>
+  <div class="who"><span>Name: <b>${esc(student.name)}</b></span><span>Period: <b>${esc(student.period)}</b></span></div><div class="clock" id="clock"></div>
+  <div class="big"><div><div class="k">Missions completed</div><div class="v" style="color:var(--lime)">${earned.size} / ${TOTAL}</div><div class="empty">${pct}%</div></div>
+    <div><div class="k">Correct on first try</div><div class="v" style="color:var(--gold)">${firstTry.size} / ${TOTAL}</div><div class="empty">${Math.round(firstTry.size/TOTAL*100)}%</div></div></div>
+  ${secRow('Open vs. Closed',a,'var(--teal)')}${secRow('Atom View',b,'var(--violet)')}${secRow('Equation Balancer',e,'var(--gold)')}${secRow('STAAR Challenge',c,'var(--pink)')}
+  <div class="legend"><span><i style="background:var(--lime)"></i>Right on first try</span><span><i style="background:var(--gold)"></i>Right after retrying</span><span><i style="background:var(--red)"></i>Tried, not right yet</span><span><i style="background:var(--panel2);border:2px solid var(--line)"></i>Not done</span></div>
+  ${skipped.length?`<div class="do"><b>Not finished yet (${skipped.length})</b><p style="margin:6px 0 0;font-size:13px">${skipped.map(s=>esc(s[1])).join(' · ')}</p></div>`:`<div class="fb good"><b>Every mission complete!</b> Amazing work.</div>`}
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="rBack">Back to missions</button><button class="btn" id="rEdit">Change name</button></div>`);
+  const tick=()=>{const c=$('clock');if(c)c.textContent=new Date().toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit'});};
+  tick();clearInterval(clockTimer);clockTimer=setInterval(tick,1000);$('rBack').onclick=closeModal;$('rEdit').onclick=askName;if(earned.size===TOTAL)burst(innerWidth/2,innerHeight/4);}
+$('finBtn').onclick=()=>student.name?showResults():askName();
+$('modal').addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+/* ================= TABS & LOOP ================= */
+let tab=0;
+build(MA,$('mA'),'a','var(--teal)','Open vs. Closed Missions',0);build(MB,$('mB'),'b','var(--violet)','Atom View Missions',1);
+TOTAL=MA.length+MB.length+EQS.length+CH.length;$('tot').textContent=TOTAL;
+function showTab(i){tab=i;[0,1,2,3].forEach(j=>{$('t'+j).setAttribute('aria-selected',i===j);$('p'+j).hidden=i!==j;});$('benchBox').hidden=i===2;const b=BOXES.find(x=>x.tabIdx===i);if(b)b.update();if(i===2){renderB();bResize();}if(i===3)renderCh();resize();}
+[0,1,2,3].forEach(i=>$('t'+i).onclick=()=>showTab(i));
+addEventListener('resize',()=>{resize();sizeCF();bResize();});
+buildAtoms();sync();readouts();renderB();renderCh();resize();sizeCF();
+let last=0,acc=0;
+function loop(ms){const t=ms/1000;const dt=Math.min(.1,t-last);last=t;
+  if(S.running){S.p=Math.min(1,S.p+dt/RX[S.rx].dur);if(S.p>=1){S.running=false;sync();}}
+  acc+=dt;if(acc>.15){acc=0;readouts();tickLatch();}
+  draw(t);if(parts.length){drawCF();cf._d=true;}else if(cf._d){cx2.clearRect(0,0,innerWidth,innerHeight);cf._d=false;}
+  requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+})();
+</script>
+
+</body></html>

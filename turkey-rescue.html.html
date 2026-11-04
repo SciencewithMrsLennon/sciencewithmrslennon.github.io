@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Great Turkey Rescue</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Nunito:wght@500;700;800;900&family=DM+Mono:wght@500&display=swap">
+<style>
+/* Layout: a locked kitchen. Map of 4 station cards + a final turkey lock; each station opens as recipe-card questions beside a combination lock. */
+:root{
+  --night:#22131c;      /* plum-black kitchen at night */
+  --panel:#331f2b;
+  --panel-2:#43293a;
+  --line:#5b3a4e;
+  --card:#f5e6c6;       /* recipe card */
+  --card-ink:#2b1a12;
+  --card-line:#d9c39a;
+  --gold:#f0b33b;       /* accent */
+  --cran:#d0405c;
+  --sage:#93b582;
+  --text:#f6ebe0;
+  --muted:#c9b0bd;
+  --display:"Shrikhand", "Cooper Black", Georgia, serif;
+  --body:"Nunito", "Trebuchet MS", system-ui, sans-serif;
+  --mono:"DM Mono", ui-monospace, Menlo, monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--night);color:var(--text);font-family:var(--body);font-size:17px;line-height:1.5;
+  background-image:radial-gradient(circle at 15% 0%, #3d2131 0, transparent 45%),radial-gradient(circle at 100% 100%, #2f1a12 0, transparent 50%);
+  min-height:100%}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 48px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;padding-bottom:16px;border-bottom:2px dashed var(--line)}
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand small{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:800}
+.brand h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,44px);line-height:1.05;margin:0;color:var(--text);text-wrap:balance}
+.status{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-family:var(--mono);font-size:15px;display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.pips{display:flex;gap:6px}
+.pip{width:26px;height:26px;border-radius:6px;border:2px solid var(--line);display:grid;place-items:center;font-family:var(--mono);font-size:14px;color:var(--muted)}
+.pip.got{background:var(--gold);border-color:var(--gold);color:var(--card-ink);font-weight:700}
+
+/* intro */
+.intro{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:center;padding-block:24px}
+.intro p{margin:0 0 10px;max-width:60ch}
+.intro .lead{font-size:19px;font-weight:700}
+.note{background:var(--card);color:var(--card-ink);border-radius:4px;padding:16px 18px;transform:rotate(1.2deg);box-shadow:0 10px 24px #0007;position:relative;font-size:15px}
+.note::before{content:"";position:absolute;top:-10px;left:50%;width:70px;height:20px;margin-left:-35px;background:#e9c873cc;transform:rotate(-3deg)}
+.note h3{font-family:var(--display);font-weight:400;margin:0 0 6px;font-size:20px;color:var(--cran)}
+.note ol{margin:0;padding-left:20px}
+.note li{margin-bottom:4px}
+.namefield{display:flex;flex-direction:column;gap:4px;margin-top:12px;max-width:340px}
+.namefield label{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.namefield input{background:var(--panel);border:2px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--text);font:inherit}
+
+/* map */
+.map{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:8px}
+.station{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:18px 16px;text-align:left;display:flex;flex-direction:column;gap:10px;transition:transform .15s, border-color .15s;position:relative;min-width:0}
+.station:hover{transform:translateY(-3px);border-color:var(--gold)}
+.station svg{width:64px;height:64px}
+.station h3{font-family:var(--display);font-weight:400;font-size:22px;margin:0;line-height:1.1}
+.station .topic{font-size:14px;color:var(--muted);font-weight:700}
+.badge{align-self:flex-start;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:var(--panel-2);color:var(--muted)}
+.station.done{border-color:var(--sage)}
+.station.done .badge{background:var(--sage);color:#1b2614}
+.final{margin-top:16px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:18px;background:linear-gradient(120deg,var(--panel),var(--panel-2));border:2px dashed var(--gold);border-radius:16px;padding:18px 20px}
+.final svg{width:84px;height:84px}
+.final h3{font-family:var(--display);font-weight:400;font-size:26px;margin:0}
+.final p{margin:2px 0 0;color:var(--muted)}
+.final.locked{opacity:.55;border-color:var(--line)}
+
+.btn{background:var(--gold);color:var(--card-ink);border:none;border-radius:10px;padding:12px 20px;font-weight:900;font-size:16px;box-shadow:0 4px 0 #a9761a}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #a9761a}
+.btn[disabled]{background:var(--panel-2);color:var(--muted);box-shadow:none;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--text);border:2px solid var(--line);box-shadow:none}
+
+/* station view */
+.back{margin-block:18px 6px}
+.stage{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start}
+.stage-head{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+.stage-head svg{width:56px;height:56px;flex:none}
+.stage-head h2{font-family:var(--display);font-weight:400;font-size:clamp(26px,4vw,36px);margin:0;line-height:1.05}
+.stage-head .topic{color:var(--gold);font-weight:800;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.story{color:var(--muted);margin:6px 0 16px;max-width:62ch}
+.recipe{background:var(--card);color:var(--card-ink);border-radius:6px;padding:8px 20px 14px;box-shadow:0 12px 30px #0008;
+  background-image:repeating-linear-gradient(transparent 0 33px, var(--card-line) 33px 34px);background-position:0 46px}
+.recipe-title{font-family:var(--display);color:var(--cran);font-size:20px;padding:6px 0 10px;border-bottom:2px solid var(--cran);margin-bottom:6px}
+.q{padding:12px 0;border-bottom:1px dashed var(--card-line)}
+.q:last-child{border-bottom:none}
+.q .num{font-family:var(--mono);font-weight:500;background:var(--card-ink);color:var(--card);border-radius:4px;padding:1px 7px;margin-right:8px;font-size:14px}
+.q p{margin:0 0 6px;font-weight:700}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;padding-left:4px;font-size:16px}
+.opts span b{font-family:var(--mono);color:var(--cran);margin-right:6px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
+.legend span{background:var(--card-ink);color:var(--card);border-radius:6px;padding:3px 10px;font-size:14px;font-weight:700}
+.legend b{font-family:var(--mono);color:var(--gold);margin-right:4px}
+.foods{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:8px 0}
+.food{background:#fff8e8;border:2px solid var(--card-line);border-radius:10px;padding:10px;text-align:center}
+.food b{display:block;font-family:var(--mono);font-size:22px;color:var(--cran)}
+.food .t{font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums}
+
+/* lock */
+.lock{background:linear-gradient(160deg,#4a3240,#2a1922);border:3px solid #6e4b60;border-radius:20px;padding:20px 18px;position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);box-shadow:inset 0 2px 0 #ffffff14, 0 14px 30px #0008}
+.lock h3{margin:0 0 4px;font-family:var(--display);font-weight:400;font-size:22px;color:var(--gold)}
+.lock .sub{font-size:14px;color:var(--muted);margin:0 0 14px}
+.dials{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.dial{display:flex;flex-direction:column;align-items:center;gap:4px}
+.dial button.arrow{width:46px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-size:14px;line-height:1}
+.dial .face{width:52px;height:64px;border-radius:10px;background:linear-gradient(#1a0f15,#2c1b25 50%,#1a0f15);border:2px solid #7a566b;display:grid;place-items:center;font-family:var(--mono);font-size:30px;color:var(--gold);text-shadow:0 0 10px #f0b33b66;user-select:none}
+.dial small{font-family:var(--mono);color:var(--muted);font-size:12px}
+.lock .actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.msg{min-height:24px;font-weight:800;text-align:center;font-size:15px}
+.msg.bad{color:#ff8fa3}
+.msg.good{color:var(--sage)}
+.shake{animation:shake .45s}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.hint{background:var(--panel);border:1px dashed var(--gold);border-radius:10px;padding:10px 12px;font-size:15px;margin-top:8px}
+.attempts{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:center}
+
+.unlocked{margin-top:20px;background:var(--panel);border:2px solid var(--sage);border-radius:14px;padding:16px 18px}
+.unlocked h3{margin:0 0 8px;font-family:var(--display);font-weight:400;color:var(--sage);font-size:24px}
+.unlocked ul{margin:0;padding-left:20px}
+.unlocked li{margin-bottom:6px}
+.prize{display:flex;align-items:center;gap:12px;margin:10px 0 14px}
+.prize .tile{width:54px;height:54px;border-radius:10px;background:var(--gold);color:var(--card-ink);font-family:var(--display);font-size:32px;display:grid;place-items:center;transform:rotate(-4deg)}
+
+/* final + win */
+.final-stage{max-width:620px;margin:20px auto;text-align:center}
+.final-stage h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,42px);margin:6px 0}
+.tiles{display:flex;justify-content:center;gap:10px;margin:18px 0}
+.tiles .tile{width:58px;height:58px;border-radius:10px;background:var(--gold);color:var(--card-ink);font-family:var(--display);font-size:34px;display:grid;place-items:center}
+.tiles .tile:nth-child(odd){transform:rotate(-5deg)}.tiles .tile:nth-child(even){transform:rotate(4deg)}
+.wordin{font-family:var(--mono);font-size:28px;text-align:center;letter-spacing:.3em;text-transform:uppercase;width:100%;max-width:280px;padding:12px;border-radius:12px;border:3px solid #7a566b;background:#1a0f15;color:var(--gold)}
+.cert{background:var(--card);color:var(--card-ink);border-radius:8px;padding:30px 24px;margin-top:20px;border:6px double var(--cran);box-shadow:0 18px 40px #000a}
+.cert small{letter-spacing:.2em;text-transform:uppercase;font-weight:900;color:var(--cran);font-size:12px}
+.cert h2{font-family:var(--display);font-weight:400;font-size:clamp(30px,6vw,46px);margin:6px 0;color:var(--card-ink)}
+.cert .who{font-family:var(--display);font-size:30px;color:var(--cran);border-bottom:2px solid var(--card-line);display:inline-block;padding:0 20px 4px;margin:6px 0 12px}
+.cert .stats{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;font-family:var(--mono);margin-top:10px}
+.cert .stats b{display:block;font-size:24px}
+canvas#confetti{position:fixed;inset:0;pointer-events:none;width:100%;height:100%;z-index:50}
+
+/* teacher */
+.teacher{margin-top:40px;border-top:2px dashed var(--line);padding-top:16px;color:var(--muted);font-size:14px}
+.teacher summary{cursor:pointer;font-weight:800}
+.teacher .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.teacher input{background:var(--panel);border:2px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--text);font:inherit}
+.keytable{margin-top:12px;overflow-x:auto}
+.keytable table{border-collapse:collapse;min-width:420px;font-size:14px}
+.keytable td,.keytable th{border:1px solid var(--line);padding:6px 10px;text-align:left}
+.keytable td.code{font-family:var(--mono);color:var(--gold);font-size:16px}
+
+@media (max-width:860px){
+  .map{grid-template-columns:repeat(2,1fr)}
+  .stage{grid-template-columns:1fr}
+  .lock{position:static}
+  .intro{grid-template-columns:1fr}
+}
+@media (max-width:480px){
+  .opts{grid-template-columns:1fr}
+  .final{grid-template-columns:1fr;text-align:center;justify-items:center}
+  .dial .face{width:44px;height:56px;font-size:26px}
+  .dial button.arrow{width:40px}
+  .station svg{width:48px;height:48px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<canvas id="confetti" hidden></canvas>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <small>Science with Mrs. Lennon · Thermal Energy Escape Room</small>
+      <h1>The Great Turkey Rescue</h1>
+    </div>
+    <div class="status">
+      <div class="chip" title="Time elapsed"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span id="clock">00:00</span></div>
+      <div class="pips" id="pips" aria-label="Letters collected"></div>
+    </div>
+  </header>
+  <main id="app"></main>
+
+  <details class="teacher">
+    <summary>Teacher answer key</summary>
+    <div class="row">
+      <input id="tpass" aria-label="Teacher passcode" type="password" placeholder="Teacher passcode" autocomplete="off">
+      <button class="btn ghost" id="tgo" type="button">Show key</button>
+      <button class="btn ghost" id="treset" type="button">Reset this device</button>
+    </div>
+    <div id="tkey"></div>
+  </details>
+</div>
+
+<script>
+const ICONS = {
+  oven:`<svg viewBox="0 0 64 64" fill="none"><rect x="8" y="10" width="48" height="46" rx="6" fill="#5b3a4e" stroke="#f0b33b" stroke-width="3"/><rect x="15" y="26" width="34" height="22" rx="3" fill="#22131c" stroke="#f0b33b" stroke-width="2"/><path d="M22 42c4-8 16-8 20 0" stroke="#d0405c" stroke-width="5" stroke-linecap="round"/><circle cx="18" cy="17" r="3" fill="#f0b33b"/><circle cx="28" cy="17" r="3" fill="#f0b33b"/><path d="M38 17h12" stroke="#f0b33b" stroke-width="3" stroke-linecap="round"/></svg>`,
+  pot:`<svg viewBox="0 0 64 64" fill="none"><path d="M24 14c-3-4 3-6 0-10M32 14c-3-4 3-6 0-10M40 14c-3-4 3-6 0-10" stroke="#c9b0bd" stroke-width="2.5" stroke-linecap="round"/><path d="M10 24h44v18a14 14 0 0 1-14 14H24a14 14 0 0 1-14-14z" fill="#5b3a4e" stroke="#f0b33b" stroke-width="3"/><path d="M4 28h6M54 28h6" stroke="#f0b33b" stroke-width="4" stroke-linecap="round"/><path d="M18 36c4 4 8-4 12 0s8-4 12 0" stroke="#93b582" stroke-width="3" stroke-linecap="round"/></svg>`,
+  pie:`<svg viewBox="0 0 64 64" fill="none"><path d="M6 38h52l-5 12H11z" fill="#5b3a4e" stroke="#f0b33b" stroke-width="3" stroke-linejoin="round"/><path d="M8 38c2-12 14-20 24-20s22 8 24 20z" fill="#d98a35" stroke="#f0b33b" stroke-width="3"/><path d="M20 30l4 4M32 26v6M44 30l-4 4" stroke="#22131c" stroke-width="2.5" stroke-linecap="round"/><path d="M14 56h36" stroke="#c9b0bd" stroke-width="2" stroke-dasharray="3 4"/></svg>`,
+  jar:`<svg viewBox="0 0 64 64" fill="none"><rect x="18" y="6" width="28" height="8" rx="2" fill="#f0b33b"/><path d="M16 16h32v36a6 6 0 0 1-6 6H22a6 6 0 0 1-6-6z" fill="#5b3a4e" stroke="#f0b33b" stroke-width="3"/><path d="M34 26l-8 12h8l-4 10 10-14h-8l4-8z" fill="#f0b33b"/></svg>`,
+  turkey:`<svg viewBox="0 0 64 64" fill="none"><ellipse cx="32" cy="50" rx="28" ry="6" fill="#43293a"/><path d="M10 42c0-14 10-24 22-24s22 10 22 24z" fill="#b5652a" stroke="#f0b33b" stroke-width="3"/><path d="M18 30c4-4 8-5 12-5" stroke="#f5c27a" stroke-width="3" stroke-linecap="round"/><path d="M50 30l7-9M54 34l8-6" stroke="#f5e6c6" stroke-width="4" stroke-linecap="round"/><circle cx="58" cy="20" r="3" fill="#f5e6c6"/><circle cx="62" cy="27" r="3" fill="#f5e6c6"/></svg>`
+};
+
+const STATIONS = [
+  { id:"oven", icon:"oven", name:"The Oven Door", topic:"Temperature & kinetic energy", letter:"H",
+    story:"Grandma locked the oven to keep the turkey safe, and now nobody remembers the code. Answer each question, then dial in the letter of each correct answer, in order.",
+    type:"mc", dial:["A","B","C","D"], answer:"BABC",
+    questions:[
+      {q:"The turkey warms from 40°F to 165°F in the oven. What happens to the particles in the turkey?", opts:["They slow down","They move faster","They stop moving","Each particle gets bigger"]},
+      {q:"Temperature measures the average ______ of the particles in a substance.", opts:["kinetic energy","mass","volume","potential energy"]},
+      {q:"A big pot of warm dishwater (110°F) sits next to a small mug of hot cocoa (160°F). Where are the particles moving faster on average?", opts:["The dishwater","The cocoa","Same speed","Neither one, liquids don't move"]},
+      {q:"Every roll is baked to the same 200°F. Which has the most total thermal energy?", opts:["One roll","Two rolls","A tray of 24 rolls","They are all equal"]}
+    ],
+    hint:"Temperature is about how fast particles move on average. Thermal energy is the total energy of all the particles, so more stuff at the same temperature means more thermal energy.",
+    explain:[
+      "Adding thermal energy makes particles move faster. They don't grow; the space between them can increase.",
+      "Temperature is the average kinetic energy of the particles.",
+      "The cocoa is hotter, so its particles are faster on average, even though the big pot of dishwater holds more total thermal energy.",
+      "Same temperature, more particles: the tray of 24 rolls has the most thermal energy."
+    ]},
+  { id:"pot", icon:"pot", name:"The Gravy Pot", topic:"Conduction, convection, radiation", letter:"E",
+    story:"The gravy pot lid is chained shut with a 4-dial lock. Decide how thermal energy moves in each kitchen scene and dial in C, V or R.",
+    type:"sort", dial:["C","V","R"], answer:"CVRR",
+    legend:[["C","Conduction (touching)"],["V","Convection (fluid currents)"],["R","Radiation (waves)"]],
+    questions:[
+      {q:"Aunt Rosa leaves a metal spoon in the gravy. A few minutes later, the handle is too hot to hold."},
+      {q:"In the potato pot, hot water rises from the bottom while cooler water sinks, making a rolling boil."},
+      {q:"Everyone warms their hands by the fireplace without touching it."},
+      {q:"A heat lamp above the buffet keeps the dinner rolls warm."}
+    ],
+    hint:"Ask yourself: Are the objects touching? (C) Is a liquid or gas moving in a loop? (V) Is the energy traveling across empty space as light or infrared waves? (R)",
+    explain:[
+      "Conduction: energy passes particle to particle through the metal spoon.",
+      "Convection: warm water is less dense and rises, cool water sinks, forming a current.",
+      "Radiation: infrared waves travel from the fire to your hands. No touching needed.",
+      "Radiation: the heat lamp sends infrared waves down onto the rolls."
+    ]},
+  { id:"pie", icon:"pie", name:"The Pie Rack", topic:"Particle speed & temperature", letter:"A",
+    story:"The pie cabinet has a 5-dial lock. Put these foods in order from FASTEST-moving particles to SLOWEST-moving particles.",
+    type:"order", dial:["R","G","P","C","I"], answer:"RGPCI",
+    foods:[["P","Pumpkin pie","72°F"],["I","Ice cream","5°F"],["R","Rolls fresh from the oven","200°F"],["C","Cranberry sauce from the fridge","38°F"],["G","Gravy on the stove","185°F"]],
+    questions:[],
+    hint:"Higher temperature means faster particles. Put the hottest food on the first dial and the coldest food on the last dial.",
+    explain:[
+      "Rolls (200°F) have the fastest particles, then gravy (185°F), pumpkin pie (72°F), cranberry sauce (38°F), and ice cream (5°F).",
+      "Even the ice cream's particles are still moving. They are just vibrating slowly in place."
+    ]},
+  { id:"jar", icon:"jar", name:"The Pantry", topic:"Energy transformations", letter:"T",
+    story:"The pantry door is locked and the whipped cream is inside. Match each kitchen activity to its energy transformation.",
+    type:"mc", dial:["A","B","C","D"], answer:"CDAB", shared:true,
+    shareOpts:["Electrical → Mechanical","Chemical → Thermal","Electrical → Thermal","Chemical → Mechanical"],
+    questions:[
+      {q:"The toaster browns the leftover rolls."},
+      {q:"After dinner, cousins burn off the pie playing backyard football."},
+      {q:"An electric mixer whips the cream."},
+      {q:"The gas burner on the stove heats the green beans."}
+    ],
+    hint:"Look at what goes IN (plugged in? food? fuel?) and what comes OUT (motion? heat?). Food and natural gas both store chemical energy.",
+    explain:[
+      "Toaster: electrical energy becomes thermal energy.",
+      "Football: chemical energy from food becomes mechanical energy (motion).",
+      "Mixer: electrical energy becomes mechanical energy as the beaters spin.",
+      "Gas burner: chemical energy in natural gas becomes thermal energy (plus some light)."
+    ]}
+];
+const FINAL = "HEAT";
+const TEACHER_PASS = "gobble";
+
+/* ---------- state ---------- */
+const KEY = "turkey-rescue-v1";
+let S = {name:"", start:null, done:{}, attempts:0, hints:0, finished:null, dials:{}};
+try{ const raw = localStorage.getItem(KEY); if(raw) S = Object.assign(S, JSON.parse(raw)); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+let view = "map";
+const app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function fmt(ms){ const t=Math.max(0,Math.floor(ms/1000)); const m=Math.floor(t/60), s=t%60; return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"); }
+function tick(){
+  const end = S.finished || Date.now();
+  document.getElementById("clock").textContent = S.start ? fmt(end - S.start) : "00:00";
+}
+setInterval(tick, 1000);
+
+function renderPips(){
+  document.getElementById("pips").innerHTML = STATIONS.map(st =>
+    `<div class="pip ${S.done[st.id]?'got':''}" title="${esc(st.name)}">${S.done[st.id]?st.letter:'?'}</div>`).join("");
+}
+
+/* ---------- map ---------- */
+function renderMap(){
+  const all = STATIONS.every(st => S.done[st.id]);
+  const started = !!S.start;
+  app.innerHTML = `
+  <section class="intro">
+    <div>
+      <p class="lead">Thanksgiving dinner is in one hour, and Grandma accidentally locked everything in the kitchen.</p>
+      <p>The turkey, the gravy, the pies and the whipped cream are all behind combination locks. Use what you know about thermal energy to crack each lock. Every lock you open gives you a letter. Collect all four letters to unlock the turkey and save dinner.</p>
+      <div class="namefield">
+        <label for="team">Your name or team name</label>
+        <input id="team" type="text" maxlength="40" placeholder="e.g. Table 3 Turkeys" value="${esc(S.name)}">
+      </div>
+    </div>
+    <aside class="note">
+      <h3>Grandma's rules</h3>
+      <ol>
+        <li>Open the stations in any order.</li>
+        <li>Read the recipe card, then dial in your answers on the lock.</li>
+        <li>The lock won't tell you which answer is wrong. Check your work as a team.</li>
+        <li>Each station has one hint. Using it is fine; it shows up on your certificate.</li>
+      </ol>
+    </aside>
+  </section>
+  <div class="map">
+    ${STATIONS.map(st => `
+      <button class="station ${S.done[st.id]?'done':''}" data-go="${st.id}" type="button">
+        ${ICONS[st.icon]}
+        <span class="badge">${S.done[st.id] ? 'Unlocked · ' + st.letter : 'Locked'}</span>
+        <h3>${esc(st.name)}</h3>
+        <span class="topic">${esc(st.topic)}</span>
+      </button>`).join("")}
+  </div>
+  <div class="final ${all?'':'locked'}">
+    ${ICONS.turkey}
+    <div>
+      <h3>The Turkey Lock</h3>
+      <p>${all ? "You have all four letters. Unscramble them to free the turkey." : `Collect all four letters to open this lock. ${Object.keys(S.done).length} of 4 found.`}</p>
+    </div>
+    <button class="btn" id="goFinal" type="button" ${all?'':'disabled'}>${all?'Open the turkey':'Locked'}</button>
+  </div>`;
+  const team = document.getElementById("team");
+  team.addEventListener("input", () => { S.name = team.value; save(); });
+  app.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => { if(!S.start){S.start=Date.now(); save();} view=b.dataset.go; render(); window.scrollTo(0,0); }));
+  const gf = document.getElementById("goFinal");
+  if(all) gf.addEventListener("click", () => { view="final"; render(); window.scrollTo(0,0); });
+}
+
+/* ---------- station ---------- */
+function renderStation(st){
+  const solved = !!S.done[st.id];
+  if(!S.dials[st.id]) S.dials[st.id] = Array(st.answer.length).fill(0);
+  const dvals = S.dials[st.id];
+  let body = "";
+  if(st.type === "sort"){
+    body += `<div class="legend">${st.legend.map(([k,v]) => `<span><b>${k}</b>${esc(v)}</span>`).join("")}</div>`;
+  }
+  if(st.shared){
+    body += `<div class="legend">${st.shareOpts.map((o,i) => `<span><b>${"ABCD"[i]}</b>${esc(o)}</span>`).join("")}</div>`;
+  }
+  if(st.type === "order"){
+    body += `<div class="foods">${st.foods.map(([k,n,t]) => `<div class="food"><b>${k}</b>${esc(n)}<div class="t">${t}</div></div>`).join("")}</div>`;
+  }
+  body += st.questions.map((q,i) => `
+    <div class="q">
+      <p><span class="num">${i+1}</span>${esc(q.q)}</p>
+      ${q.opts ? `<div class="opts">${q.opts.map((o,j) => `<span><b>${"ABCD"[j]}</b>${esc(o)}</span>`).join("")}</div>` : ""}
+    </div>`).join("");
+
+  const dialLabels = st.type === "order"
+    ? st.answer.split("").map((_,i) => i===0 ? "fastest" : i===st.answer.length-1 ? "slowest" : "")
+    : st.answer.split("").map((_,i) => "Q" + (i+1));
+
+  app.innerHTML = `
+  <button class="btn ghost back" id="back" type="button">← Back to the kitchen</button>
+  <div class="stage">
+    <section style="min-width:0">
+      <div class="stage-head">${ICONS[st.icon]}<div><div class="topic">${esc(st.topic)}</div><h2>${esc(st.name)}</h2></div></div>
+      <p class="story">${esc(st.story)}</p>
+      <div class="recipe">
+        <div class="recipe-title">Recipe card</div>
+        ${body}
+      </div>
+      ${solved ? `
+      <div class="unlocked">
+        <h3>Lock opened!</h3>
+        <div class="prize"><div class="tile">${st.letter}</div><div>You found the letter <b>${st.letter}</b>. Here's why each answer works:</div></div>
+        <ul>${st.explain.map(e => `<li>${esc(e)}</li>`).join("")}</ul>
+      </div>` : ""}
+    </section>
+    <aside class="lock" id="lock">
+      <h3>${solved ? "Unlocked" : "Combination lock"}</h3>
+      <p class="sub">${solved ? "Nice work. Head back to the kitchen for the next lock." : "Tap the arrows to set each dial, then try the lock."}</p>
+      <div class="dials" id="dials">
+        ${dvals.map((v,i) => `
+          <div class="dial">
+            <button class="arrow" data-d="${i}" data-dir="-1" type="button" aria-label="Dial ${i+1} up" ${solved?'disabled':''}>▲</button>
+            <div class="face" aria-live="polite">${solved ? st.answer[i] : st.dial[v]}</div>
+            <button class="arrow" data-d="${i}" data-dir="1" type="button" aria-label="Dial ${i+1} down" ${solved?'disabled':''}>▼</button>
+            <small>${dialLabels[i] || "&nbsp;"}</small>
+          </div>`).join("")}
+      </div>
+      <div class="actions">
+        ${solved ? `<button class="btn" id="toMap" type="button">Back to the kitchen</button>` : `
+        <button class="btn" id="try" type="button">Try the lock</button>
+        <div class="msg" id="msg" role="status"></div>
+        <button class="btn ghost" id="hintBtn" type="button">${S["hint_"+st.id] ? "Hint shown" : "Use my hint"}</button>
+        <div id="hintBox">${S["hint_"+st.id] ? `<div class="hint">${esc(st.hint)}</div>` : ""}</div>
+        <div class="attempts" id="att">${S["att_"+st.id] ? (S["att_"+st.id] + " wrong tries at this lock") : ""}</div>`}
+      </div>
+    </aside>
+  </div>`;
+
+  document.getElementById("back").addEventListener("click", () => { view="map"; render(); });
+  if(solved){ document.getElementById("toMap").addEventListener("click", () => { view="map"; render(); window.scrollTo(0,0); }); return; }
+
+  app.querySelectorAll(".arrow").forEach(b => b.addEventListener("click", () => {
+    const i = +b.dataset.d, n = st.dial.length;
+    dvals[i] = (dvals[i] + (+b.dataset.dir) + n) % n;
+    b.parentElement.querySelector(".face").textContent = st.dial[dvals[i]];
+    save();
+  }));
+  document.getElementById("try").addEventListener("click", () => {
+    const code = dvals.map(v => st.dial[v]).join("");
+    const msg = document.getElementById("msg");
+    if(code === st.answer){
+      S.done[st.id] = true; save(); renderPips();
+      burst(60);
+      render();
+      setTimeout(() => { const u = document.querySelector(".unlocked"); if(u) u.scrollIntoView({behavior:"smooth", block:"center"}); }, 50);
+    } else {
+      S.attempts++; S["att_"+st.id] = (S["att_"+st.id]||0) + 1; save();
+      msg.className = "msg bad";
+      msg.textContent = "The lock didn't budge. At least one dial is off.";
+      const d = document.getElementById("dials");
+      d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake");
+      document.getElementById("att").textContent = S["att_"+st.id] + " wrong tries at this lock";
+    }
+  });
+  document.getElementById("hintBtn").addEventListener("click", () => {
+    if(!S["hint_"+st.id]){ S["hint_"+st.id] = true; S.hints++; save(); }
+    document.getElementById("hintBox").innerHTML = `<div class="hint">${esc(st.hint)}</div>`;
+    document.getElementById("hintBtn").textContent = "Hint shown";
+  });
+}
+
+/* ---------- final ---------- */
+function renderFinal(){
+  if(S.finished){ renderWin(); return; }
+  const scrambled = ["T","H","A","E"];
+  app.innerHTML = `
+  <button class="btn ghost back" id="back" type="button">← Back to the kitchen</button>
+  <section class="final-stage">
+    ${ICONS.turkey.replace('<svg','<svg width="110" height="110"')}
+    <h2>The Turkey Lock</h2>
+    <p>These are the letters you collected. Unscramble them to spell the form of energy that moves from a hotter object to a cooler one.</p>
+    <div class="tiles">${scrambled.map(l => `<div class="tile">${l}</div>`).join("")}</div>
+    <input class="wordin" id="word" maxlength="4" autocomplete="off" aria-label="Secret word">
+    <div style="margin-top:14px"><button class="btn" id="tryWord" type="button">Free the turkey</button></div>
+    <div class="msg" id="msg" role="status" style="margin-top:10px"></div>
+  </section>`;
+  document.getElementById("back").addEventListener("click", () => { view="map"; render(); });
+  const w = document.getElementById("word");
+  const go = () => {
+    if(w.value.trim().toUpperCase() === FINAL){
+      S.finished = Date.now(); save(); tick(); burst(220); renderWin();
+    } else {
+      S.attempts++; save();
+      const m = document.getElementById("msg"); m.className="msg bad"; m.textContent="Not quite. Use all four letters once each.";
+      w.classList.remove("shake"); void w.offsetWidth; w.classList.add("shake");
+    }
+  };
+  document.getElementById("tryWord").addEventListener("click", go);
+  w.addEventListener("keydown", e => { if(e.key==="Enter") go(); });
+}
+
+function renderWin(){
+  app.innerHTML = `
+  <section class="final-stage">
+    <div class="cert">
+      <small>Certificate of Kitchen Rescue</small>
+      <h2>Dinner is saved!</h2>
+      <p>This certifies that</p>
+      <div class="who">${esc(S.name || "Our Thermal Energy Experts")}</div>
+      <p>used temperature, kinetic energy, heat transfer and energy transformations to crack every lock in Grandma's kitchen.</p>
+      <div class="stats">
+        <div><b>${fmt(S.finished - S.start)}</b>time</div>
+        <div><b>${S.hints}</b>hints used</div>
+        <div><b>${S.attempts}</b>wrong tries</div>
+      </div>
+    </div>
+    <p style="margin-top:18px;color:var(--muted)">Show this screen to your teacher.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn ghost" id="toMap" type="button">Back to the kitchen</button>
+      <button class="btn ghost" id="newGame" type="button">Start a new game</button>
+    </div>
+  </section>`;
+  document.getElementById("toMap").addEventListener("click", () => { view="map"; render(); });
+  const ng = document.getElementById("newGame");
+  ng.addEventListener("click", () => {
+    if(ng.dataset.armed){ try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); }
+    else { ng.dataset.armed="1"; ng.textContent="Tap again to clear this device"; setTimeout(() => { ng.textContent="Start a new game"; delete ng.dataset.armed; }, 4000); }
+  });
+}
+
+function render(){
+  renderPips(); tick();
+  if(view === "map") renderMap();
+  else if(view === "final") renderFinal();
+  else renderStation(STATIONS.find(s => s.id === view));
+}
+
+/* ---------- teacher ---------- */
+document.getElementById("tgo").addEventListener("click", () => {
+  const box = document.getElementById("tkey");
+  if(document.getElementById("tpass").value.trim().toLowerCase() !== TEACHER_PASS){ box.innerHTML = `<p class="msg bad" style="text-align:left">That passcode doesn't match.</p>`; return; }
+  box.innerHTML = `<div class="keytable"><table><tr><th>Station</th><th>Code</th><th>Letter</th></tr>
+    ${STATIONS.map(s => `<tr><td>${esc(s.name)}</td><td class="code">${s.answer}</td><td>${s.letter}</td></tr>`).join("")}
+    <tr><td>The Turkey Lock</td><td class="code">${FINAL}</td><td>—</td></tr></table></div>`;
+});
+document.getElementById("treset").addEventListener("click", () => {
+  const b = document.getElementById("treset");
+  if(b.dataset.armed){ try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); }
+  else { b.dataset.armed = "1"; b.textContent = "Tap again to erase progress"; setTimeout(() => { b.textContent="Reset this device"; delete b.dataset.armed; }, 4000); }
+});
+
+/* ---------- confetti ---------- */
+const cv = document.getElementById("confetti"), cx = cv.getContext("2d");
+let parts = [], raf = null;
+function burst(n){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  cv.hidden = false; cv.width = innerWidth; cv.height = innerHeight;
+  const cols = ["#f0b33b","#d0405c","#93b582","#d98a35","#f5e6c6"];
+  for(let i=0;i<n;i++) parts.push({x:innerWidth/2+(Math.random()-.5)*200,y:innerHeight*.35,vx:(Math.random()-.5)*12,vy:Math.random()*-12-4,r:Math.random()*6+4,c:cols[i%cols.length],a:Math.random()*6,life:0});
+  if(!raf) loop();
+}
+function loop(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  parts.forEach(p => { p.vy+=.35; p.x+=p.vx; p.y+=p.vy; p.a+=.15; p.life++;
+    cx.save(); cx.translate(p.x,p.y); cx.rotate(p.a); cx.fillStyle=p.c;
+    cx.beginPath(); cx.ellipse(0,0,p.r,p.r*.5,0,0,Math.PI*2); cx.fill(); cx.restore(); });
+  parts = parts.filter(p => p.y < cv.height+40 && p.life < 240);
+  if(parts.length) raf = requestAnimationFrame(loop); else { raf=null; cv.hidden=true; }
+}
+
+render();
+</script>
+
+</html>

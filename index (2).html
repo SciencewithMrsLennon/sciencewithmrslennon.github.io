@@ -1,0 +1,538 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Weather Engine Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&family=Space+Mono:wght@700&display=swap">
+<style>
+/* Layout: a weather-station console — mission card on top, a live coastal weather scene with readouts, and a bank of big switches below. Deliberately single dark console theme to match the other labs. */
+:root{
+  color-scheme:dark;
+  --bg:#0a1024; --panel:#121c3d; --panel2:#1a2752; --line:#2c3d78; --ink:#eef4ff; --muted:#a9b8e6;
+  --sun:#ffc93c; --sky:#4cc9f0; --sea:#3a86ff; --heat:#ff6b4a; --lime:#7cf29c; --violet:#a46bff; --red:#ff5470; --pink:#ff4fa3;
+  --f-display:"Fredoka",ui-rounded,system-ui,sans-serif;
+  --f-body:"Nunito",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"Space Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:radial-gradient(900px 500px at 0% -10%,rgba(76,201,240,.22),transparent 60%),radial-gradient(800px 500px at 100% 0%,rgba(255,201,60,.16),transparent 60%),var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:20px 60px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--sky)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,6vw,54px);line-height:1;margin:4px 0 0;background:linear-gradient(90deg,var(--sun),var(--heat) 35%,var(--sky) 70%,var(--sea));-webkit-background-clip:text;background-clip:text;color:transparent}
+.score{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:10px 16px;min-width:220px;display:flex;flex-direction:column;gap:6px}
+.score b{font-family:var(--f-display);font-size:22px;color:var(--sun)}
+.score .bar{height:10px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.score .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--sun),var(--heat),var(--sky));transition:width .5s}
+.intro{margin:0;color:var(--muted);max-width:78ch}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{font:700 16px var(--f-display);border:2px solid var(--line);background:var(--panel);color:var(--muted);padding:10px 16px;border-radius:14px;cursor:pointer}
+.tab[aria-selected="true"]{color:#0a1024;border-color:transparent}
+#t0[aria-selected="true"]{background:var(--sun)}
+#t1[aria-selected="true"]{background:var(--sky)}
+#t2[aria-selected="true"]{background:var(--lime)}
+#t3[aria-selected="true"]{background:var(--pink)}
+button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.btn{font:700 15px var(--f-display);border:2px solid var(--line);background:var(--panel2);color:var(--ink);padding:9px 14px;border-radius:12px;cursor:pointer;transition:transform .1s}
+.btn:active{transform:scale(.96)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.go{background:linear-gradient(90deg,var(--heat),var(--pink));border-color:transparent}
+.btn.finish{background:linear-gradient(90deg,var(--lime),var(--sky));color:#0a1024;border-color:transparent}
+.sep{flex:1}
+/* missions */
+.mbox{background:var(--panel);border:3px solid var(--sun);border-radius:22px;overflow:hidden;box-shadow:0 0 30px rgba(255,201,60,.15)}
+.mnav{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;background:linear-gradient(90deg,rgba(255,201,60,.16),rgba(76,201,240,.12));border-bottom:2px solid var(--line)}
+.mlabel{font:700 13px var(--f-display);text-transform:uppercase;letter-spacing:.06em;padding:4px 12px;border-radius:99px;color:#0a1024}
+.mcount{font-family:var(--f-display);font-size:20px}
+.mdots{display:flex;flex-wrap:wrap;gap:6px}
+.mdots button{width:18px;height:18px;border-radius:50%;background:var(--panel2);border:2px solid var(--line);padding:0;cursor:pointer}
+.mdots button.ok{background:var(--lime);border-color:var(--lime)}
+.mdots button.cur{border-color:var(--sun);box-shadow:0 0 0 3px rgba(255,201,60,.35)}
+.mnext.ready{background:linear-gradient(90deg,var(--lime),var(--sky));color:#0a1024;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.mission{padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.mcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.mcols{grid-template-columns:1fr}}
+.mcols>div{display:flex;flex-direction:column;gap:10px;min-width:0}
+.mission h3{font-family:var(--f-display);font-size:20px;margin:0;line-height:1.15}
+.do{background:var(--panel2);border-radius:12px;padding:10px 12px;font-size:14px}
+.do>b{color:var(--sun);font-family:var(--f-display);font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+.do ol{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.do li{display:flex;gap:8px;align-items:flex-start}
+.do li b{color:var(--sky)}
+.ck{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--muted);margin-top:1px;display:grid;place-items:center;font-size:12px;font-weight:900;color:#0a1024}
+.do li.ok .ck{background:var(--lime);border-color:var(--lime)}
+.do li.ok .ck::after{content:'✓'}
+.do li.ok{color:#c8ffd6}
+.do li.next .ck{border-color:var(--sun);box-shadow:0 0 0 3px rgba(255,201,60,.3)}
+.lock{background:rgba(164,107,255,.16);border:2px dashed var(--violet);border-radius:12px;padding:8px 12px;font-size:14px;font-weight:800;color:#e3d6ff}
+.q{margin:0;font-weight:800}
+.q span{color:var(--sky);font-family:var(--f-display);text-transform:uppercase;font-size:13px;letter-spacing:.06em;margin-right:6px}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{font:600 15px var(--f-body);text-align:left;border:2px solid var(--line);background:var(--panel2);color:var(--ink);padding:9px 12px;border-radius:12px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--violet)}
+.opt.right{background:rgba(124,242,156,.18);border-color:var(--lime)}
+.opt.wrong{background:rgba(255,84,112,.15);border-color:var(--red);animation:shake .35s}
+.opt:disabled{cursor:default}
+.opt:disabled:not(.right):not(.wrong){opacity:.4;cursor:not-allowed}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.fb{font-size:14px;border-radius:12px;padding:10px 12px}
+.fb.good{background:rgba(124,242,156,.14);color:#c8ffd6}
+.fb.bad{background:rgba(255,84,112,.14);color:#ffd0d8}
+.pool,.slots{display:flex;flex-wrap:wrap;gap:6px}
+.slots{min-height:44px;background:var(--panel2);border-radius:12px;padding:8px;border:2px dashed var(--line)}
+.card-s{font:600 14px var(--f-display);padding:7px 11px;border-radius:10px;border:2px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.slots .card-s{cursor:default}
+.slots .card-s.ok{border-color:var(--lime)}
+.slots .card-s.no{border-color:var(--red)}
+.empty{color:var(--muted);font-size:14px}
+/* challenge */
+.task{padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.clue{background:linear-gradient(90deg,rgba(255,79,163,.18),rgba(255,107,74,.12));border:2px solid var(--pink);border-radius:14px;padding:12px 14px;font-family:var(--f-display);font-size:20px;font-weight:600}
+.dots{display:flex;flex-wrap:wrap;gap:6px}
+.dots button{width:18px;height:18px;border-radius:50%;background:var(--panel2);border:2px solid var(--line);padding:0;cursor:pointer}
+.dots .ok{background:var(--lime);border-color:var(--lime)}
+.dots .cur{border-color:var(--sun);box-shadow:0 0 0 3px rgba(255,201,60,.35)}
+/* sim */
+.bench{background:var(--panel);border:2px solid var(--line);border-radius:22px;overflow:hidden}
+.simgrid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+@media (max-width:860px){.simgrid{grid-template-columns:1fr}}
+.screen{position:relative;background:#050914;min-width:0}
+canvas{display:block;width:100%}
+.pill{position:absolute;top:12px;left:12px;font:700 13px var(--f-display);background:rgba(10,16,36,.78);border:1px solid var(--line);padding:4px 10px;border-radius:99px}
+.readout{padding:16px;display:flex;flex-direction:column;gap:10px;border-left:2px solid var(--line);min-width:0}
+@media (max-width:860px){.readout{border-left:0;border-top:2px solid var(--line)}}
+.now{font-family:var(--f-display);font-size:26px;line-height:1.1}
+.rgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.rg{background:var(--panel2);border-radius:12px;padding:8px 10px;min-width:0}
+.rg .k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}
+.rg .v{font-family:var(--f-display);font-size:20px;font-variant-numeric:tabular-nums}
+.meter{height:8px;border-radius:99px;background:#0a1024;overflow:hidden;margin-top:4px}
+.meter i{display:block;height:100%;width:0;border-radius:99px;transition:width .3s}
+.explain{font-size:14px;background:rgba(76,201,240,.1);border:2px solid rgba(76,201,240,.4);border-radius:12px;padding:10px 12px}
+.switches{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;padding:14px 16px;border-top:2px solid var(--line)}
+.sw{display:flex;align-items:center;gap:10px;background:var(--panel2);border:2px solid var(--line);border-radius:14px;padding:10px 12px;cursor:pointer;color:var(--ink);font:700 15px var(--f-display);text-align:left}
+.sw .knob{flex:none;width:46px;height:26px;border-radius:99px;background:#33406e;position:relative;transition:background .2s}
+.sw .knob::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s}
+.sw[aria-pressed="true"]{border-color:var(--c)}
+.sw[aria-pressed="true"] .knob{background:var(--c)}
+.sw[aria-pressed="true"] .knob::after{left:23px}
+.sw small{display:block;font:600 12px var(--f-body);color:var(--muted)}
+.swlab{min-width:0}
+.swhead{padding:10px 16px 0;font:700 13px var(--f-display);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+/* results */
+.modal{position:fixed;inset:0;z-index:40;background:rgba(5,8,20,.85);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px}
+.mcard{width:100%;max-width:640px;background:var(--panel);border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:14px;border:4px solid transparent;background-image:linear-gradient(var(--panel),var(--panel)),linear-gradient(90deg,var(--sun),var(--heat),var(--sky),var(--sea));background-origin:border-box;background-clip:padding-box,border-box}
+.mcard h2{font-family:var(--f-display);font-size:30px;margin:0}
+.field{display:flex;flex-direction:column;gap:4px;font-weight:800}
+.field input{font:600 17px var(--f-body);padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--panel2);color:var(--ink)}
+.err{color:#ffb3c0;font-size:14px;margin:0}
+.who{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:15px}
+.who b{font-family:var(--f-display);font-size:22px;color:var(--sun)}
+.big{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.big div{background:var(--panel2);border-radius:14px;padding:12px 14px}
+.big .k{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}
+.big .v{font-family:var(--f-display);font-size:34px;line-height:1.1}
+.sec{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center;font-size:14px}
+@media (max-width:520px){.sec{grid-template-columns:1fr auto}.sec .rdots{grid-column:1/-1}}
+.rdots{display:flex;flex-wrap:wrap;gap:5px}
+.rdots i{width:16px;height:16px;border-radius:5px;background:var(--panel2);border:2px solid var(--line)}
+.rdots i.g{background:var(--lime);border-color:var(--lime)}
+.rdots i.y{background:var(--sun);border-color:var(--sun)}
+.rdots i.r{background:var(--red);border-color:var(--red)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.turnin{background:linear-gradient(90deg,rgba(124,242,156,.18),rgba(76,201,240,.14));border:3px solid var(--lime);border-radius:16px;padding:14px 16px;font-size:15px}
+.turnin .tt{font-family:var(--f-display);font-weight:700;font-size:22px;color:var(--lime)}
+.turnin ol{margin:8px 0;padding-left:22px;display:flex;flex-direction:column;gap:5px}
+.turnin b{color:var(--sun)}
+.turnin p{margin:0;font-weight:800;color:#ffd0d8}
+.clock{font-family:var(--f-mono);font-size:14px;color:var(--sky)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:50;width:100%;height:100%}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<canvas id="confetti"></canvas>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Grade 8 Science · TEKS 8.10A · STAAR Review</div>
+      <h1>Weather Engine Lab</h1>
+    </div>
+    <div class="score" aria-live="polite">
+      <div>Weather points: <b id="pts">0</b> / <span id="tot">0</span></div>
+      <div class="bar"><i id="ptsBar"></i></div>
+      <button class="btn finish" id="finBtn">Finish ★ See my results</button>
+    </div>
+  </header>
+  <p class="intro">Plan on about 45 minutes. You control the <b>Sun</b>, the <b>ocean</b> (hydrosphere), and the <b>atmosphere</b> with the switches under the scene. Your mission is at the top of each tab. The answers stay <b>locked 🔒</b> until you do every <b>Do this</b> step in order. Each step gets a green ✓ when the simulation shows it happened. Then answer, and click <b>Next mission ▶</b>.</p>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t0" aria-selected="true">1 · Sun Power</button>
+    <button class="tab" role="tab" id="t1" aria-selected="false">2 · Water &amp; Weather</button>
+    <button class="tab" role="tab" id="t2" aria-selected="false">3 · Air on the Move</button>
+    <button class="tab" role="tab" id="t3" aria-selected="false">4 · STAAR Challenge</button>
+  </div>
+
+  <section id="p0"><div class="mbox" id="mA"></div></section>
+  <section id="p1" hidden><div class="mbox" id="mB"></div></section>
+  <section id="p2" hidden><div class="mbox" id="mC"></div></section>
+  <section id="p3" hidden>
+    <div class="mbox" style="border-color:var(--pink)">
+      <div class="task">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="mlabel" style="background:var(--pink)">STAAR Challenge</span>
+          <b style="font-family:var(--f-display);font-size:20px" id="cN">Challenge 1 of 10</b>
+          <div class="dots" id="cDots"></div>
+        </div>
+        <div class="clue" id="cClue"></div>
+        <div class="do"><b>Do this</b><ol>
+          <li><span>1.</span><span>Read the challenge in the pink box.</span></li>
+          <li><span>2.</span><span>Use the switches to build that weather. Some challenges need you to <b>wait</b> and watch the readings change.</span></li>
+          <li><span>3.</span><span>When the scene matches, click <b>Check my setup</b>. If it does not match, read the hint, fix your switches, and check again.</span></li>
+          <li><span>4.</span><span>When you get it right, click <b>Next challenge ▶</b>.</span></li>
+        </ol></div>
+        <div class="fb" id="cFb" hidden></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn go" id="cCheck">Check my setup</button><button class="btn" id="cPrev">◀ Previous</button><button class="btn mnext" id="cNext" disabled>Next challenge ▶</button></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="bench">
+    <div class="simgrid">
+      <div class="screen"><canvas id="sim" height="420" aria-label="Coastal weather scene with land, ocean, sky, and the Sun"></canvas><span class="pill" id="simPill">Coastal town · Day</span></div>
+      <div class="readout">
+        <div><div class="eyebrow">Weather now</div><div class="now" id="rNow">Clear</div></div>
+        <div class="rgrid">
+          <div class="rg"><div class="k">Land temp</div><div class="v" id="rLand">70°F</div></div>
+          <div class="rg"><div class="k">Ocean temp</div><div class="v" id="rSea">68°F</div></div>
+          <div class="rg"><div class="k">Evaporation</div><div class="v" id="rEvap">Low</div><div class="meter"><i id="mEvap" style="background:var(--sky)"></i></div></div>
+          <div class="rg"><div class="k">Humidity</div><div class="v" id="rHum">20%</div><div class="meter"><i id="mHum" style="background:var(--sea)"></i></div></div>
+          <div class="rg"><div class="k">Clouds</div><div class="v" id="rCloud">None</div><div class="meter"><i id="mCloud" style="background:#c9d6f2"></i></div></div>
+          <div class="rg"><div class="k">Precipitation</div><div class="v" id="rRain">None</div></div>
+          <div class="rg" style="grid-column:1/-1"><div class="k">Wind at the beach</div><div class="v" id="rWind">Calm</div></div>
+        </div>
+        <div class="explain" id="rWhy">Flip the switches below to see how the Sun, the ocean, and the air work together to make weather.</div>
+      </div>
+    </div>
+    <div class="swhead">Earth's weather engine</div>
+    <div class="switches">
+      <button class="sw" data-k="sun" style="--c:var(--sun)"><span class="knob"></span><span class="swlab">☀️ Sun<small id="sSun">Night (Sun is down)</small></span></button>
+      <button class="sw" data-k="direct" style="--c:var(--heat)"><span class="knob"></span><span class="swlab">📐 Direct sunlight<small id="sDirect">Angled rays (winter)</small></span></button>
+      <button class="sw" data-k="ocean" style="--c:var(--sea)"><span class="knob"></span><span class="swlab">🌊 Ocean<small id="sOcean">Hydrosphere ON</small></span></button>
+      <button class="sw" data-k="atmo" style="--c:var(--sky)"><span class="knob"></span><span class="swlab">🌍 Atmosphere<small id="sAtmo">Air ON</small></span></button>
+      <button class="sw" data-k="gh" style="--c:var(--pink)"><span class="knob"></span><span class="swlab">🏭 Extra heat-trapping gases<small id="sGh">Normal amount</small></span></button>
+    </div>
+    <div class="swhead">Show me how it works</div>
+    <div class="switches" style="border-top:0">
+      <button class="sw" data-k="showHeat" style="--c:var(--heat)"><span class="knob"></span><span class="swlab">🔥 Show energy<small>Sunlight and heat arrows</small></span></button>
+      <button class="sw" data-k="showWater" style="--c:var(--sky)"><span class="knob"></span><span class="swlab">💧 Show water cycle<small>Evaporation, clouds, rain labels</small></span></button>
+      <button class="sw" data-k="showAir" style="--c:var(--lime)"><span class="knob"></span><span class="swlab">🌀 Show air currents<small>Rising and sinking air</small></span></button>
+      <button class="sw" data-k="fast" style="--c:var(--violet)"><span class="knob"></span><span class="swlab">⏩ Fast forward<small>Time runs 2x faster</small></span></button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="mcard" id="mcard"></div></div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PAL=['#ffc93c','#ff6b4a','#4cc9f0','#3a86ff','#7cf29c','#ff4fa3'];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function hexA(h,a){const n=parseInt(h.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const R=rng(5);
+
+/* ================= WEATHER MODEL ================= */
+const S={sun:false,direct:true,ocean:true,atmo:true,gh:false,showHeat:false,showWater:false,showAir:false,fast:false,
+  land:62,sea:64,H:25,C:0,Rn:0,storm:false,W:0,E:0,stormT:0};
+function targets(){const I=S.direct?1:0.45;let land,sea;
+  if(S.atmo){land=S.sun?(S.ocean?58+32*I:66+40*I):(S.ocean?52:36);sea=S.sun?64+10*I:61;if(S.gh){land+=7;sea+=6;}}
+  else{land=S.sun?110+120*I:-130;sea=S.sun?70+40*I:-40;}
+  if(!S.ocean)sea=land;return {land,sea,I};}
+function step(dt){const {land,sea,I}=targets();
+  const kl=S.atmo?.35:.6;S.land+=(land-S.land)*(1-Math.exp(-kl*dt));
+  const ks=S.ocean?(S.atmo?.05:.08):kl;S.sea+=(sea-S.sea)*(1-Math.exp(-ks*dt));
+  if(!S.atmo){S.E=0;S.H=Math.max(0,S.H-40*dt);S.C=Math.max(0,S.C-40*dt);S.Rn=0;S.storm=false;S.W=0;return;}
+  S.E=(S.ocean?(S.sun?(.4+.6*I):.12)*clamp((S.sea-40)/30,0,1.3):0);
+  const U=Math.max(0,S.land-S.sea)/10;
+  S.H+=(S.E*6-S.H*(S.ocean?.04:.09)-S.Rn*9)*dt;S.H=clamp(S.H,0,100);
+  if(S.H>55)S.C+=((S.H-55)*.08*(.4+U)-S.C*.02-(S.sun?0:.06)*S.C-S.Rn*2.2)*dt;else S.C-=S.C*.09*dt;
+  S.C=clamp(S.C,0,100);
+  S.Rn=S.C>65?(S.C-65)/35:0;
+  const stormNow=S.C>66&&U>1.2&&S.land>84&&S.sun;S.stormT=stormNow?Math.min(3,S.stormT+dt):Math.max(0,S.stormT-dt);S.storm=S.stormT>.5;
+  S.W=S.ocean?clamp((S.land-S.sea)/12,-1.5,1.5):0;}
+const F=t=>`${Math.round(clamp(t,-200,260))}°F`;
+function windWord(){if(!S.atmo)return 'No wind (no air)';if(!S.ocean)return 'Calm';if(S.W>.3)return S.W>.9?'Strong sea breeze →':'Sea breeze →';if(S.W<-.25)return '← Land breeze';return 'Calm';}
+function nowWord(){if(!S.atmo)return S.sun?'No weather · scorching':'No weather · freezing';if(S.storm)return '⛈️ Thunderstorm';if(S.Rn>0)return '🌧️ Rain';
+  if(S.C>45)return '☁️ Cloudy';if(S.C>15)return '⛅ Partly cloudy';if(!S.sun)return '🌙 Clear night';return S.land>85?'☀️ Clear and hot':S.land<70?'☀️ Clear and cool':'☀️ Clear and warm';}
+function whyText(){if(!S.atmo)return 'With no atmosphere there is no air to hold heat, carry water vapor, or move as wind. Temperatures swing to extremes, like on the Moon.';
+  if(S.storm)return 'Lots of energy plus lots of water vapor plus fast-rising warm air over the hot land = a thunderstorm.';
+  if(S.Rn>0)return 'Cloud droplets grew heavy enough to fall as precipitation.';
+  if(S.C>15)return 'Water vapor rose, cooled, and condensed into cloud droplets.';
+  if(!S.ocean)return S.sun?'No ocean means little water to evaporate. The air stays dry, so few clouds form. Land heats up fast.':'No ocean nearby to hold heat, so the dry land cools off quickly at night.';
+  if(!S.sun)return 'The Sun is down. Land loses heat fast, but the ocean cools slowly and stays warmer.';
+  if(S.land-S.sea>3)return 'The Sun heats the land faster than the ocean. This uneven heating makes warm air rise over the land.';
+  return 'Energy from the Sun is warming the land and the ocean.';}
+
+/* ================= DRAW ================= */
+const cv=$('sim');let X=null,W=0,Hh=0;
+function resize(){const w=cv.getBoundingClientRect().width;if(!w)return;const h=Math.round(Math.max(320,Math.min(480,w*.68)));const d=Math.min(2,devicePixelRatio||1);cv.width=w*d;cv.height=h*d;cv.style.height=h+'px';X=cv.getContext('2d');X.setTransform(d,0,0,d,0,0);W=w;Hh=h;}
+const STARS=[...Array(90)].map(()=>({x:R(),y:R()*.6,r:R()*1.2+.3,p:R()*6}));
+const VAP=[...Array(60)].map(()=>({x:R(),y:R(),s:.4+R()*.6}));
+const DROPS=[...Array(80)].map(()=>({x:R(),y:R(),s:.7+R()*.6}));
+const AIR=[...Array(26)].map((_,i)=>({u:i/26}));
+const CL=[...Array(9)].map(()=>({x:R(),y:R(),r:.6+R()*.6}));
+let flash=0;
+function txt(x,s,px,py,col,size,al){x.font=`700 ${size||13}px Fredoka, sans-serif`;x.textAlign=al||'center';x.lineWidth=4;x.strokeStyle='rgba(5,9,20,.85)';x.strokeText(s,px,py);x.fillStyle=col||'#fff';x.fillText(s,px,py);}
+function arrow(x,x1,y1,x2,y2,col,w){const a=Math.atan2(y2-y1,x2-x1);x.strokeStyle=col;x.fillStyle=col;x.lineWidth=w||3;x.beginPath();x.moveTo(x1,y1);x.lineTo(x2-8*Math.cos(a),y2-8*Math.sin(a));x.stroke();x.beginPath();x.moveTo(x2,y2);x.lineTo(x2-12*Math.cos(a-.45),y2-12*Math.sin(a-.45));x.lineTo(x2-12*Math.cos(a+.45),y2-12*Math.sin(a+.45));x.closePath();x.fill();}
+function draw(t){const x=X;if(!x)return;const w=W,h=Hh,gy=h*.74,shore=w*.52;
+  // sky
+  let g=x.createLinearGradient(0,0,0,gy);
+  if(!S.atmo){g.addColorStop(0,'#000');g.addColorStop(1,'#0b0b14');}
+  else if(S.sun){const c=S.storm?['#3c4a66','#6b7a96']:S.C>45?['#7d93b8','#b9c7de']:['#3d9be9','#bfe6ff'];g.addColorStop(0,c[0]);g.addColorStop(1,c[1]);}
+  else{g.addColorStop(0,'#081233');g.addColorStop(1,'#1d2d63');}
+  x.fillStyle=g;x.fillRect(0,0,w,gy);
+  if(!S.atmo||!S.sun)for(const s of STARS){x.fillStyle=`rgba(255,255,255,${reduce?.7:.4+.4*Math.sin(t*1.5+s.p)})`;x.beginPath();x.arc(s.x*w,s.y*gy,s.r,0,7);x.fill();}
+  if(S.atmo){x.strokeStyle='rgba(120,200,255,.35)';x.lineWidth=2;x.setLineDash([6,8]);x.beginPath();x.moveTo(0,h*.08);x.lineTo(w,h*.08);x.stroke();x.setLineDash([]);if(S.showHeat||S.showAir)txt(x,'top of the atmosphere',w-90,h*.08-6,'#bfe6ff',11);}
+  // sun
+  const sx=S.direct?w*.30:w*.06,sy=S.direct?h*.14:h*.42;
+  if(S.sun){const gl=x.createRadialGradient(sx,sy,4,sx,sy,60);gl.addColorStop(0,'rgba(255,240,180,1)');gl.addColorStop(.3,'rgba(255,201,60,.8)');gl.addColorStop(1,'rgba(255,201,60,0)');x.fillStyle=gl;x.beginPath();x.arc(sx,sy,60,0,7);x.fill();x.fillStyle='#fff3c4';x.beginPath();x.arc(sx,sy,18,0,7);x.fill();}
+  else if(S.atmo){x.fillStyle='#e8ecff';x.beginPath();x.arc(w*.82,h*.14,13,0,7);x.fill();x.fillStyle='#081233';x.beginPath();x.arc(w*.82+6,h*.14-3,12,0,7);x.fill();}
+  // ground: land
+  x.fillStyle=S.atmo?'#3f8f4a':'#6b6b72';x.fillRect(0,gy,shore,h-gy);
+  x.fillStyle=S.atmo?'#2f6e38':'#55555c';x.fillRect(0,gy,shore,6);
+  // town
+  for(let i=0;i<4;i++){const hx=w*.06+i*w*.09,hy=gy;x.fillStyle=['#ffd7a8','#f4b6c2','#cde3ff','#fff2b3'][i];x.fillRect(hx,hy-22,26,22);x.fillStyle='#a8483a';x.beginPath();x.moveTo(hx-3,hy-22);x.lineTo(hx+13,hy-34);x.lineTo(hx+29,hy-22);x.fill();}
+  // ocean or sand
+  if(S.ocean){const frozen=S.sea<32;x.fillStyle=frozen?'#dfeefb':'#2f6fd6';x.fillRect(shore,gy,w-shore,h-gy);
+    if(!frozen){x.strokeStyle='rgba(255,255,255,.4)';x.lineWidth=2;for(let i=0;i<4;i++){x.beginPath();for(let xx=shore;xx<=w;xx+=8){const yy=gy+8+i*12+Math.sin(xx*.05+t*2+i)*2;xx===shore?x.moveTo(xx,yy):x.lineTo(xx,yy);}x.stroke();}}
+    else txt(x,'ocean frozen solid',(shore+w)/2,gy+30,'#3a86ff',13);
+    x.fillStyle='#e9d39a';x.beginPath();x.moveTo(shore-30,gy);x.lineTo(shore+18,gy);x.lineTo(shore,h);x.lineTo(shore-50,h);x.fill();}
+  else{x.fillStyle='#e2c27a';x.fillRect(shore,gy,w-shore,h-gy);x.fillStyle='#d1ab5c';for(let i=0;i<5;i++){x.beginPath();x.ellipse(shore+30+i*(w-shore)/5,gy+18+(i%2)*12,40,8,0,0,7);x.fill();}txt(x,'dry sand (no ocean)',(shore+w)/2,gy+48,'#5a3d10',13);}
+  // flag pole at shore shows wind
+  const px=shore-14,py=gy-70;x.strokeStyle='#ddd';x.lineWidth=3;x.beginPath();x.moveTo(px,gy);x.lineTo(px,py);x.stroke();
+  const dir=S.W>.3?-1:S.W<-.25?1:0;const flap=reduce?0:Math.sin(t*8)*3;x.fillStyle='#ff4fa3';x.beginPath();
+  if(dir===0){x.moveTo(px,py);x.lineTo(px+5,py+18);x.lineTo(px-1,py+20);}else{const L=18+Math.min(1.5,Math.abs(S.W))*14;x.moveTo(px,py);x.lineTo(px+dir*L,py+5+flap);x.lineTo(px,py+14);}x.fill();
+  // energy: sunlight beam on land
+  if(S.showHeat&&S.sun){const bw=w*.07;const tx=w*.24;const ang=Math.atan2(gy-sy,tx-sx);const nx=-Math.sin(ang),ny=Math.cos(ang);
+    const half=bw/2;const p1=[sx+nx*half,sy+ny*half],p2=[sx-nx*half,sy-ny*half];
+    const hit=(p)=>{const k=(gy-p[1])/Math.sin(ang);return [p[0]+Math.cos(ang)*k,gy];};const h1=hit(p1),h2=hit(p2);
+    x.fillStyle='rgba(255,220,90,.25)';x.beginPath();x.moveTo(p1[0],p1[1]);x.lineTo(h1[0],h1[1]);x.lineTo(h2[0],h2[1]);x.lineTo(p2[0],p2[1]);x.closePath();x.fill();
+    x.fillStyle=S.direct?'rgba(255,90,40,.75)':'rgba(255,170,60,.55)';x.fillRect(Math.min(h1[0],h2[0]),gy-3,Math.abs(h2[0]-h1[0]),8);
+    txt(x,S.direct?'Direct rays: small area = hotter':'Angled rays: spread out = cooler',w*.18,gy+30,'#fff3c4',12);
+        // rays to ocean
+    arrow(x,sx+20,sy+10,w*.7,gy-6,'rgba(255,220,90,.8)',3);txt(x,'sunlight',w*.55,(sy+gy)/2-6,'#fff3c4',12);}
+  if(S.showHeat){ // infrared heat rising from ground
+    const nArrows=6;for(let i=0;i<nArrows;i++){const bx=w*(.08+i*.16);const ph=reduce?.5:((t*.6+i*.17)%1);const y0=gy-6,ytop=h*.1;const yy=y0-(y0-ytop)*ph;
+      const trapped=S.atmo&&(i%3!==0||(S.gh&&i%2===0));
+      x.strokeStyle='rgba(255,107,74,.85)';x.lineWidth=2.5;x.beginPath();for(let k=0;k<=20;k++){const yk=y0-(y0-yy)*k/20;const xk=bx+Math.sin(k*.9+t*4)*4;k?x.lineTo(xk,yk):x.moveTo(xk,yk);}x.stroke();
+      if(trapped&&ph>.75){arrow(x,bx+8,h*.13,bx+14,h*.3,'rgba(255,140,90,.9)',2.5);}
+    }
+    txt(x,S.atmo?(S.gh?'Heat rises… MORE of it is trapped and sent back down':'Heat rises… the atmosphere traps some of it like a blanket'):'Heat rises… and escapes straight to space',w*.5,h*.06+14,'#ffb39e',12);}
+  // evaporation particles
+  if(S.atmo&&S.ocean&&S.E>.02){const n=Math.round(VAP.length*clamp(S.E,0,1.2)/1.2);for(let i=0;i<n;i++){const v=VAP[i];const yy=gy-((v.y+t*.08*v.s*(S.fast?2:1))%1)*gy*.6;const xx=shore+v.x*(w-shore);x.fillStyle=`rgba(180,225,255,${.7*(1-(gy-yy)/(gy*.6))})`;x.beginPath();x.arc(xx+Math.sin(t*2+i)*3,yy,2.2,0,7);x.fill();}
+    if(S.showWater)txt(x,'Evaporation: water vapor rises ↑',(shore+w)/2,gy-44,'#dff3ff',12);}
+  // clouds over land
+  if(S.atmo&&S.C>3){const a=clamp(S.C/100,0,1);const col=S.storm?'#4b5470':S.Rn>0?'#8c97b0':'#f4f7ff';for(const c of CL){const cx=w*(.04+c.x*.48),cy=h*(.16+c.y*.12),r=(18+30*a)*c.r;x.fillStyle=hexA(col,.35+.55*a);x.beginPath();x.arc(cx,cy,r,0,7);x.arc(cx+r*.8,cy+4,r*.8,0,7);x.arc(cx-r*.8,cy+6,r*.7,0,7);x.fill();}
+    if(S.showWater)txt(x,'Condensation: vapor cools into clouds',w*.26,h*.36,'#ffffff',12);}
+  // rain
+  if(S.atmo&&S.Rn>0){x.strokeStyle='rgba(170,210,255,.8)';x.lineWidth=1.5;const n=Math.round(DROPS.length*clamp(S.Rn,.2,1));for(let i=0;i<n;i++){const d=DROPS[i];const xx=w*(.02+d.x*.5),yy=h*.22+((d.y+t*1.6*d.s)%1)*(gy-h*.22);x.beginPath();x.moveTo(xx,yy);x.lineTo(xx-3,yy+10);x.stroke();}
+    if(S.showWater)txt(x,'Precipitation: rain falls',w*.26,gy-46,'#dff3ff',12);}
+  if(S.storm&&!reduce){if(Math.random()<.015)flash=1;if(flash>0){x.fillStyle=`rgba(255,255,255,${flash*.5})`;x.fillRect(0,0,w,gy);x.strokeStyle=`rgba(255,240,150,${flash})`;x.lineWidth=3;x.beginPath();let lx=w*.2,ly=h*.25;x.moveTo(lx,ly);for(let i=0;i<5;i++){lx+=(Math.random()-.5)*30;ly+=(gy-h*.25)/5;x.lineTo(lx,ly);}x.stroke();flash-=.08;}}
+  // air currents
+  if(S.showAir&&S.atmo&&S.ocean&&Math.abs(S.W)>.12){const s=Math.sign(S.W);const lx=w*.24,rx=w*.78,top=h*.2,bot=gy-16;
+    // loop path: surface (sea->land when s>0), rise over land, top (land->sea), sink over sea
+    const pts=s>0?[[rx,bot],[lx,bot],[lx,top],[rx,top]]:[[lx,bot],[rx,bot],[rx,top],[lx,top]];
+    x.strokeStyle='rgba(124,242,156,.35)';x.lineWidth=3;x.setLineDash([8,8]);x.beginPath();x.moveTo(...pts[0]);for(let i=1;i<4;i++)x.lineTo(...pts[i]);x.closePath();x.stroke();x.setLineDash([]);
+    const spd=Math.min(1.5,Math.abs(S.W));for(const a of AIR){const u=reduce?a.u:(a.u+t*.06*spd)%1;const seg=Math.floor(u*4),f=u*4-seg;const A=pts[seg],B=pts[(seg+1)%4];const ax=A[0]+(B[0]-A[0])*f,ay=A[1]+(B[1]-A[1])*f;const ang=Math.atan2(B[1]-A[1],B[0]-A[0]);
+      x.fillStyle='#7cf29c';x.beginPath();x.moveTo(ax+8*Math.cos(ang),ay+8*Math.sin(ang));x.lineTo(ax-6*Math.cos(ang-.6),ay-6*Math.sin(ang-.6));x.lineTo(ax-6*Math.cos(ang+.6),ay-6*Math.sin(ang+.6));x.fill();}
+    const warmX=s>0?lx:rx,coolX=s>0?rx:lx;txt(x,'warm air RISES ↑',warmX,(top+bot)/2,'#c8ffd6',12);txt(x,'cool air SINKS ↓',coolX,(top+bot)/2,'#c8ffd6',12);
+    txt(x,s>0?'Sea breeze: cool ocean air flows to the land →':'← Land breeze: cool land air flows to the sea',w*.5,bot-8,'#7cf29c',12);}
+  // thermometers
+  const therm=(cx,temp,label)=>{const top=gy+10,bh=h-gy-24;x.fillStyle='rgba(5,9,20,.75)';x.beginPath();x.roundRect(cx-34,top-4,68,bh+10,10);x.fill();
+    const f=clamp((temp+40)/160,0,1);x.fillStyle='#24305a';x.fillRect(cx-22,top+4,8,bh-14);x.fillStyle=temp>85?'#ff5470':temp>65?'#ffc93c':temp>32?'#4cc9f0':'#c9d6ff';x.fillRect(cx-22,top+4+(bh-14)*(1-f),8,(bh-14)*f);
+    x.beginPath();x.arc(cx-18,top+bh-6,7,0,7);x.fill();x.font='700 15px Fredoka, sans-serif';x.textAlign='left';x.fillStyle='#fff';x.fillText(F(temp),cx-8,top+bh/2+2);x.font='700 11px Nunito, sans-serif';x.fillStyle='#a9b8e6';x.fillText(label,cx-8,top+bh/2+16);};
+  therm(w*.40,S.land,'LAND');therm(w*.88,S.ocean?S.sea:S.land,S.ocean?'OCEAN':'SAND');
+}
+
+/* ================= SWITCHES ================= */
+const SWS=[...document.querySelectorAll('.sw')];
+function syncSwitches(){SWS.forEach(b=>b.setAttribute('aria-pressed',!!S[b.dataset.k]));
+  $('sSun').textContent=S.sun?'Day (Sun is shining)':'Night (Sun is down)';$('sDirect').textContent=S.direct?'Direct rays (summer)':'Angled rays (winter)';
+  $('sOcean').textContent=S.ocean?'Hydrosphere ON':'No ocean (dry land)';$('sAtmo').textContent=S.atmo?'Air ON':'No air at all';$('sGh').textContent=S.gh?'Extra gases added':'Normal amount';
+  $('simPill').textContent=`Coastal town · ${S.sun?'Day':'Night'}${S.direct?'':' · Winter sun'}`;}
+SWS.forEach(b=>b.onclick=()=>{const k=b.dataset.k;S[k]=!S[k];if(k==='ocean'&&S.ocean)S.sea=targets().sea;syncSwitches();});
+function readouts(){$('rLand').textContent=F(S.land);$('rSea').textContent=S.ocean?F(S.sea):'—';
+  const ev=S.E>.6?'High':S.E>.2?'Medium':S.E>.02?'Low':'None';$('rEvap').textContent=ev;$('mEvap').style.width=clamp(S.E/1.2,0,1)*100+'%';
+  $('rHum').textContent=Math.round(S.H)+'%';$('mHum').style.width=S.H+'%';
+  $('rCloud').textContent=S.C>65?'Thick':S.C>45?'Cloudy':S.C>15?'Some':'None';$('mCloud').style.width=S.C+'%';
+  $('rRain').textContent=S.storm?'Thunderstorm':S.Rn>0?'Rain':'None';$('rWind').textContent=windWord();$('rNow').textContent=nowWord();$('rWhy').textContent=whyText();}
+
+/* ================= POINTS & CONFETTI ================= */
+const earned=new Set(),tried=new Set(),firstTry=new Set();let TOTAL=0;var NAV={};
+function attempt(id,ok){if(tried.has(id))return;tried.add(id);if(ok)firstTry.add(id);}
+function award(id){if(earned.has(id))return;earned.add(id);$('pts').textContent=earned.size;$('ptsBar').style.width=(earned.size/TOTAL*100)+'%';Object.values(NAV).forEach(f=>f());
+  if(earned.size===TOTAL)setTimeout(()=>{for(let i=0;i<6;i++)setTimeout(()=>burst(innerWidth*(.15+.7*Math.random()),innerHeight*.4),i*220);},300);}
+const cf=$('confetti'),cx2=cf.getContext('2d');let parts=[];
+function sizeCF(){const d=devicePixelRatio||1;cf.width=innerWidth*d;cf.height=innerHeight*d;cx2.setTransform(d,0,0,d,0,0);}
+function burst(x,y){if(reduce)return;for(let i=0;i<70;i++)parts.push({x,y,vx:(Math.random()-.5)*10,vy:-Math.random()*10-3,life:1,c:PAL[i%PAL.length],s:5+Math.random()*6,rot:Math.random()*6,vr:(Math.random()-.5)*.4});}
+function drawCF(){cx2.clearRect(0,0,innerWidth,innerHeight);parts=parts.filter(p=>p.life>0);for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.rot+=p.vr;p.life-=.012;cx2.save();cx2.globalAlpha=Math.max(0,p.life);cx2.translate(p.x,p.y);cx2.rotate(p.rot);cx2.fillStyle=p.c;cx2.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cx2.restore();}}
+
+/* ================= MISSIONS ================= */
+const B=s=>`<b>${s}</b>`;
+const on=k=>()=>S[k], off=k=>()=>!S[k];
+const all=(...f)=>()=>f.every(g=>g());
+const MA=[
+ {t:'Where does weather get its energy?',steps:[[`Turn the ${B('☀️ Sun')} switch ON.`,on('sun')],[`Turn ${B('🔥 Show energy')} ON and watch the arrows.`,on('showHeat')],[`Wait until the land thermometer reaches ${B('75°F')}.`,()=>S.land>=75]],q:'What is the main source of the energy that drives Earth\'s weather?',o:['The Moon','The Sun','Volcanoes','The ocean floor'],a:1,right:'Energy from the Sun heats the land, water, and air. That energy powers all weather.',hint:'Where do the yellow sunlight arrows come from?'},
+ {t:'Land heats up fast',steps:[[`Make sure the ${B('☀️ Sun')}, ${B('🌊 Ocean')}, and ${B('🌍 Atmosphere')} are all ON.`,all(on('sun'),on('ocean'),on('atmo'))],[`Make sure ${B('📐 Direct sunlight')} is ON.`,on('direct')],[`Watch both thermometers. Wait until the land reaches ${B('85°F')}.`,()=>S.land>=85&&S.ocean&&S.atmo]],q:'In the sunlight, which heats up FASTER?',o:['The ocean','The land','They heat at exactly the same speed','Neither one heats up'],a:1,right:'Land heats up much faster than water. Water takes a lot more energy to warm up.',hint:'Compare the two thermometers. Which number went up quickly?'},
+ {t:'The ocean holds its heat',steps:[[`Start in the daytime: ${B('☀️ Sun')} ON, ${B('🌊 Ocean')} ON, ${B('🌍 Atmosphere')} ON.`,all(on('sun'),on('ocean'),on('atmo'))],[`Now turn the ${B('☀️ Sun')} OFF (night).`,off('sun')],[`Wait until the land is COOLER than the ocean.`,()=>!S.sun&&S.ocean&&S.atmo&&S.land<S.sea-2]],q:'At night, which stays warmer?',o:['The land, because it heated up faster','The ocean, because water cools down slowly','They are always the same temperature','Neither, both freeze'],a:1,right:'Water heats AND cools slowly. The ocean holds its heat at night, while the land cools off fast.',hint:'Look at the two thermometers at night.'},
+ {t:'Uneven heating',steps:[[`Turn the ${B('☀️ Sun')} ON with ${B('📐 Direct sunlight')}, ocean, and atmosphere ON.`,all(on('sun'),on('direct'),on('ocean'),on('atmo'))],[`Wait until the land is at least ${B('10°F warmer')} than the ocean.`,()=>S.sun&&S.ocean&&S.land-S.sea>=10]],q:'What is "uneven heating"?',o:['The Sun only shines on the ocean','The Sun warms different surfaces, like land and water, by different amounts','The Sun heats everything to the same temperature','Heat that comes from inside Earth'],a:1,right:'The Sun warms land and water by different amounts. This uneven heating is what gets air moving and starts weather.',hint:'The same sunlight hit both, but the temperatures are different.'},
+ {t:'Direct vs. angled sunlight',steps:[[`Turn ON ${B('☀️ Sun')} and ${B('🔥 Show energy')}.`,all(on('sun'),on('showHeat'))],[`With ${B('📐 Direct sunlight')} ON, look at the size of the bright red patch where the beam hits the land.`,on('direct')],[`Now turn ${B('📐 Direct sunlight')} OFF (angled rays). Look at the patch again.`,off('direct')]],q:'Why does angled sunlight heat the ground LESS than direct sunlight?',o:['Angled sunlight has no energy','The same energy is spread out over a bigger area','Angled sunlight is a different color','The Sun is closer in winter'],a:1,right:'Angled rays spread the same energy over more ground, so each spot gets less energy. That is why winter and places far from the equator are cooler.',hint:'Compare how wide the bright patch was each time.'},
+ {t:'Winter sun',steps:[[`Turn the ${B('☀️ Sun')} ON and ${B('📐 Direct sunlight')} OFF.`,all(on('sun'),off('direct'))],[`Wait until the land temperature drops below ${B('76°F')}.`,()=>S.sun&&!S.direct&&S.land<76]],q:'Which place gets the most direct sunlight all year and is usually warmest?',o:['Near the North Pole','Near the equator','Near the South Pole','On top of the clouds'],a:1,right:'The equator gets the most direct sunlight, so it receives the most energy per area and stays warm.',hint:'Direct rays = more energy on each spot. Where on Earth is the Sun most directly overhead?'},
+ {t:'A planet with no air',steps:[[`Turn the ${B('🌍 Atmosphere')} OFF.`,off('atmo')],[`Turn the ${B('☀️ Sun')} ON and wait until the land is above ${B('150°F')}.`,()=>!S.atmo&&S.sun&&S.land>150],[`Now turn the ${B('☀️ Sun')} OFF and wait until the land is below ${B('0°F')}.`,()=>!S.atmo&&!S.sun&&S.land<0]],q:'With NO atmosphere, what happens to temperatures?',o:['They stay about the same day and night','They swing to extremes: very hot in the day and very cold at night','It is always warm','It rains more'],a:1,right:'Without air to hold and spread heat, temperatures swing to extremes, just like on the Moon.',hint:'Compare the day and night land temperatures you saw.'},
+ {t:'The atmosphere is a blanket',steps:[[`Turn the ${B('🌍 Atmosphere')} back ON and turn ON ${B('🔥 Show energy')}.`,all(on('atmo'),on('showHeat'))],[`Turn the ${B('☀️ Sun')} OFF. Watch the red heat arrows go up.`,()=>S.atmo&&!S.sun],[`Keep the ocean ON. Wait until the land settles near ${B('52°F')} (between 50 and 56).`,()=>S.atmo&&!S.sun&&S.ocean&&S.land<56&&S.land>50]],q:'How does the atmosphere affect temperatures at night?',o:['It lets all the heat escape, so nights are freezing','It traps some heat like a blanket, so nights stay mild','It makes nights hotter than days','It has no effect'],a:1,right:'The atmosphere traps some heat and sends it back down, keeping nights much warmer than on a planet with no air.',hint:'Some red arrows turned back down. What does that do to the ground?'},
+ {t:'Heat-trapping gases and climate',steps:[[`Turn ${B('☀️ Sun')}, ${B('🌍 Atmosphere')}, and ${B('🔥 Show energy')} ON. Read the land temperature.`,all(on('sun'),on('atmo'),on('showHeat'))],[`Turn ${B('🏭 Extra heat-trapping gases')} ON.`,on('gh')],[`Wait until the land temperature goes UP by a few degrees (above ${B('94°F')} with direct sun, or ${B('78°F')} with angled sun).`,()=>S.gh&&S.atmo&&S.sun&&S.land>(S.direct?94:78)]],q:'What happens when the atmosphere has MORE heat-trapping gases?',o:['More heat is trapped, so average temperatures rise','Less heat is trapped, so it gets colder','The Sun gives off less energy','The ocean disappears'],a:0,right:'More heat-trapping gases send more heat back to the surface, which raises average temperatures. That changes climate over time.',hint:'Watch the red arrows that turn back down, and the thermometer.'},
+ {type:'order',t:'Order the weather engine',how:['Put the steps in order, from FIRST to LAST.','Click a card to move it into the dashed box.',`If you make a mistake, click ${B('Start over')}.`],order:['The Sun gives off energy','Land and water absorb the energy','The surface heats the air above it','Warm air rises and cool air sinks','Wind blows and clouds form'],done:'Sun → land and water absorb energy → air heats up → warm air rises → wind and clouds!',miss:'Think about where the energy starts and how it moves.'},
+];
+const MB=[
+ {t:'Evaporation',steps:[[`Turn ${B('☀️ Sun')}, ${B('🌊 Ocean')}, and ${B('🌍 Atmosphere')} ON.`,all(on('sun'),on('ocean'),on('atmo'))],[`Turn ${B('💧 Show water cycle')} ON.`,on('showWater')],[`Wait until the ${B('Evaporation')} reading says Medium or High.`,()=>S.E>.2]],q:'What makes ocean water evaporate into water vapor?',o:['Wind pushing on the water','Energy from the Sun heating the water','Fish swimming','Cold air sinking'],a:1,right:'Energy from the Sun heats the water, and water molecules escape into the air as water vapor.',hint:'What switch made the blue dots start rising?'},
+ {t:'Evaporation at night',steps:[[`Start with the Sun ON and evaporation Medium or High.`,()=>S.sun&&S.E>.2],[`Turn the ${B('☀️ Sun')} OFF.`,off('sun')],[`Wait until ${B('Evaporation')} says Low.`,()=>!S.sun&&S.E<.2&&S.E>0]],q:'What happens to evaporation at night?',o:['It speeds up','It slows down because there is less energy from the Sun','It stops forever','It turns into rain'],a:1,right:'Less energy means fewer water molecules escape, so evaporation slows down.',hint:'Watch the Evaporation meter and the blue dots.'},
+ {t:'Humidity builds',steps:[[`Turn the ${B('☀️ Sun')} ON with ocean and atmosphere ON.`,all(on('sun'),on('ocean'),on('atmo'))],[`Wait until ${B('Humidity')} reaches ${B('60%')}.`,()=>S.H>=60]],q:'What does humidity measure?',o:['How hot the ground is','The amount of water vapor in the air','How fast the wind blows','How deep the ocean is'],a:1,right:'Humidity is the amount of water vapor in the air. Evaporation adds water vapor.',hint:'Humidity went up as more water evaporated.'},
+ {t:'Clouds form',steps:[[`Keep the ${B('☀️ Sun')}, ocean, and atmosphere ON with ${B('💧 Show water cycle')} ON.`,all(on('sun'),on('ocean'),on('atmo'),on('showWater'))],[`Wait until ${B('Clouds')} says Cloudy or Thick.`,()=>S.C>45]],q:'How do clouds form?',o:['Smoke from the town rises','Water vapor rises, cools, and condenses into tiny droplets','The ocean splashes into the sky','The Sun makes clouds out of light'],a:1,right:'Rising water vapor cools and condenses into tiny water droplets. Billions of droplets make a cloud.',hint:'Read the label next to the clouds.'},
+ {t:'Make it rain',steps:[[`Keep the Sun, ocean, and atmosphere ON.`,all(on('sun'),on('ocean'),on('atmo'))],[`Wait until ${B('Precipitation')} says Rain or Thunderstorm.`,()=>S.Rn>0]],q:'Why does rain fall from a cloud?',o:['The cloud gets too warm','Cloud droplets join together and get too heavy to stay up','The wind pushes it down','The Sun pushes it down'],a:1,right:'Cloud droplets bump together and grow. When they get too heavy, they fall as precipitation.',hint:'Read the explanation box after the rain starts.'},
+ {t:'Where do clouds form?',steps:[[`Turn ${B('🌀 Show air currents')} ON with the Sun, ocean, and atmosphere ON.`,all(on('showAir'),on('sun'),on('ocean'),on('atmo'))],[`Wait until there are clouds, and look at where the air is RISING.`,()=>S.C>30&&S.W>.3]],q:'During a sunny day, where do the clouds form in this scene?',o:['Over the ocean, where air sinks','Over the warm land, where warm, moist air rises and cools','Under the ground','Only at night'],a:1,right:'Air rises over the warm land. As it rises it cools, and the water vapor condenses into clouds.',hint:'Find the "warm air RISES" label.'},
+ {t:'No ocean = desert',steps:[[`Turn the ${B('🌊 Ocean')} OFF. Keep the Sun and atmosphere ON.`,all(off('ocean'),on('sun'),on('atmo'))],[`Wait until ${B('Humidity')} drops below ${B('15%')}.`,()=>!S.ocean&&S.H<15]],q:'What kind of climate does a place far from water usually have?',o:['Wet and rainy','Dry, with few clouds and hot days','Always foggy','Always snowy'],a:1,right:'With little water to evaporate, the air stays dry. Few clouds form, so days get very hot. That is a desert climate.',hint:'Look at the humidity and the clouds with no ocean.'},
+ {t:'The ocean keeps coasts mild',steps:[[`With the ${B('🌊 Ocean')} OFF, turn the ${B('☀️ Sun')} OFF. Wait until the land is below ${B('42°F')}.`,()=>!S.ocean&&!S.sun&&S.atmo&&S.land<42],[`Turn the ${B('🌊 Ocean')} back ON. Wait until the land is above ${B('48°F')}.`,()=>S.ocean&&!S.sun&&S.atmo&&S.land>48]],q:'Why do places near the ocean have milder temperatures?',o:['The ocean heats and cools slowly, so it keeps nearby land from getting very hot or very cold','The ocean makes its own sunlight','The ocean blocks the wind','Ocean water is always boiling'],a:0,right:'Water heats and cools slowly, so oceans keep coastal temperatures milder all year.',hint:'Compare the night temperature with and without the ocean.'},
+ {t:'Thunderstorm!',steps:[[`Turn ON the ${B('☀️ Sun')}, ${B('📐 Direct sunlight')}, ${B('🌊 Ocean')}, and ${B('🌍 Atmosphere')}.`,all(on('sun'),on('direct'),on('ocean'),on('atmo'))],[`Wait until the scene shows a ${B('Thunderstorm')}. (Turn on ⏩ Fast forward if you want.)`,()=>S.storm]],q:'Which ingredients made the thunderstorm?',o:['Cold land and dry air','Lots of energy, lots of water vapor, and fast-rising warm air','No sunlight at all','Only wind'],a:1,right:'Strong heating, plenty of water vapor from the ocean, and fast-rising warm air build tall storm clouds.',hint:'What three switches did you need ON?'},
+ {t:'Water needs air',steps:[[`Turn the ${B('🌍 Atmosphere')} OFF.`,off('atmo')],[`Wait until ${B('Humidity')} reaches 0% and there are no clouds.`,()=>!S.atmo&&S.H<1&&S.C<1]],q:'Why are there no clouds or rain without an atmosphere?',o:['There is no air to hold water vapor and form clouds','The ocean stops existing','The Sun stops shining','Clouds are made of air only'],a:0,right:'Clouds and rain need air to carry water vapor up, cool it, and form droplets. No air means no weather.',hint:'Look at the humidity reading.'},
+];
+const MC=[
+ {t:'Warm air rises',steps:[[`Turn the ${B('☀️ Sun')}, ocean, and atmosphere ON.`,all(on('sun'),on('ocean'),on('atmo'))],[`Turn ${B('🌀 Show air currents')} ON.`,on('showAir')],[`Wait until the green arrows are moving.`,()=>S.showAir&&Math.abs(S.W)>.2]],q:'What does the air over the warm land do?',o:['It sinks because it is heavy','It rises because warm air is less dense','It stays perfectly still','It turns into water'],a:1,right:'Warm air is less dense, so it rises. Cooler, denser air sinks.',hint:'Read the label over the land.'},
+ {t:'Sea breeze',steps:[[`Turn the ${B('☀️ Sun')} ON (daytime) with ocean and atmosphere ON.`,all(on('sun'),on('ocean'),on('atmo'))],[`Wait until the ${B('Wind at the beach')} reading says Sea breeze.`,()=>S.W>.3],`Look at which way the pink flag points.`],q:'During a sunny day, which way does the wind blow at the beach?',o:['From the land toward the ocean','From the ocean toward the land','Straight up','There is never wind in the day'],a:1,right:'In the day the land is warmer. Warm air rises over the land, and cooler ocean air flows in to replace it. That is a sea breeze.',hint:'Which way is the flag blowing?'},
+ {t:'Land breeze',steps:[[`Turn the ${B('☀️ Sun')} OFF (night) with ocean and atmosphere ON.`,all(off('sun'),on('ocean'),on('atmo'))],[`Wait until the wind says ${B('Land breeze')}.`,()=>S.W<-.25]],q:'At night, which way does the wind blow at the beach?',o:['From the land toward the ocean','From the ocean toward the land','It always blows from the ocean','Straight down'],a:0,right:'At night the land is cooler than the ocean. Air rises over the warmer ocean, and cool land air flows out to sea. That is a land breeze.',hint:'Compare the thermometers. Which is warmer at night?'},
+ {t:'What causes wind?',steps:[[`Make a ${B('sea breeze')} (Sun ON).`,()=>S.W>.3],[`Then make a ${B('land breeze')} (Sun OFF).`,()=>S.W<-.25]],q:'What is the main cause of wind?',o:['Trees waving','Uneven heating makes differences in air temperature and pressure, so air moves','The Moon pulling the air','Waves pushing the air'],a:1,right:'Uneven heating creates warm, low-pressure air and cool, high-pressure air. Air flows from high to low pressure. That flow is wind.',hint:'The wind flipped when the temperatures flipped.'},
+ {t:'Convection current',steps:[[`Turn ${B('🌀 Show air currents')} ON in the daytime.`,()=>S.showAir&&S.sun&&S.W>.3],`Follow one green arrow all the way around the loop.`],q:'What is the loop of rising warm air and sinking cool air called?',o:['A convection current','An eclipse','A tide','An ocean wave'],a:0,right:'A convection current is the loop of warm air rising and cool air sinking. It moves heat and makes wind.',hint:'It is a loop that moves heat through a fluid like air.'},
+ {t:'Winter breeze',steps:[[`Daytime with ocean and atmosphere ON: turn ${B('📐 Direct sunlight')} OFF.`,all(on('sun'),off('direct'),on('ocean'),on('atmo'))],[`Wait until the land is below ${B('76°F')} and read the wind.`,()=>S.sun&&!S.direct&&S.land<76]],q:'Why is the sea breeze weaker with angled (winter) sunlight?',o:['The ocean disappears in winter','The land and ocean temperatures are closer together, so there is less uneven heating','Winter has no air','The Sun is hotter in winter'],a:1,right:'With angled rays the land does not get much warmer than the ocean. Smaller temperature difference = weaker wind.',hint:'Compare the two thermometers now.'},
+ {t:'No air, no wind',steps:[[`Turn the ${B('🌍 Atmosphere')} OFF.`,off('atmo')],[`Turn ${B('🌀 Show air currents')} ON and read the wind.`,()=>!S.atmo&&S.showAir]],q:'Why is there no wind without an atmosphere?',o:['Wind is moving air, and there is no air to move','The Sun stops shining','The ocean blocks it','Wind only happens at night'],a:0,right:'Wind is air in motion. No atmosphere means no air, so there is no wind and no weather.',hint:'What is wind made of?'},
+ {t:'Clear skies over the water',steps:[[`Daytime with ${B('🌀 Show air currents')} ON and a sea breeze blowing.`,()=>S.showAir&&S.sun&&S.W>.3],`Look at what the air does over the ocean.`],q:'Why are skies often clear over the cooler ocean on a sunny afternoon?',o:['Cool air sinks there, so air is not rising to make clouds','The ocean absorbs all the clouds','There is no water there','The Sun does not shine on the ocean'],a:0,right:'Over the cooler ocean, air sinks. Sinking air warms and dries, so clouds do not form there.',hint:'Read the label over the ocean.'},
+ {t:'Weather vs. climate',steps:[[`Run a sunny afternoon until there are ${B('clouds')}.`,()=>S.sun&&S.C>30],[`Turn the ${B('☀️ Sun')} OFF and wait for a ${B('land breeze')}.`,()=>!S.sun&&S.W<-.25]],q:'You just watched the weather change in one day. What is the difference between weather and climate?',o:['They mean the same thing','Weather is the conditions right now; climate is the average weather of a place over many years','Climate changes every hour','Weather only happens in summer'],a:1,right:'Weather changes hour to hour. Climate is the long-term average weather pattern of a place.',hint:'One is short-term, one is long-term.'},
+ {t:'Thinking bigger',steps:[[`Turn ${B('📐 Direct sunlight')} ON (like the equator) with the Sun ON.`,()=>S.sun&&S.direct],[`Now turn it OFF (like the poles) and wait for the land to cool below ${B('76°F')}.`,()=>S.sun&&!S.direct&&S.land<76]],q:'The equator gets direct sunlight and the poles get angled sunlight. What does this uneven heating do on a GLOBAL scale?',o:['Nothing','It drives global winds and ocean currents that move heat from the equator toward the poles','It stops all weather','It makes the poles hotter than the equator'],a:1,right:'Just like the beach, uneven heating of the whole Earth drives global winds and ocean currents that carry heat toward the poles.',hint:'The beach breeze is a small version of the same process.'},
+];
+function mcHTML(m,id){return `<div class="mission" id="${id}" hidden><div class="mcols"><div><h3>${m.t}</h3>
+  <div class="do"><b>Do this</b><ol>${m.steps.map((s,i)=>Array.isArray(s)?`<li class="need" data-i="${i}"><span class="ck"></span><span>${s[0]}</span></li>`:`<li><span class="ck" style="border-style:dashed"></span><span>${s}</span></li>`).join('')}</ol></div></div>
+  <div><p class="q"><span>Answer</span>${m.q}</p><div class="lock">🔒 The answers unlock when every <b>Do this</b> step has a green ✓. Do the steps in order using the switches below.</div>
+  <div class="opts">${m.o.map((o,i)=>`<button class="opt" data-i="${i}">${'ABCD'[i]}. ${o}</button>`).join('')}</div><div class="fb" hidden></div></div></div></div>`;}
+function orderHTML(m,id){return `<div class="mission" id="${id}" hidden><div class="mcols"><div><h3>${m.t}</h3>
+  <div class="do"><b>Do this</b><ol>${m.how.map((s,i)=>`<li><span>${i+1}.</span><span>${s}</span></li>`).join('')}</ol></div></div>
+  <div><div class="pool"></div><div class="slots"></div><div style="display:flex;gap:8px"><button class="btn reset">Start over</button></div><div class="fb" hidden></div></div></div></div>`;}
+function wireMC(el,m,id){const fb=el.querySelector('.fb');el.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;fb.hidden=false;attempt(id,i===m.a);
+  if(i===m.a){b.classList.add('right');el.querySelectorAll('.opt').forEach(x=>x.disabled=true);fb.className='fb good';fb.innerHTML=`<b>Correct!</b> ${m.right}`;award(id);const r=b.getBoundingClientRect();burst(r.left+r.width/2,r.top);}
+  else{b.classList.add('wrong');b.disabled=true;fb.className='fb bad';fb.innerHTML=`<b>Not quite.</b> Hint: ${m.hint}`;}});}
+function shuffle(a){let s;do{s=a.slice().sort(()=>Math.random()-.5);}while(s.join()===a.join());return s;}
+function wireOrder(el,m,id){const pool=el.querySelector('.pool'),slots=el.querySelector('.slots'),fb=el.querySelector('.fb');let picked=[];
+  function render(){pool.innerHTML='';slots.innerHTML=picked.length?'':'<span class="empty">Your order will appear here…</span>';
+    m._sh.forEach(s=>{if(picked.includes(s))return;const b=document.createElement('button');b.className='card-s';b.textContent=s;b.onclick=()=>{picked.push(s);render();check();};pool.appendChild(b);});
+    picked.forEach((s,i)=>{const d=document.createElement('span');d.className='card-s';d.textContent=(i+1)+'. '+s;if(picked.length===m.order.length)d.classList.add(s===m.order[i]?'ok':'no');slots.appendChild(d);});}
+  function check(){if(picked.length<m.order.length)return;fb.hidden=false;const ok=picked.join()===m.order.join();attempt(id,ok);
+    if(ok){fb.className='fb good';fb.innerHTML=`<b>Correct!</b> ${m.done}`;award(id);const r=slots.getBoundingClientRect();burst(r.left+r.width/2,r.top);}
+    else{fb.className='fb bad';fb.innerHTML=`<b>Not quite.</b> The red cards are in the wrong spot. Click <b>Start over</b> and try again. ${m.miss}`;}}
+  el.querySelector('.reset').onclick=()=>{if(earned.has(id))return;picked=[];fb.hidden=true;render();};m._sh=shuffle(m.order);render();}
+const LATCH={};const BOXES=[];
+function lockSync(el,m,id){if(m.type==='order')return;const L=LATCH[id]||(LATCH[id]=new Set());const req=m.steps.map((s,i)=>[s,i]).filter(([s])=>Array.isArray(s));
+  let ok=true;for(const [s,i] of req){const li=el.querySelector(`li[data-i="${i}"]`);const done=L.has(i);li.classList.toggle('ok',done);li.classList.toggle('next',!done&&ok);if(!done)ok=false;}
+  el.querySelector('.lock').hidden=ok||earned.has(id);if(!earned.has(id))el.querySelectorAll('.opt').forEach(b=>{if(!b.classList.contains('wrong'))b.disabled=!ok;});}
+function build(list,box,prefix,col,label,tabIdx){
+  box.innerHTML=`<div class="mnav"><span class="mlabel" style="background:${col}">${label}</span><b class="mcount"></b><div class="mdots"></div><span class="sep"></span>
+    <button class="btn mprev">◀ Previous</button><button class="btn mnext">Next mission ▶</button></div>`+list.map((m,i)=>m.type==='order'?orderHTML(m,prefix+i):mcHTML(m,prefix+i)).join('');
+  list.forEach((m,i)=>{const el=$(prefix+i);m.type==='order'?wireOrder(el,m,prefix+i):wireMC(el,m,prefix+i);});
+  const st={cur:0};const prev=box.querySelector('.mprev'),next=box.querySelector('.mnext'),dots=box.querySelector('.mdots');
+  function update(){list.forEach((m,i)=>{$(prefix+i).hidden=i!==st.cur;});const done=earned.has(prefix+st.cur),last=st.cur===list.length-1;
+    box.querySelector('.mcount').textContent=`Mission ${st.cur+1} of ${list.length}`;
+    dots.innerHTML=list.map((m,i)=>`<button data-i="${i}" class="${earned.has(prefix+i)?'ok':''} ${i===st.cur?'cur':''}" aria-label="Go to mission ${i+1}"></button>`).join('');
+    dots.querySelectorAll('button').forEach(b=>b.onclick=()=>{st.cur=+b.dataset.i;update();});
+    prev.disabled=st.cur===0;next.disabled=last;next.classList.toggle('ready',done&&!last);
+    next.textContent=last?(list.every((m,i)=>earned.has(prefix+i))?'All missions done ★':'Last mission'):(done?'Next mission ▶':'Skip for now ▶');
+    const m=list[st.cur];if(m.type!=='order')lockSync($(prefix+st.cur),m,prefix+st.cur);}
+  prev.onclick=()=>{if(st.cur>0){st.cur--;update();}};next.onclick=()=>{if(st.cur<list.length-1){st.cur++;update();box.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});}};
+  NAV[prefix]=update;BOXES.push({list,prefix,st,tabIdx,update});update();}
+function tickLatch(){const b=BOXES.find(x=>x.tabIdx===tab);if(!b)return;const m=b.list[b.st.cur];if(!m||m.type==='order')return;const id=b.prefix+b.st.cur;if(earned.has(id))return;
+  const L=LATCH[id]||(LATCH[id]=new Set());let changed=false;for(let i=0;i<m.steps.length;i++){const s=m.steps[i];if(!Array.isArray(s))continue;if(L.has(i))continue;if(s[1]()){L.add(i);changed=true;}break;}
+  if(changed)lockSync($(id),m,id);}
+
+/* ================= CHALLENGE ================= */
+const CH=[
+ {clue:'Make a hot, dry DESERT afternoon.',test:()=>S.sun&&S.direct&&!S.ocean&&S.atmo,hint:'Deserts get strong, direct sunlight, have air, but have very little water nearby.'},
+ {clue:'Make a cool, clear NIGHT at the beach with a LAND BREEZE blowing.',test:()=>!S.sun&&S.ocean&&S.atmo&&S.W<-.25,hint:'You need night, the ocean, and air. Then wait until the land is cooler than the ocean.'},
+ {clue:'Make an afternoon THUNDERSTORM.',test:()=>S.storm,hint:'Storms need lots of energy (direct Sun), lots of water vapor (ocean), and rising air (atmosphere). Then wait.'},
+ {clue:'Make Earth act like the MOON: no weather and extreme temperatures.',test:()=>!S.atmo,hint:'What does the Moon NOT have that Earth does?'},
+ {clue:'Make a WINTER day at the beach.',test:()=>S.sun&&!S.direct&&S.ocean&&S.atmo,hint:'Winter sunlight hits at an angle. Keep the Sun, ocean, and air ON.'},
+ {clue:'Make a SEA BREEZE blow toward the town.',test:()=>S.W>.3,hint:'The land must be warmer than the ocean. Turn the Sun ON and wait.'},
+ {clue:'Stop ALL evaporation while the Sun is still shining.',test:()=>S.sun&&S.E<.02,hint:'Evaporation needs water and air. Remove one of them, but keep the Sun ON.'},
+ {clue:'Make the atmosphere trap MORE heat, warming the climate.',test:()=>S.gh&&S.atmo,hint:'Which switch adds gases that trap heat? The atmosphere must be ON too.'},
+ {clue:'Make it RAIN right now, but with NO thunderstorm.',test:()=>S.Rn>0&&!S.storm,hint:'Try angled (winter) sunlight with the ocean and air ON. You get rain clouds without the strong rising air a storm needs. Then wait (⏩ Fast forward helps).'},
+ {clue:'With the atmosphere ON, make the land at least 12°F WARMER than the ocean.',test:()=>S.atmo&&S.ocean&&S.land-S.sea>=12,hint:'Use the strongest heating: Sun ON with direct rays. Then wait for the land to heat up.'},
+];
+let ci=0;const solved=new Set();
+function renderCh(msg){$('cN').textContent=`Challenge ${ci+1} of ${CH.length}`;$('cClue').textContent=CH[ci].clue;
+  $('cDots').innerHTML=CH.map((_,i)=>`<button data-i="${i}" class="${solved.has(i)?'ok':''} ${i===ci?'cur':''}" aria-label="Go to challenge ${i+1}"></button>`).join('');
+  $('cDots').querySelectorAll('button').forEach(b=>b.onclick=()=>{ci=+b.dataset.i;renderCh();});
+  const done=solved.has(ci),last=ci===CH.length-1;$('cNext').disabled=!done||last;$('cNext').classList.toggle('ready',done&&!last);$('cPrev').disabled=ci===0;$('cCheck').disabled=done;
+  if(!msg){$('cFb').hidden=!done;if(done){$('cFb').className='fb good';$('cFb').innerHTML='<b>Already solved!</b> Click <b>Next challenge ▶</b>.';}}}
+$('cCheck').onclick=e=>{const ok=CH[ci].test();attempt('c'+ci,ok);const fb=$('cFb');fb.hidden=false;
+  if(ok){solved.add(ci);award('c'+ci);fb.className='fb good';fb.innerHTML=`<b>Correct!</b> Your scene matches: ${nowWord()} · Land ${F(S.land)} · ${windWord()}.`;burst(e.clientX,e.clientY);}
+  else{fb.className='fb bad';fb.innerHTML=`<b>Not yet.</b> Right now: ${nowWord()} · Land ${F(S.land)} · ${windWord()}. <b>Hint:</b> ${CH[ci].hint}`;}renderCh(true);};
+$('cNext').onclick=()=>{if(ci<CH.length-1){ci++;renderCh();}};$('cPrev').onclick=()=>{if(ci>0){ci--;renderCh();}};
+NAV.c=()=>renderCh(true);
+
+/* ================= FINISH / RESULTS ================= */
+const student={name:'',period:''};let clockTimer=null;
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function openModal(html){$('mcard').innerHTML=html;$('modal').hidden=false;$('modal').scrollTop=0;}
+function closeModal(){$('modal').hidden=true;clearInterval(clockTimer);}
+function askName(){openModal(`<h2 id="modalTitle">Finish and see my results</h2><p style="margin:0">Type your name and class period. Then click <b>Show my results</b>.</p>
+  <label class="field" for="fName">First and last name<input id="fName" autocomplete="name" value="${esc(student.name)}"></label>
+  <label class="field" for="fPer">Class period<input id="fPer" value="${esc(student.period)}"></label><p class="err" id="fErr" hidden></p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn finish" id="fGo">Show my results</button><button class="btn" id="fCancel">Back to missions</button></div>`);
+  $('fName').focus();$('fGo').onclick=()=>{const n=$('fName').value.trim(),p=$('fPer').value.trim();if(!n||!p){$('fErr').hidden=false;$('fErr').textContent=!n?'Type your first and last name.':'Type your class period.';return;}student.name=n;student.period=p;showResults();};$('fCancel').onclick=closeModal;}
+function secRow(label,ids,col){const done=ids.filter(id=>earned.has(id)).length;return `<div class="sec"><b style="color:${col}">${label}</b><div class="rdots">${ids.map((id,i)=>`<i class="${firstTry.has(id)?'g':earned.has(id)?'y':tried.has(id)?'r':''}" title="${i+1}"></i>`).join('')}</div><b>${done} / ${ids.length}</b></div>`;}
+function showResults(){const a=MA.map((m,i)=>'a'+i),b=MB.map((m,i)=>'b'+i),c=MC.map((m,i)=>'m'+i),d=CH.map((m,i)=>'c'+i);
+  const skipped=[...a.map((id,i)=>[id,'Sun '+(i+1)]),...b.map((id,i)=>[id,'Water '+(i+1)]),...c.map((id,i)=>[id,'Air '+(i+1)]),...d.map((id,i)=>[id,'Challenge '+(i+1)])].filter(([id])=>!earned.has(id));
+  const pct=Math.round(earned.size/TOTAL*100);
+  openModal(`<h2 id="modalTitle">Weather Engine Lab Results</h2>
+  <div class="turnin"><div class="tt">Last step: turn in your results!</div><ol>
+    <li><b>Take a screenshot</b> that shows your name, your scores, and the colored squares.<br>Chromebook: <b>Ctrl + Shift + Show windows</b> (the key with the boxes). Windows: <b>Windows key + Shift + S</b>. Mac: <b>Command + Shift + 4</b>. Then drag a box around this card.</li>
+    <li><b>Go to Google Classroom</b> and open the Weather Engine Lab assignment.</li>
+    <li>Click <b>+ Add or create</b>, then <b>File</b>, and choose your screenshot (look in your Downloads folder).</li>
+    <li>Click <b>Turn in</b>.</li></ol><p>Do not close or refresh this page until you have turned it in. Your results disappear if you do.</p></div>
+  <div class="who"><span>Name: <b>${esc(student.name)}</b></span><span>Period: <b>${esc(student.period)}</b></span></div><div class="clock" id="clock"></div>
+  <div class="big"><div><div class="k">Missions completed</div><div class="v" style="color:var(--lime)">${earned.size} / ${TOTAL}</div><div class="empty">${pct}%</div></div>
+    <div><div class="k">Correct on first try</div><div class="v" style="color:var(--sun)">${firstTry.size} / ${TOTAL}</div><div class="empty">${Math.round(firstTry.size/TOTAL*100)}%</div></div></div>
+  ${secRow('Sun Power',a,'var(--sun)')}${secRow('Water & Weather',b,'var(--sky)')}${secRow('Air on the Move',c,'var(--lime)')}${secRow('STAAR Challenge',d,'var(--pink)')}
+  <div class="legend"><span><i style="background:var(--lime)"></i>Right on first try</span><span><i style="background:var(--sun)"></i>Right after retrying</span><span><i style="background:var(--red)"></i>Tried, not right yet</span><span><i style="background:var(--panel2);border:2px solid var(--line)"></i>Not done</span></div>
+  ${skipped.length?`<div class="do"><b>Not finished yet (${skipped.length})</b><p style="margin:6px 0 0;font-size:13px">${skipped.map(s=>esc(s[1])).join(' · ')}</p></div>`:`<div class="fb good"><b>Every mission complete!</b> Amazing work.</div>`}
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="rBack">Back to missions</button><button class="btn" id="rEdit">Change name</button></div>`);
+  const tick=()=>{const c=$('clock');if(c)c.textContent=new Date().toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit'});};
+  tick();clearInterval(clockTimer);clockTimer=setInterval(tick,1000);$('rBack').onclick=closeModal;$('rEdit').onclick=askName;if(earned.size===TOTAL)burst(innerWidth/2,innerHeight/4);}
+$('finBtn').onclick=()=>student.name?showResults():askName();
+$('modal').addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+/* ================= TABS & LOOP ================= */
+let tab=0;
+build(MA,$('mA'),'a','var(--sun)','Sun Power Missions',0);build(MB,$('mB'),'b','var(--sky)','Water & Weather Missions',1);build(MC,$('mC'),'m','var(--lime)','Air on the Move Missions',2);
+TOTAL=MA.length+MB.length+MC.length+CH.length;$('tot').textContent=TOTAL;
+function showTab(i){tab=i;[0,1,2,3].forEach(j=>{$('t'+j).setAttribute('aria-selected',i===j);$('p'+j).hidden=i!==j;});const b=BOXES.find(x=>x.tabIdx===i);if(b)b.update();if(i===3)renderCh();}
+[0,1,2,3].forEach(i=>$('t'+i).onclick=()=>showTab(i));
+addEventListener('resize',()=>{resize();sizeCF();});
+syncSwitches();renderCh();resize();sizeCF();
+let last=0,acc=0;
+function loop(ms){const t=ms/1000;let dt=Math.min(.1,t-last);last=t;if(S.fast)dt*=2;
+  for(let i=0;i<4;i++)step(dt/4);acc+=dt;if(acc>.2){acc=0;readouts();tickLatch();}
+  draw(t);if(parts.length){drawCF();cf._d=true;}else if(cf._d){cx2.clearRect(0,0,innerWidth,innerHeight);cf._d=false;}
+  requestAnimationFrame(loop);}
+readouts();requestAnimationFrame(loop);
+})();
+</script>
+
+</body></html>

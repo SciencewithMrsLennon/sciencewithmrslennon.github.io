@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Newton's Laws Proving Ground</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#14284b;--navy2:#1e3a6e;--teal:#0fb5a4;--teal-l:#d7f6f2;--yellow:#ffc93c;--yellow-l:#fff4d1;
+  --coral:#ff6b6b;--coral-l:#ffe3e3;--bg:#eef3fa;--card:#fff;--ink:#14284b;--muted:#5b6b85;--line:#d6deea;
+  --good:#15803d;--good-l:#dcfce7;--bad:#b91c1c;--bad-l:#fee2e2;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Nunito,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45}
+h1,h2,h3{font-family:Fredoka,Nunito,sans-serif;margin:0 0 .35em;line-height:1.15}
+button{font-family:inherit}
+header.top{background:var(--navy);color:#fff;padding:10px 16px;display:none;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header.top.show{display:flex}
+header.top .brand{font-family:Fredoka;font-size:18px;display:flex;align-items:center;gap:8px}
+header.top .meta{display:flex;gap:14px;font-weight:700;font-size:14px;align-items:center}
+.pill{background:rgba(255,255,255,.14);padding:4px 10px;border-radius:999px}
+.screen{display:none;max-width:1000px;margin:0 auto;padding:16px 16px 48px}
+.screen.active{display:block}
+.card{background:var(--card);border-radius:18px;padding:18px;box-shadow:0 2px 0 var(--line),0 8px 24px rgba(20,40,75,.06);margin-bottom:16px}
+.btn{border:none;border-radius:12px;padding:12px 20px;font-weight:800;font-size:16px;cursor:pointer;background:var(--teal);color:#fff;box-shadow:0 4px 0 #0a8478;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0a8478}
+.btn:disabled{background:#b8c3d3;box-shadow:0 4px 0 #9aa6b8;cursor:not-allowed}
+.btn.yellow{background:var(--yellow);color:var(--navy);box-shadow:0 4px 0 #d9a21c}
+.btn.coral{background:var(--coral);box-shadow:0 4px 0 #d64b4b}
+.btn.ghost{background:#fff;color:var(--navy);box-shadow:0 4px 0 var(--line);border:2px solid var(--line)}
+.btn.small{padding:8px 14px;font-size:14px}
+/* Intro */
+.hero{background:linear-gradient(135deg,#14284b 0%,#1e3a6e 55%,#0fb5a4 130%);color:#fff;border-radius:24px;padding:28px 24px;position:relative;overflow:hidden;margin-top:8px}
+.hero h1{font-size:clamp(30px,6vw,52px);margin-bottom:6px}
+.hero .tag{display:inline-block;background:var(--yellow);color:var(--navy);font-weight:800;border-radius:999px;padding:4px 12px;font-size:13px;margin-bottom:12px}
+.hero p{max-width:560px;font-size:17px;opacity:.95}
+.hero .stars span{position:absolute;width:3px;height:3px;background:#fff;border-radius:50%;opacity:.7;animation:tw 3s infinite}
+@keyframes tw{50%{opacity:.15}}
+.hero svg.rocket{position:absolute;right:4%;bottom:-10px;width:min(30vw,190px);animation:float 3.2s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-14px) rotate(2deg)}}
+.namebox{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;max-width:560px;position:relative;z-index:2}
+.namebox input{flex:1;min-width:200px;padding:13px 14px;border-radius:12px;border:none;font-size:16px;font-family:inherit}
+.overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:16px}
+.ov{background:var(--card);border-radius:16px;padding:14px;border-top:6px solid var(--teal)}
+.ov:nth-child(2){border-color:var(--yellow)}.ov:nth-child(3){border-color:var(--coral)}.ov:nth-child(4){border-color:var(--navy2)}.ov:nth-child(5){border-color:#8b5cf6}
+.ov b{font-family:Fredoka;font-size:17px;display:block}
+.ov small{color:var(--muted);font-weight:700}
+/* Hub */
+.hubgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.station{background:var(--card);border-radius:18px;padding:16px;border:3px solid transparent;cursor:pointer;position:relative;box-shadow:0 2px 0 var(--line)}
+.station:hover{border-color:var(--teal)}
+.station.locked{opacity:.55;cursor:not-allowed}
+.station.locked:hover{border-color:transparent}
+.station .num{font-family:Fredoka;background:var(--navy);color:#fff;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;margin-bottom:8px}
+.station .status{position:absolute;top:14px;right:14px;font-weight:800;font-size:13px;padding:3px 9px;border-radius:999px;background:var(--yellow-l)}
+.station.done .status{background:var(--good-l);color:var(--good)}
+.station.locked .status{background:#e7ecf3;color:var(--muted)}
+.station .teks{font-size:12px;font-weight:800;color:var(--teal)}
+.progressbar{height:12px;background:#dbe3ee;border-radius:999px;overflow:hidden;margin:6px 0 2px}
+.progressbar div{height:100%;background:linear-gradient(90deg,var(--teal),var(--yellow));width:0;transition:width .4s}
+/* Station layout */
+.stHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.stHead .teks{background:var(--teal-l);color:#0a7a6f;font-weight:800;font-size:13px;border-radius:999px;padding:4px 10px}
+.brief{background:var(--yellow-l);border-left:6px solid var(--yellow);border-radius:12px;padding:12px 14px;margin:10px 0}
+.brief b{color:var(--navy)}
+canvas{width:100%;height:auto;display:block;border-radius:14px;background:#f7fafd}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:12px 0}
+.ctrl{background:#f4f7fb;border-radius:12px;padding:10px 12px}
+.ctrl label{font-weight:800;font-size:14px;display:flex;justify-content:space-between}
+.ctrl label span{color:var(--teal);font-family:Fredoka;font-size:17px}
+input[type=range]{width:100%;accent-color:var(--teal)}
+.toggle{display:flex;align-items:center;gap:8px;font-weight:800;cursor:pointer;padding:6px 0}
+.toggle input{width:20px;height:20px;accent-color:var(--teal)}
+.readouts{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.ro{background:var(--navy);color:#fff;border-radius:12px;padding:8px 12px;min-width:110px}
+.ro small{display:block;font-size:11px;opacity:.75;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.ro b{font-family:Fredoka;font-size:20px}
+.msg{font-weight:700;padding:10px 12px;border-radius:10px;background:#f4f7fb;margin:8px 0;min-height:20px}
+table.data{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+table.data th{background:var(--navy);color:#fff;padding:7px;text-align:center;font-weight:800}
+table.data th:first-child{border-radius:10px 0 0 0}table.data th:last-child{border-radius:0 10px 0 0}
+table.data td{padding:6px;text-align:center;border-bottom:1px solid var(--line)}
+table.data tr:nth-child(even) td{background:#f7fafd}
+.tasks{list-style:none;padding:0;margin:8px 0}
+.tasks li{padding:9px 12px;border-radius:10px;background:#f4f7fb;margin-bottom:6px;font-weight:700;display:flex;gap:10px;align-items:flex-start}
+.tasks li .box{flex:0 0 22px;height:22px;border-radius:6px;border:2px solid var(--muted);display:grid;place-items:center;font-size:14px;margin-top:1px}
+.tasks li.ok{background:var(--good-l)}
+.tasks li.ok .box{background:var(--good);border-color:var(--good);color:#fff}
+.q{border:2px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;background:#fff}
+.q .qp{font-weight:800;margin:0 0 10px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;font-size:15px;cursor:pointer;display:flex;gap:10px;align-items:flex-start;color:var(--ink)}
+.opt:hover:not(:disabled){border-color:var(--teal);background:var(--teal-l)}
+.opt .letter{flex:0 0 26px;height:26px;border-radius:8px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.opt.right{border-color:var(--good);background:var(--good-l)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-l);opacity:.75}
+.fb{margin-top:8px;font-weight:700;font-size:15px}
+.fb.good{color:var(--good)}.fb.bad{color:var(--bad)}
+.numrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.numrow input,.numrow select,.f2 input,.f2 select{padding:9px 10px;border-radius:10px;border:2px solid var(--line);font-size:16px;font-family:inherit;width:120px}
+.numrow select{width:auto}
+.f2{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:10px 0}
+.f2 label{font-weight:800;font-size:14px;display:block;margin-bottom:4px}
+.f2 input,.f2 select{width:100%}
+.hidden{display:none!important}
+.locknote{background:#f4f7fb;border:2px dashed var(--line);border-radius:14px;padding:14px;color:var(--muted);font-weight:700;text-align:center}
+.finishbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.lawchips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.chip{border-radius:999px;padding:4px 10px;font-weight:800;font-size:13px}
+.chip.l1{background:var(--teal-l);color:#0a7a6f}.chip.l2{background:var(--yellow-l);color:#8a5d00}.chip.l3{background:var(--coral-l);color:#a33}
+.match{display:grid;gap:8px;margin:10px 0}
+.mrow{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#f4f7fb;padding:10px 12px;border-radius:12px;flex-wrap:wrap}
+.mrow span{font-weight:700;flex:1;min-width:220px}
+.mrow select{padding:8px;border-radius:10px;border:2px solid var(--line);font-size:15px;font-family:inherit}
+.mrow.right{background:var(--good-l)}.mrow.wrong{background:var(--bad-l)}
+/* Results */
+.cert{background:linear-gradient(135deg,#fff 0%,#fff9e6 100%);border:4px solid var(--yellow);border-radius:24px;padding:26px;text-align:center}
+.cert h1{font-size:clamp(28px,5vw,40px)}
+.bigscore{font-family:Fredoka;font-size:64px;color:var(--teal);line-height:1}
+.scoregrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:18px 0;text-align:left}
+.sg{background:#fff;border-radius:12px;padding:10px 12px;border:2px solid var(--line)}
+.sg small{display:block;color:var(--muted);font-weight:800;font-size:12px}
+.sg b{font-family:Fredoka;font-size:22px}
+@media print{header.top,.noprint{display:none!important}body{background:#fff}.screen{padding:0}}
+@media (max-width:600px){.hero svg.rocket{opacity:.35}.card{padding:14px}}
+</style>
+</head>
+<body>
+
+<header class="top" id="topbar">
+  <div class="brand">🚀 Newton's Laws Proving Ground</div>
+  <div class="meta"><span class="pill" id="who"></span><span class="pill">⏱ <span id="clock">0:00</span></span><button class="btn small ghost" onclick="goHub()">🏠 Mission Hub</button></div>
+</header>
+
+<!-- INTRO -->
+<section class="screen active" id="intro">
+  <div class="hero">
+    <div class="stars" id="stars"></div>
+    <span class="tag">TEKS 8.7A · 8.7B · STAAR Readiness</span>
+    <h1>Newton's Laws<br>Proving Ground</h1>
+    <p>You've been hired as a junior engineer at the Proving Ground. Your job: test carts, crates, crash cars, and rockets to prove how Newton's three laws of motion work — together.</p>
+    <div class="namebox">
+      <input id="nameIn" placeholder="Type your first and last name" maxlength="40" autocomplete="off">
+      <button class="btn yellow" onclick="startGame()">Start Mission ➜</button>
+    </div>
+    <svg class="rocket" viewBox="0 0 120 200" aria-hidden="true">
+      <path d="M60 8 C85 35 92 70 88 120 L32 120 C28 70 35 35 60 8Z" fill="#fff"/>
+      <circle cx="60" cy="62" r="14" fill="#0fb5a4" stroke="#14284b" stroke-width="5"/>
+      <path d="M32 95 L12 135 L34 128Z" fill="#ff6b6b"/><path d="M88 95 L108 135 L86 128Z" fill="#ff6b6b"/>
+      <rect x="40" y="118" width="40" height="10" rx="3" fill="#14284b"/>
+      <path d="M44 130 Q60 200 76 130Z" fill="#ffc93c"><animate attributeName="d" dur=".35s" repeatCount="indefinite" values="M44 130 Q60 200 76 130Z;M46 130 Q60 180 74 130Z;M44 130 Q60 200 76 130Z"/></path>
+    </svg>
+  </div>
+  <div class="overview">
+    <div class="ov"><b>1 · Force &amp; Mass Lab</b><small>Newton's 2nd Law · ~12 min</small></div>
+    <div class="ov"><b>2 · Net Force Challenge</b><small>Balanced vs. unbalanced · ~8 min</small></div>
+    <div class="ov"><b>3 · Crash Test Center</b><small>Vehicle restraints · ~9 min</small></div>
+    <div class="ov"><b>4 · Rocket Launch Pad</b><small>All 3 laws at once · ~9 min</small></div>
+    <div class="ov"><b>5 · Final Certification</b><small>STAAR-style check · ~7 min</small></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3>Newton's Three Laws — Quick Reference</h3>
+    <div class="lawchips"><span class="chip l1">1st Law · Inertia</span></div>
+    <p style="margin:.2em 0 .7em">An object at rest stays at rest, and an object in motion keeps moving at the same speed and direction, <b>unless an unbalanced force acts on it.</b></p>
+    <div class="lawchips"><span class="chip l2">2nd Law · F = m × a</span></div>
+    <p style="margin:.2em 0 .7em">The acceleration of an object depends on the <b>net force</b> and the <b>mass</b>. More force → more acceleration. More mass → less acceleration. &nbsp;<b>a = F ÷ m</b></p>
+    <div class="lawchips"><span class="chip l3">3rd Law · Action–Reaction</span></div>
+    <p style="margin:.2em 0 0">When one object pushes on another, the second object pushes back with an <b>equal force in the opposite direction.</b></p>
+  </div>
+</section>
+
+<!-- HUB -->
+<section class="screen" id="hub">
+  <div class="card">
+    <h2>Mission Hub</h2>
+    <p style="margin:0;color:var(--muted);font-weight:700">Complete each station in order. Your first answer on every question counts toward your score, so think before you click!</p>
+    <div class="progressbar"><div id="hubBar"></div></div>
+    <small id="hubTxt" style="font-weight:800;color:var(--muted)"></small>
+  </div>
+  <div class="hubgrid" id="hubGrid"></div>
+</section>
+
+<!-- STATION 1 -->
+<section class="screen" id="s1">
+  <div class="card">
+    <div class="stHead"><h2>Station 1 · Force &amp; Mass Lab</h2><span class="teks">TEKS 8.7A</span></div>
+    <div class="brief"><b>Engineer's Briefing:</b> This cart rolls on a frictionless track, so the force you apply is the <b>net force</b>. A motion sensor measures the cart's acceleration. Use the sliders, run trials, and find the pattern between <b>force, mass, and acceleration</b>.</div>
+    <canvas id="c1" width="900" height="230"></canvas>
+    <div class="readouts">
+      <div class="ro"><small>Net Force</small><b id="r1F">20 N</b></div>
+      <div class="ro"><small>Mass</small><b id="r1m">2 kg</b></div>
+      <div class="ro"><small>Time</small><b id="r1t">0.0 s</b></div>
+      <div class="ro"><small>Speed</small><b id="r1v">0.0 m/s</b></div>
+      <div class="ro"><small>Acceleration</small><b id="r1a">—</b></div>
+    </div>
+    <div class="controls">
+      <div class="ctrl"><label>Net Force <span id="v1F">20 N</span></label><input type="range" id="i1F" min="0" max="50" step="5" value="20"></div>
+      <div class="ctrl"><label>Cart Mass <span id="v1m">2 kg</span></label><input type="range" id="i1m" min="1" max="10" step="1" value="2"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="run1">▶ Run Trial</button><button class="btn ghost" onclick="s1Clear()">Clear Data</button></div>
+    <div class="msg" id="m1">Set the force and mass, then press Run Trial.</div>
+  </div>
+  <div class="card">
+    <h3>📋 Data Table</h3>
+    <table class="data"><thead><tr><th>Trial</th><th>Net Force (N)</th><th>Mass (kg)</th><th>Acceleration (m/s²)</th></tr></thead><tbody id="t1"><tr><td colspan="4" style="color:var(--muted)">No trials yet</td></tr></tbody></table>
+    <h3 style="margin-top:14px">🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k1a"><span class="box"></span><span><b>Test Force:</b> Keep the mass at <b>2 kg</b>. Run trials at <b>10 N, 20 N, and 30 N</b>.</span></li>
+      <li id="k1b"><span class="box"></span><span><b>Test Mass:</b> Keep the force at <b>20 N</b>. Run trials with <b>2 kg, 4 kg, and 8 kg</b>.</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>🧠 Analyze Your Data</h3>
+    <div id="q1lock" class="locknote">🔒 Finish both lab tasks to unlock the analysis questions.</div>
+    <div id="q1box" class="hidden"></div>
+  </div>
+  <div class="card finishbar"><span id="f1txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn yellow" id="f1" disabled onclick="finishStation(1)">Complete Station ✔</button></div>
+</section>
+
+<!-- STATION 2 -->
+<section class="screen" id="s2">
+  <div class="card">
+    <div class="stHead"><h2>Station 2 · Net Force Challenge</h2><span class="teks">TEKS 8.7A</span></div>
+    <div class="brief"><b>Engineer's Briefing:</b> Real objects usually have more than one force acting on them. Forces in <b>opposite directions subtract</b>. The leftover is the <b>net force</b>. If the net force is 0 N, the forces are <b>balanced</b> and the acceleration is 0. Then use <b>a = F ÷ m</b>.</div>
+    <div style="font-weight:800;color:var(--muted)" id="s2count">Crate 1 of 4</div>
+    <canvas id="c2" width="900" height="240"></canvas>
+    <div class="f2">
+      <div><label>Net force (N)</label><input type="number" id="i2F" inputmode="decimal"></div>
+      <div><label>Direction of net force</label><select id="i2d"><option value="">Choose…</option><option value="left">Left</option><option value="right">Right</option><option value="none">None (balanced)</option></select></div>
+      <div><label>Acceleration (m/s²)</label><input type="number" id="i2a" inputmode="decimal"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="chk2">Check Answer</button><button class="btn yellow hidden" id="next2">Next Crate ➜</button></div>
+    <div class="msg" id="m2">Read the forces on the crate, then fill in all three boxes.</div>
+  </div>
+  <div class="card finishbar"><span id="f2txt" style="font-weight:800;color:var(--muted)">Solve all 4 crates to finish.</span><button class="btn yellow" id="f2" disabled onclick="finishStation(2)">Complete Station ✔</button></div>
+</section>
+
+<!-- STATION 3 -->
+<section class="screen" id="s3">
+  <div class="card">
+    <div class="stHead"><h2>Station 3 · Crash Test Center</h2><span class="teks">TEKS 8.7B</span></div>
+    <div class="brief"><b>Engineer's Briefing:</b> Car companies use crash test dummies to design <b>vehicle restraints</b> such as seat belts and airbags. In a crash, all three of Newton's laws act at the same time. Run crash tests and watch what happens to the 60 kg dummy.</div>
+    <canvas id="c3" width="900" height="250"></canvas>
+    <div class="readouts">
+      <div class="ro"><small>Speed</small><b id="r3v">20 m/s</b></div>
+      <div class="ro"><small>Stopping Time</small><b id="r3t">—</b></div>
+      <div class="ro"><small>Force on Dummy</small><b id="r3F">—</b></div>
+      <div class="ro"><small>Injury Risk</small><b id="r3r">—</b></div>
+    </div>
+    <div class="controls">
+      <div class="ctrl"><label>Car Speed <span id="v3v">20 m/s</span></label><input type="range" id="i3v" min="10" max="30" step="10" value="20"></div>
+      <div class="ctrl"><label class="toggle"><input type="checkbox" id="i3b"> Seat belt</label><label class="toggle"><input type="checkbox" id="i3a"> Airbag</label></div>
+    </div>
+    <button class="btn coral" id="run3">💥 Run Crash Test</button>
+    <div class="msg" id="m3">Choose a speed and restraints, then run a crash test.</div>
+  </div>
+  <div class="card">
+    <h3>📋 Crash Log</h3>
+    <table class="data"><thead><tr><th>Test</th><th>Speed</th><th>Seat Belt</th><th>Airbag</th><th>Stop Time</th><th>Force on Dummy</th></tr></thead><tbody id="t3"><tr><td colspan="6" style="color:var(--muted)">No tests yet</td></tr></tbody></table>
+    <h3 style="margin-top:14px">🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k3a"><span class="box"></span><span>Run a test with <b>no seat belt and no airbag</b>.</span></li>
+      <li id="k3b"><span class="box"></span><span>Run a test at the <b>same speed</b> with <b>both the seat belt and airbag</b>. Compare the force on the dummy.</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>🧠 Analyze the Crash</h3>
+    <div id="q3lock" class="locknote">🔒 Finish both crash tasks to unlock the analysis questions.</div>
+    <div id="q3box" class="hidden"></div>
+  </div>
+  <div class="card finishbar"><span id="f3txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn yellow" id="f3" disabled onclick="finishStation(3)">Complete Station ✔</button></div>
+</section>
+
+<!-- STATION 4 -->
+<section class="screen" id="s4">
+  <div class="card">
+    <div class="stHead"><h2>Station 4 · Rocket Launch Pad</h2><span class="teks">TEKS 8.7A · 8.7B</span></div>
+    <div class="brief"><b>Engineer's Briefing:</b> A rocket's engines push exhaust gas <b>down</b>, and the gas pushes the rocket <b>up</b>. That upward push is called <b>thrust</b>. Gravity pulls the rocket down with a force called <b>weight</b> (weight = mass × 10 on Earth). The rocket only lifts off if the forces are <b>unbalanced</b>.</div>
+    <canvas id="c4" width="900" height="360"></canvas>
+    <div class="readouts">
+      <div class="ro"><small>Weight ↓</small><b id="r4w">—</b></div>
+      <div class="ro"><small>Thrust ↑</small><b id="r4th">—</b></div>
+      <div class="ro"><small>Net Force</small><b id="r4n">—</b></div>
+      <div class="ro"><small>Acceleration</small><b id="r4a">—</b></div>
+      <div class="ro"><small>Altitude</small><b id="r4h">0 m</b></div>
+    </div>
+    <div class="controls">
+      <div class="ctrl"><label>Rocket Mass <span id="v4m">2,000 kg</span></label><input type="range" id="i4m" min="1000" max="5000" step="500" value="2000"></div>
+      <div class="ctrl"><label>Engine Thrust <span id="v4t">30,000 N</span></label><input type="range" id="i4t" min="0" max="80000" step="5000" value="30000"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn coral" id="run4">🚀 Launch</button><button class="btn ghost" onclick="s4Reset()">Reset Pad</button></div>
+    <div class="msg" id="m4">Set the mass and thrust, then launch.</div>
+  </div>
+  <div class="card">
+    <h3>📋 Launch Log</h3>
+    <table class="data"><thead><tr><th>#</th><th>Mass (kg)</th><th>Thrust (N)</th><th>Weight (N)</th><th>Net Force (N)</th><th>a (m/s²)</th><th>Result</th></tr></thead><tbody id="t4"><tr><td colspan="7" style="color:var(--muted)">No launches yet</td></tr></tbody></table>
+    <h3 style="margin-top:14px">🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k4a"><span class="box"></span><span>Fire the engines (thrust above 0) but make the rocket <b>stay on the pad</b>.</span></li>
+      <li id="k4b"><span class="box"></span><span>Get the rocket to <b>lift off</b>.</span></li>
+      <li id="k4c"><span class="box"></span><span>Launch two rockets with the <b>same thrust</b> but <b>different masses</b>. Compare their accelerations.</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>🧠 Mission Analysis</h3>
+    <div id="q4lock" class="locknote">🔒 Finish all three launch tasks to unlock the analysis.</div>
+    <div id="q4box" class="hidden"></div>
+  </div>
+  <div class="card finishbar"><span id="f4txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn yellow" id="f4" disabled onclick="finishStation(4)">Complete Station ✔</button></div>
+</section>
+
+<!-- STATION 5 -->
+<section class="screen" id="s5">
+  <div class="card">
+    <div class="stHead"><h2>Station 5 · Final Certification</h2><span class="teks">TEKS 8.7A · 8.7B</span></div>
+    <div class="brief"><b>Engineer's Briefing:</b> To earn your Proving Ground certification, answer these STAAR-style questions. Read every answer choice before you click. Your <b>first try</b> counts!</div>
+    <div id="q5box"></div>
+  </div>
+  <div class="card finishbar"><span id="f5txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn yellow" id="f5" disabled onclick="finishStation(5)">Get My Certificate 🏆</button></div>
+</section>
+
+<!-- RESULTS -->
+<section class="screen" id="results">
+  <div class="cert">
+    <div style="font-size:46px">🏆</div>
+    <h1>Proving Ground Certified Engineer</h1>
+    <p style="font-weight:700;color:var(--muted);margin:0">This certifies that</p>
+    <h2 id="certName" style="font-size:32px;color:var(--navy2);margin:6px 0 12px"></h2>
+    <p style="font-weight:700;color:var(--muted);margin:0 0 10px">has proven Newton's three laws of motion.</p>
+    <div class="bigscore" id="certPct"></div>
+    <div style="font-weight:800;color:var(--muted)" id="certRaw"></div>
+    <div class="scoregrid" id="certGrid"></div>
+    <p style="font-weight:700;color:var(--muted);margin:0" id="certMeta"></p>
+    <p style="font-weight:800;margin:14px 0 0">📸 Show this screen to your teacher or take a screenshot.</p>
+    <div class="noprint" style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn" onclick="window.print()">🖨 Print</button><button class="btn ghost" onclick="goHub()">Back to Hub</button></div>
+  </div>
+</section>
+
+<script>
+/* ====== Core state ====== */
+const S={name:'',start:null,done:{},score:{1:{},2:{},3:{},4:{},5:{}},need:{1:[],2:[],3:[],4:[],5:[]},got:{1:new Set(),2:new Set(),3:new Set(),4:new Set(),5:new Set()},built:{}};
+const STATIONS=[
+ {n:1,title:'Force & Mass Lab',teks:'TEKS 8.7A',desc:'Discover how force and mass change acceleration.'},
+ {n:2,title:'Net Force Challenge',teks:'TEKS 8.7A',desc:'Combine forces and calculate acceleration.'},
+ {n:3,title:'Crash Test Center',teks:'TEKS 8.7B',desc:'Test seat belts and airbags with crash dummies.'},
+ {n:4,title:'Rocket Launch Pad',teks:'TEKS 8.7A · 8.7B',desc:'See all three laws act at once in a launch.'},
+ {n:5,title:'Final Certification',teks:'STAAR-Style',desc:'Prove what you learned and earn your certificate.'}
+];
+const $=id=>document.getElementById(id);
+const fmt=n=>Number(n).toLocaleString('en-US');
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');window.scrollTo(0,0);}
+
+// stars on intro
+(function(){const st=$('stars');for(let i=0;i<40;i++){const s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.animationDelay=(Math.random()*3)+'s';st.appendChild(s);}})();
+
+function startGame(){
+  const n=$('nameIn').value.trim();
+  if(!n){$('nameIn').focus();$('nameIn').placeholder='Please type your name first!';return;}
+  S.name=n;S.start=Date.now();
+  $('who').textContent='👷 '+n;$('topbar').classList.add('show');
+  setInterval(()=>{const s=Math.floor((Date.now()-S.start)/1000);$('clock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');},1000);
+  goHub();
+}
+$('nameIn').addEventListener('keydown',e=>{if(e.key==='Enter')startGame();});
+
+function unlocked(n){return n===1||S.done[n-1];}
+function goHub(){
+  if(!S.name){show('intro');return;}
+  const g=$('hubGrid');g.innerHTML='';
+  STATIONS.forEach(st=>{
+    const d=document.createElement('div');
+    const isDone=S.done[st.n],isOpen=unlocked(st.n);
+    d.className='station'+(isDone?' done':'')+(!isOpen?' locked':'');
+    d.innerHTML=`<div class="num">${st.n}</div><span class="status">${isDone?'✔ Complete':isOpen?'Ready':'🔒 Locked'}</span><div class="teks">${st.teks}</div><h3>${st.title}</h3><div style="color:var(--muted);font-weight:600;font-size:14px">${st.desc}</div>`;
+    d.onclick=()=>{if(isOpen)openStation(st.n);};
+    g.appendChild(d);
+  });
+  const c=Object.keys(S.done).length;
+  $('hubBar').style.width=(c/5*100)+'%';$('hubTxt').textContent=`${c} of 5 stations complete`;
+  show('hub');
+}
+function openStation(n){
+  if(!S.built[n]){({1:build1,2:build2,3:build3,4:build4,5:build5})[n]();S.built[n]=true;}
+  show('s'+n);
+  if(n===1)draw1(0);if(n===2)draw2();if(n===3)draw3(0,0,0,false);if(n===4)draw4(0,0,false);
+}
+function finishStation(n){S.done[n]=true;if(n===5){showResults();}else goHub();}
+
+/* ====== Scoring + question helpers ====== */
+function record(st,qid,ok){if(!(qid in S.score[st]))S.score[st][qid]=ok;}
+function need(st,key){S.need[st].push(key);}
+function got(st,key){S.got[st].add(key);checkFinish(st);}
+function checkFinish(st){
+  const all=S.need[st].length>0&&S.need[st].every(k=>S.got[st].has(k));
+  $('f'+st).disabled=!all;
+  $('f'+st+'txt').textContent=all?'✅ Station complete! Click the button to save your progress.':`Progress: ${S.need[st].filter(k=>S.got[st].has(k)).length} of ${S.need[st].length} questions correct.`;
+}
+function mc(box,st,qid,prompt,options,correct,explain){
+  need(st,qid);
+  const d=document.createElement('div');d.className='q';
+  d.innerHTML=`<p class="qp">${prompt}</p>`;
+  const o=document.createElement('div');o.className='opts';const fb=document.createElement('div');fb.className='fb';
+  options.forEach((t,i)=>{
+    const b=document.createElement('button');b.className='opt';b.innerHTML=`<span class="letter">${'ABCD'[i]}</span><span>${t}</span>`;
+    b.onclick=()=>{
+      if(d.dataset.solved)return;
+      const ok=i===correct;record(st,qid,ok);
+      if(ok){b.classList.add('right');d.dataset.solved=1;o.querySelectorAll('.opt').forEach(x=>x.disabled=true);fb.className='fb good';fb.innerHTML='✅ Correct! '+explain;got(st,qid);}
+      else{b.classList.add('wrong');b.disabled=true;fb.className='fb bad';fb.textContent='❌ Not quite. Look back at your data and try again.';}
+    };
+    o.appendChild(b);
+  });
+  d.appendChild(o);d.appendChild(fb);box.appendChild(d);
+}
+function numq(box,st,qid,prompt,answer,unit,explain,hint){
+  need(st,qid);
+  const d=document.createElement('div');d.className='q';
+  d.innerHTML=`<p class="qp">${prompt}</p><div class="numrow"><input type="number" inputmode="decimal" placeholder="?"> <b>${unit}</b> <button class="btn small">Check</button></div><div class="fb"></div>`;
+  const inp=d.querySelector('input'),btn=d.querySelector('button'),fb=d.querySelector('.fb');
+  btn.onclick=()=>{
+    if(d.dataset.solved)return;
+    if(inp.value===''){fb.className='fb bad';fb.textContent='Type a number first.';return;}
+    const ok=Math.abs(parseFloat(inp.value)-answer)<0.01;record(st,qid,ok);
+    if(ok){d.dataset.solved=1;inp.disabled=true;btn.disabled=true;fb.className='fb good';fb.innerHTML='✅ Correct! '+explain;got(st,qid);}
+    else{fb.className='fb bad';fb.innerHTML='❌ Not quite. '+hint;}
+  };
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')btn.click();});
+  box.appendChild(d);
+}
+function matchq(box,st,qid,prompt,rows,explain){
+  need(st,qid);
+  const d=document.createElement('div');d.className='q';
+  d.innerHTML=`<p class="qp">${prompt}</p>`;
+  const m=document.createElement('div');m.className='match';
+  const sels=rows.map(r=>{
+    const row=document.createElement('div');row.className='mrow';
+    row.innerHTML=`<span>${r[0]}</span><select><option value="">Choose a law…</option><option value="1">1st Law (inertia)</option><option value="2">2nd Law (F = m × a)</option><option value="3">3rd Law (action–reaction)</option></select>`;
+    m.appendChild(row);return {row,sel:row.querySelector('select'),ans:r[1]};
+  });
+  d.appendChild(m);
+  const btn=document.createElement('button');btn.className='btn small';btn.textContent='Check Matches';
+  const fb=document.createElement('div');fb.className='fb';
+  btn.onclick=()=>{
+    if(d.dataset.solved)return;
+    if(sels.some(s=>!s.sel.value)){fb.className='fb bad';fb.textContent='Choose a law for every row first.';return;}
+    let all=true;sels.forEach(s=>{const ok=s.sel.value===s.ans;s.row.classList.toggle('right',ok);s.row.classList.toggle('wrong',!ok);if(!ok)all=false;});
+    record(st,qid,all);
+    if(all){d.dataset.solved=1;btn.disabled=true;sels.forEach(s=>s.sel.disabled=true);fb.className='fb good';fb.innerHTML='✅ All matched! '+explain;got(st,qid);}
+    else{fb.className='fb bad';fb.textContent='❌ The red rows need another look. Fix them and check again.';}
+  };
+  d.appendChild(btn);d.appendChild(fb);box.appendChild(d);
+}
+
+/* ====== Drawing helpers ====== */
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function arrow(ctx,x1,y,x2,color,label,below){
+  if(Math.abs(x2-x1)<2)return;
+  const dir=Math.sign(x2-x1);ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=8;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2-dir*14,y);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x2,y);ctx.lineTo(x2-dir*20,y-13);ctx.lineTo(x2-dir*20,y+13);ctx.closePath();ctx.fill();
+  if(label){ctx.font='800 16px Nunito';ctx.textAlign='center';ctx.fillText(label,(x1+x2)/2,below?y+30:y-14);}
+}
+function varrow(ctx,x,y1,y2,color,label){
+  if(Math.abs(y2-y1)<2)return;
+  const dir=Math.sign(y2-y1);ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=8;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(x,y1);ctx.lineTo(x,y2-dir*14);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x,y2);ctx.lineTo(x-12,y2-dir*20);ctx.lineTo(x+12,y2-dir*20);ctx.closePath();ctx.fill();
+  if(label){ctx.font='800 15px Nunito';ctx.textAlign='left';ctx.fillText(label,x+16,(y1+y2)/2+5);}
+}
+
+/* ====== STATION 1 ====== */
+const s1={F:20,m:2,trials:[],raf:null,running:false};
+const TRACK_M=25,TX0=60,TX1=840;
+function draw1(xm){
+  const c=$('c1'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);
+  // backdrop
+  const g=ctx.createLinearGradient(0,0,0,230);g.addColorStop(0,'#e7f3ff');g.addColorStop(1,'#f7fafd');ctx.fillStyle=g;ctx.fillRect(0,0,c.width,c.height);
+  // track
+  ctx.fillStyle='#14284b';rr(ctx,TX0-20,170,TX1-TX0+100,12,6);ctx.fill();
+  ctx.fillStyle='#5b6b85';ctx.font='700 12px Nunito';ctx.textAlign='center';
+  for(let m=0;m<=TRACK_M;m+=5){const px=TX0+m/TRACK_M*(TX1-TX0-80);ctx.fillRect(px,184,2,8);ctx.fillText(m+' m',px,206);}
+  // sensor
+  ctx.fillStyle='#ff6b6b';rr(ctx,10,120,34,50,6);ctx.fill();ctx.fillStyle='#fff';ctx.font='800 10px Nunito';ctx.fillText('SENSOR',27,113);
+  // cart
+  const px=TX0+xm/TRACK_M*(TX1-TX0-80);const h=34+s1.m*3,w=80;
+  ctx.fillStyle='#0fb5a4';rr(ctx,px,170-h-14,w,h,10);ctx.fill();
+  ctx.fillStyle='#fff';ctx.font='800 17px Fredoka, Nunito';ctx.fillText(s1.m+' kg',px+w/2,170-14-h/2+6);
+  ctx.fillStyle='#14284b';[px+18,px+w-18].forEach(wx=>{ctx.beginPath();ctx.arc(wx,163,9,0,7);ctx.fill();});
+  // force arrow
+  if(s1.F>0)arrow(ctx,px-8-s1.F*2.4,170-14-h/2,px-6,'#ffc93c',s1.F+' N',false);
+}
+function s1UI(){
+  s1.F=+$('i1F').value;s1.m=+$('i1m').value;
+  $('v1F').textContent=s1.F+' N';$('v1m').textContent=s1.m+' kg';$('r1F').textContent=s1.F+' N';$('r1m').textContent=s1.m+' kg';
+  if(!s1.running){draw1(0);$('r1t').textContent='0.0 s';$('r1v').textContent='0.0 m/s';$('r1a').textContent='—';}
+}
+function s1Run(){
+  if(s1.running)return;
+  const a=s1.F/s1.m;
+  if(a===0){
+    $('m1').innerHTML='🛑 With <b>0 N</b> of net force, the cart stays at rest. That\'s Newton\'s 1st Law!';$('r1a').textContent='0 m/s²';
+    s1Log(0);return;
+  }
+  s1.running=true;$('run1').disabled=true;$('m1').textContent='Running trial…';
+  const t0=performance.now();
+  const step=now=>{
+    const t=(now-t0)/1000*1.3; // slight time speed-up
+    let x=0.5*a*t*t;const done=x>=TRACK_M||t>=6;if(x>TRACK_M)x=TRACK_M;
+    const tt=done&&x>=TRACK_M?Math.sqrt(2*TRACK_M/a):t;
+    draw1(x);$('r1t').textContent=tt.toFixed(1)+' s';$('r1v').textContent=(a*tt).toFixed(1)+' m/s';$('r1a').textContent=(+a.toFixed(2))+' m/s²';
+    if(!done){s1.raf=requestAnimationFrame(step);}
+    else{s1.running=false;$('run1').disabled=false;$('m1').innerHTML=`✅ Trial recorded: <b>${s1.F} N</b> on <b>${s1.m} kg</b> → acceleration of <b>${+a.toFixed(2)} m/s²</b>.`;s1Log(a);}
+  };
+  s1.raf=requestAnimationFrame(step);
+}
+function s1Log(a){
+  s1.trials.push({F:s1.F,m:s1.m,a:+a.toFixed(2)});
+  $('t1').innerHTML=s1.trials.map((t,i)=>`<tr><td>${i+1}</td><td>${t.F}</td><td>${t.m}</td><td>${t.a}</td></tr>`).join('');
+  s1Check();
+}
+function s1Clear(){if(s1.running)return;s1.trials=[];$('t1').innerHTML='<tr><td colspan="4" style="color:var(--muted)">No trials yet</td></tr>';}
+let s1A=false,s1B=false;
+function s1Check(){
+  const has=(F,m)=>s1.trials.some(t=>t.F===F&&t.m===m);
+  if(!s1A&&[10,20,30].every(f=>has(f,2))){s1A=true;$('k1a').classList.add('ok');$('k1a').querySelector('.box').textContent='✓';}
+  if(!s1B&&[2,4,8].every(m=>has(20,m))){s1B=true;$('k1b').classList.add('ok');$('k1b').querySelector('.box').textContent='✓';}
+  if(s1A&&s1B){$('q1lock').classList.add('hidden');$('q1box').classList.remove('hidden');}
+}
+function build1(){
+  $('i1F').oninput=s1UI;$('i1m').oninput=s1UI;$('run1').onclick=s1Run;
+  const b=$('q1box');
+  mc(b,1,'a','Look at your "Test Force" trials. When the net force <b>doubled</b> from 10 N to 20 N and the mass stayed the same, what happened to the acceleration?',
+    ['It was cut in half','It doubled','It stayed the same','It became zero'],1,'More net force on the same mass gives more acceleration. Double the force → double the acceleration.');
+  mc(b,1,'b','Look at your "Test Mass" trials. When the mass <b>doubled</b> from 2 kg to 4 kg and the force stayed at 20 N, what happened to the acceleration?',
+    ['It doubled','It stayed the same','It was cut in half','It tripled'],2,'More mass means less acceleration with the same force. Double the mass → half the acceleration.');
+  numq(b,1,'c','A 4 kg cart has a net force of 24 N acting on it. What is its acceleration?',6,'m/s²','a = F ÷ m = 24 N ÷ 4 kg = 6 m/s².','Use a = F ÷ m. Divide the force by the mass.');
+  numq(b,1,'d','A cart accelerates at 3 m/s² when a net force of 15 N acts on it. What is the mass of the cart?',5,'kg','m = F ÷ a = 15 N ÷ 3 m/s² = 5 kg.','Rearrange the formula: m = F ÷ a.');
+  mc(b,1,'e','Which statement best describes Newton\'s 2nd Law?',
+    ['Every action has an equal and opposite reaction','An object\'s acceleration depends on the net force on it and its mass','Objects at rest always stay at rest','Heavier objects always fall faster than lighter objects'],1,'That\'s the 2nd Law: a = F ÷ m.');
+  checkFinish(1);s1UI();
+}
+
+/* ====== STATION 2 ====== */
+const crates=[
+ {L:30,Ln:'Push',R:50,Rn:'Push',m:5,net:20,dir:'right'},
+ {L:40,Ln:'Pull',R:40,Rn:'Pull',m:8,net:0,dir:'none'},
+ {L:60,Ln:'Push',R:15,Rn:'Friction',m:9,net:45,dir:'left'},
+ {L:25,Ln:'Friction',R:75,Rn:'Push',m:10,net:50,dir:'right'}
+];
+const s2={i:0,offset:0,raf:null};
+function draw2(){
+  const c=$('c2'),ctx=c.getContext('2d'),k=crates[s2.i];ctx.clearRect(0,0,c.width,c.height);
+  ctx.fillStyle='#f7fafd';ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle='#c9d3e1';ctx.fillRect(0,190,c.width,50);ctx.fillStyle='#14284b';ctx.fillRect(0,188,c.width,4);
+  const cx=450+s2.offset,w=130,h=110,y=188-h;
+  ctx.fillStyle='#c58a4a';rr(ctx,cx-w/2,y,w,h,8);ctx.fill();
+  ctx.strokeStyle='#8a5a2b';ctx.lineWidth=5;ctx.strokeRect(cx-w/2+8,y+8,w-16,h-16);
+  ctx.beginPath();ctx.moveTo(cx-w/2+8,y+8);ctx.lineTo(cx+w/2-8,y+h-8);ctx.moveTo(cx+w/2-8,y+8);ctx.lineTo(cx-w/2+8,y+h-8);ctx.stroke();
+  ctx.fillStyle='#fff';rr(ctx,cx-34,y+h/2-16,68,32,8);ctx.fill();ctx.fillStyle='#14284b';ctx.font='800 20px Fredoka, Nunito';ctx.textAlign='center';ctx.fillText(k.m+' kg',cx,y+h/2+7);
+  // left force points RIGHT (pushes from left), right force points LEFT — label clearly
+  const ay=y+h/2;
+  // Force acting toward the left (named Ln) drawn on the right side pointing left; force toward right (Rn) drawn on left side pointing right
+  arrow(ctx,cx-w/2-10-k.R*2.6,ay,cx-w/2-8,'#0fb5a4',`${k.Rn}: ${k.R} N →`,true);
+  arrow(ctx,cx+w/2+10+k.L*2.6,ay,cx+w/2+8,'#ff6b6b',`← ${k.Ln}: ${k.L} N`,true);
+  $('s2count').textContent=`Crate ${s2.i+1} of ${crates.length}`;
+}
+function s2Check(){
+  const k=crates[s2.i],F=parseFloat($('i2F').value),d=$('i2d').value,a=parseFloat($('i2a').value);
+  if(isNaN(F)||!d||isNaN(a)){$('m2').innerHTML='⚠️ Fill in all three boxes first.';return;}
+  const aAns=k.net/k.m;const okF=Math.abs(F-k.net)<.01,okD=d===k.dir,okA=Math.abs(a-aAns)<.01;
+  const ok=okF&&okD&&okA;record(2,'c'+s2.i,ok);
+  if(ok){
+    $('m2').innerHTML=k.net===0?`✅ Correct! The forces are <b>balanced</b> (net force = 0 N), so the crate does not accelerate. If it was at rest, it stays at rest (1st Law).`:`✅ Correct! Net force = ${Math.max(k.L,k.R)} − ${Math.min(k.L,k.R)} = <b>${k.net} N ${k.dir}</b>. a = ${k.net} ÷ ${k.m} = <b>${aAns} m/s²</b>.`;
+    $('chk2').classList.add('hidden');got(2,'c'+s2.i);
+    if(s2.i<crates.length-1)$('next2').classList.remove('hidden');
+    if(k.net!==0){const sign=k.dir==='right'?1:-1;const t0=performance.now();const step=now=>{const t=(now-t0)/1000;s2.offset=sign*Math.min(0.5*aAns*t*t*12,220);draw2();if(t<1.6)s2.raf=requestAnimationFrame(step);};s2.raf=requestAnimationFrame(step);}
+  }else{
+    const tips=[];if(!okF)tips.push('net force (subtract forces in opposite directions)');if(!okD)tips.push('direction (which way is the bigger force?)');if(!okA)tips.push('acceleration (a = net force ÷ mass)');
+    $('m2').innerHTML='❌ Check your '+tips.join(', ')+'.';
+  }
+}
+function s2Next(){s2.i++;s2.offset=0;cancelAnimationFrame(s2.raf);$('i2F').value='';$('i2d').value='';$('i2a').value='';$('chk2').classList.remove('hidden');$('next2').classList.add('hidden');$('m2').textContent='Read the forces on the crate, then fill in all three boxes.';draw2();}
+function build2(){crates.forEach((_,i)=>need(2,'c'+i));$('chk2').onclick=s2Check;$('next2').onclick=s2Next;checkFinish(2);}
+
+/* ====== STATION 3 ====== */
+const s3={v:20,belt:false,bag:false,runs:[],running:false,raf:null};
+const WALL=760;
+function stopTime(b,a){return b&&a?0.15:b?0.10:a?0.03:0.01;}
+function draw3(carX,dummyOff,bagR,crashed,flash){
+  const c=$('c3'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);
+  const g=ctx.createLinearGradient(0,0,0,250);g.addColorStop(0,'#e7f3ff');g.addColorStop(1,'#f7fafd');ctx.fillStyle=g;ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle='#8a97ab';ctx.fillRect(0,205,c.width,45);ctx.fillStyle='#fff';for(let i=0;i<c.width;i+=60)ctx.fillRect(i,225,30,4);
+  // wall
+  ctx.fillStyle='#5b6b85';ctx.fillRect(WALL,70,60,136);ctx.fillStyle='#ffc93c';for(let y=78;y<200;y+=28){ctx.fillRect(WALL,y,60,12);}
+  ctx.fillStyle='#14284b';ctx.font='800 13px Nunito';ctx.textAlign='center';ctx.fillText('BARRIER',WALL+30,62);
+  // car (front at carX)
+  const front=carX,len=250,back=front-len,crush=crashed?14:0;
+  ctx.fillStyle='#ff6b6b';rr(ctx,back,140,len-crush,50,12);ctx.fill();
+  ctx.beginPath();ctx.moveTo(back+40,140);ctx.lineTo(back+80,95);ctx.lineTo(back+170,95);ctx.lineTo(back+205-crush,140);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#bfe6ff';ctx.beginPath();ctx.moveTo(back+56,138);ctx.lineTo(back+86,103);ctx.lineTo(back+160,103);ctx.lineTo(back+190-crush,138);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#14284b';[back+55,front-55-crush].forEach(x=>{ctx.beginPath();ctx.arc(x,192,17,0,7);ctx.fill();ctx.fillStyle='#d6deea';ctx.beginPath();ctx.arc(x,192,6,0,7);ctx.fill();ctx.fillStyle='#14284b';});
+  // seat
+  ctx.fillStyle='#14284b';rr(ctx,back+78,112,12,40,4);ctx.fill();
+  // dummy
+  const dx=back+108+dummyOff;
+  ctx.fillStyle='#ffc93c';ctx.beginPath();ctx.arc(dx,108,11,0,7);ctx.fill();rr(ctx,dx-10,119,20,26,6);ctx.fill();
+  ctx.fillStyle='#14284b';ctx.beginPath();ctx.arc(dx,108,11,-Math.PI/2,0);ctx.lineTo(dx,108);ctx.fill();ctx.beginPath();ctx.arc(dx,108,11,Math.PI/2,Math.PI);ctx.lineTo(dx,108);ctx.fill();
+  // belt
+  if(s3.belt){ctx.strokeStyle='#14284b';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(back+84,116);ctx.lineTo(dx+9,142);ctx.stroke();}
+  // airbag
+  if(bagR>0){ctx.fillStyle='rgba(255,255,255,.95)';ctx.strokeStyle='#5b6b85';ctx.lineWidth=2;ctx.beginPath();ctx.arc(back+168-crush,116,bagR,0,7);ctx.fill();ctx.stroke();}
+  if(flash){ctx.fillStyle='#14284b';ctx.font='800 26px Fredoka, Nunito';ctx.fillText('💥',back+180,98);}
+}
+function s3UI(){s3.v=+$('i3v').value;s3.belt=$('i3b').checked;s3.bag=$('i3a').checked;$('v3v').textContent=s3.v+' m/s';$('r3v').textContent=s3.v+' m/s';if(!s3.running)draw3(330,0,0,false);}
+function s3Run(){
+  if(s3.running)return;s3.running=true;$('run3').disabled=true;$('m3').textContent='Crash test in progress…';
+  const v=s3.v,b=s3.belt,a=s3.bag,dt=stopTime(b,a),F=Math.round(60*v/dt);
+  const startX=260,speedPx=v*14;let phase=0,t0=performance.now(),impactT=null;
+  const limit=b?14:a?42:58; // how far dummy slides forward
+  const step=now=>{
+    const t=(now-t0)/1000;
+    if(phase===0){
+      const x=startX+speedPx*t;
+      if(x>=WALL){phase=1;impactT=now;draw3(WALL,0,0,true);}
+      else draw3(x,0,0,false);
+    }else{
+      const ti=(now-impactT)/1000;
+      let off=Math.min(ti*speedPx*0.9,limit);
+      if(b&&ti>0.25)off=Math.max(limit-(ti-0.25)*40,6);
+      const bagR=a?Math.min(ti*200,26):0;
+      const hit=!b&&off>=limit;
+      draw3(WALL,off,bagR,true,hit&&!a);
+      if(ti>1.1){end();return;}
+    }
+    s3.raf=requestAnimationFrame(step);
+  };
+  function end(){
+    s3.running=false;$('run3').disabled=false;
+    const risk=F<10000?'Low':F<40000?'Moderate':'Severe';
+    $('r3t').textContent=dt+' s';$('r3F').textContent=fmt(F)+' N';$('r3r').textContent=risk;
+    const what=!b&&!a?'The car stopped at the barrier, but the unbelted dummy <b>kept moving forward</b> and slammed into the windshield in just 0.01 s.':
+      !b&&a?'The airbag caught the dummy, but without a seat belt it still flew forward fast.':
+      b&&!a?'The seat belt applied a force that slowed the dummy along with the car.':'The seat belt and airbag worked together to slow the dummy over a <b>longer time</b>.';
+    $('m3').innerHTML=`${what} Force on dummy: <b>${fmt(F)} N</b> (${risk} risk).`;
+    s3.runs.push({v,b,a,dt,F});
+    $('t3').innerHTML=s3.runs.map((r,i)=>`<tr><td>${i+1}</td><td>${r.v} m/s</td><td>${r.b?'✔':'✘'}</td><td>${r.a?'✔':'✘'}</td><td>${r.dt} s</td><td>${fmt(r.F)} N</td></tr>`).join('');
+    s3Check();
+  }
+  s3.raf=requestAnimationFrame(step);
+}
+let s3A=false,s3B=false;
+function s3Check(){
+  const none=s3.runs.filter(r=>!r.b&&!r.a);
+  if(!s3A&&none.length){s3A=true;$('k3a').classList.add('ok');$('k3a').querySelector('.box').textContent='✓';}
+  if(!s3B&&none.some(n=>s3.runs.some(r=>r.b&&r.a&&r.v===n.v))){s3B=true;$('k3b').classList.add('ok');$('k3b').querySelector('.box').textContent='✓';}
+  if(s3A&&s3B){$('q3lock').classList.add('hidden');$('q3box').classList.remove('hidden');}
+}
+function build3(){
+  ['i3v','i3b','i3a'].forEach(id=>$(id).oninput=s3UI);$('run3').onclick=s3Run;
+  const b=$('q3box');
+  mc(b,3,'a','In the test with no restraints, the car stopped at the barrier but the dummy kept moving forward. Which law explains this?',
+    ['1st Law: an object in motion stays in motion unless an unbalanced force acts on it','2nd Law: acceleration equals force divided by mass','3rd Law: every action has an equal and opposite reaction','Gravity pulled the dummy forward'],0,'Nothing stopped the dummy, so its inertia kept it moving forward at the car\'s original speed.');
+  mc(b,3,'b','The seat belt and airbag made the stopping time <b>longer</b>. Why did this make the force on the dummy smaller?',
+    ['The airbag added mass to the dummy','A longer stopping time means a smaller acceleration, and F = m × a, so the force is smaller','The seat belt removed the dummy\'s inertia','The airbag reduced gravity inside the car'],1,'This is the 2nd Law. The dummy\'s mass didn\'t change, but slowing down over more time means a smaller acceleration, so the force is smaller.');
+  mc(b,3,'c','When the car hits the barrier, the car pushes on the barrier. What does the barrier do?',
+    ['It pushes back on the car with an equal force in the opposite direction','It pushes back with a smaller force because it doesn\'t move','It pushes back with a bigger force because it is stronger','It does not push on the car at all'],0,'That\'s the 3rd Law. The forces are equal in size and opposite in direction, and they act on different objects.');
+  mc(b,3,'d','Which statement best explains why seat belts and airbags are designed the way they are?',
+    ['They use only the 1st Law','They use only the 3rd Law','All three of Newton\'s laws act at the same time during a crash, and restraints are designed around them','Newton\'s laws do not apply to car crashes'],2,'Inertia (1st), F = m × a (2nd), and action–reaction (3rd) all happen at the same moment in a crash.');
+  checkFinish(3);s3UI();
+}
+
+/* ====== STATION 4 ====== */
+const s4={m:2000,th:30000,launches:[],running:false,raf:null};
+const G=10;
+function draw4(alt,shake,flame){
+  const c=$('c4'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);
+  const sky=ctx.createLinearGradient(0,0,0,360);const dark=Math.min(alt/400,1);
+  sky.addColorStop(0,`rgb(${Math.round(140-120*dark)},${Math.round(196-170*dark)},${Math.round(255-190*dark)})`);sky.addColorStop(1,`rgb(${Math.round(220-180*dark)},${Math.round(236-190*dark)},255)`);
+  ctx.fillStyle=sky;ctx.fillRect(0,0,c.width,c.height);
+  if(dark>.3){ctx.fillStyle=`rgba(255,255,255,${dark})`;for(let i=0;i<50;i++){ctx.fillRect((i*137)%900,(i*71)%300,2,2);}}
+  const groundY=330+Math.min(alt*2,400);
+  if(groundY<360){ctx.fillStyle='#5aa469';ctx.fillRect(0,groundY,c.width,360);ctx.fillStyle='#5b6b85';ctx.fillRect(360,groundY-10,180,12);ctx.fillStyle='#14284b';ctx.fillRect(560,groundY-150,10,140);}
+  // rocket position
+  const screenAlt=Math.min(alt*2,120);
+  const rx=450+(shake?(Math.random()-.5)*6:0),base=318-screenAlt;
+  const scale=0.8+s4.m/10000;
+  ctx.save();ctx.translate(rx,base);ctx.scale(scale,scale);
+  if(flame>0){ctx.fillStyle='#ffc93c';ctx.beginPath();ctx.moveTo(-16,0);ctx.quadraticCurveTo(0,flame*(0.8+Math.random()*.4),16,0);ctx.fill();ctx.fillStyle='#ff6b6b';ctx.beginPath();ctx.moveTo(-9,0);ctx.quadraticCurveTo(0,flame*.55,9,0);ctx.fill();}
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(0,-150);ctx.bezierCurveTo(26,-118,30,-70,26,-8);ctx.lineTo(-26,-8);ctx.bezierCurveTo(-30,-70,-26,-118,0,-150);ctx.fill();
+  ctx.strokeStyle='#14284b';ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle='#0fb5a4';ctx.beginPath();ctx.arc(0,-92,10,0,7);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#ff6b6b';ctx.beginPath();ctx.moveTo(-26,-40);ctx.lineTo(-44,4);ctx.lineTo(-24,-4);ctx.fill();ctx.beginPath();ctx.moveTo(26,-40);ctx.lineTo(44,4);ctx.lineTo(24,-4);ctx.fill();
+  ctx.fillStyle='#14284b';ctx.fillRect(-16,-10,32,10);
+  ctx.restore();
+  // force arrows
+  const thL=s4.th/1000*1.6,wL=s4.m*G/1000*1.6;
+  if(s4.th>0)varrow(ctx,rx+90,base-60,base-60-thL,'#0fb5a4','Thrust '+fmt(s4.th)+' N');
+  varrow(ctx,rx-90,base-60,base-60+wL,'#ff6b6b','');
+  ctx.fillStyle='#ff6b6b';ctx.font='800 15px Nunito';ctx.textAlign='right';ctx.fillText('Weight '+fmt(s4.m*G)+' N',rx-104,base-60+wL/2+5);
+}
+function s4UI(){
+  s4.m=+$('i4m').value;s4.th=+$('i4t').value;
+  $('v4m').textContent=fmt(s4.m)+' kg';$('v4t').textContent=fmt(s4.th)+' N';
+  const w=s4.m*G,net=s4.th-w;
+  $('r4w').textContent=fmt(w)+' N';$('r4th').textContent=fmt(s4.th)+' N';$('r4n').textContent=net>0?fmt(net)+' N ↑':'0 N (on pad)';$('r4a').textContent=net>0?(+(net/s4.m).toFixed(2))+' m/s²':'0 m/s²';
+  if(!s4.running){$('r4h').textContent='0 m';draw4(0,false,0);}
+}
+function s4Reset(){if(s4.running)return;s4UI();$('m4').textContent='Set the mass and thrust, then launch.';}
+function s4Run(){
+  if(s4.running)return;s4.running=true;$('run4').disabled=true;
+  const m=s4.m,th=s4.th,w=m*G,net=th-w,a=net>0?net/m:0,lift=net>0;
+  const t0=performance.now();const flameMax=th/1000*1.2;
+  const step=now=>{
+    const t=(now-t0)/1000;
+    if(lift){const alt=0.5*a*t*t;draw4(alt,false,flameMax);$('r4h').textContent=fmt(Math.round(alt))+' m';if(t<4){s4.raf=requestAnimationFrame(step);return;}}
+    else{draw4(0,th>0,th>0?flameMax:0);if(t<1.8){s4.raf=requestAnimationFrame(step);return;}draw4(0,false,0);}
+    s4.running=false;$('run4').disabled=false;
+    $('m4').innerHTML=lift?`🚀 Liftoff! Thrust (${fmt(th)} N) is greater than weight (${fmt(w)} N). Net force = <b>${fmt(net)} N up</b>, so a = ${fmt(net)} ÷ ${fmt(m)} = <b>${+a.toFixed(2)} m/s²</b>.`:
+      th===0?'The engines are off. With no thrust, the rocket stays at rest on the pad.':`🛑 No liftoff. Thrust (${fmt(th)} N) is not greater than weight (${fmt(w)} N), so there is no unbalanced upward force. The rocket stays at rest.`;
+    s4.launches.push({m,th,w,net:lift?net:0,a:+a.toFixed(2),lift});
+    $('t4').innerHTML=s4.launches.map((l,i)=>`<tr><td>${i+1}</td><td>${fmt(l.m)}</td><td>${fmt(l.th)}</td><td>${fmt(l.w)}</td><td>${fmt(l.net)}</td><td>${l.a}</td><td>${l.lift?'🚀 Liftoff':'🛑 Stayed'}</td></tr>`).join('');
+    s4Check();
+  };
+  s4.raf=requestAnimationFrame(step);
+}
+let s4A=false,s4B=false,s4C=false;
+function s4Check(){
+  const L=s4.launches;const tick=id=>{$(id).classList.add('ok');$(id).querySelector('.box').textContent='✓';};
+  if(!s4A&&L.some(l=>l.th>0&&!l.lift)){s4A=true;tick('k4a');}
+  if(!s4B&&L.some(l=>l.lift)){s4B=true;tick('k4b');}
+  if(!s4C&&L.some(x=>x.lift&&L.some(y=>y.lift&&y.th===x.th&&y.m!==x.m))){s4C=true;tick('k4c');}
+  if(s4A&&s4B&&s4C){$('q4lock').classList.add('hidden');$('q4box').classList.remove('hidden');}
+}
+function build4(){
+  $('i4m').oninput=s4UI;$('i4t').oninput=s4UI;$('run4').onclick=s4Run;
+  const b=$('q4box');
+  matchq(b,4,'a','A rocket launch shows all three laws <b>at the same time</b>. Match each moment to the law it shows best.',[
+    ['The engines push exhaust gas down, and the gas pushes the rocket up.','3'],
+    ['The rocket sits still on the pad until thrust becomes greater than its weight.','1'],
+    ['With the same thrust, the lighter rocket had a greater acceleration than the heavier rocket.','2']
+  ],'All three laws are acting together during a single launch.');
+  numq(b,4,'b','A 2,000 kg rocket has a thrust of 30,000 N. Its weight is 20,000 N. What is its acceleration?',5,'m/s²','Net force = 30,000 − 20,000 = 10,000 N up. a = 10,000 ÷ 2,000 = 5 m/s².','First find the net force (thrust − weight), then divide by the mass.');
+  mc(b,4,'c','Engineers want a rocket to accelerate faster without changing the engines. Based on your data, what should they do?',
+    ['Add more fuel tanks to increase the mass','Decrease the rocket\'s mass','Paint the rocket a lighter color','Point the exhaust upward'],1,'With the same net force, less mass means more acceleration (2nd Law).');
+  checkFinish(4);s4UI();
+}
+
+/* ====== STATION 5 ====== */
+function build5(){
+  const b=$('q5box');
+  const Q=[
+   ['A roller coaster car comes to a sudden stop at the end of the ride. The riders lurch forward against their lap bars. Which law best explains why the riders lurch forward?',['Newton\'s 1st Law','Newton\'s 2nd Law','Newton\'s 3rd Law','The law of conservation of mass'],0,'The riders\' bodies keep moving forward (inertia) until the lap bars apply an unbalanced force.'],
+   ['A soccer player kicks a ball. Which statement about the forces between the foot and the ball is correct?',['The foot pushes on the ball harder than the ball pushes on the foot','The ball pushes on the foot with an equal force in the opposite direction','Only the foot exerts a force','The ball pushes back only after it starts moving'],1,'3rd Law: action and reaction forces are equal in size and opposite in direction.'],
+   ['A 0.5 kg soccer ball is kicked with a net force of 20 N. What is the acceleration of the ball?',['10 m/s²','20.5 m/s²','40 m/s²','100 m/s²'],2,'a = F ÷ m = 20 N ÷ 0.5 kg = 40 m/s².'],
+   ['A student pushes three carts with the same net force. Cart A (1 kg) accelerates at 12 m/s². Cart B (2 kg) accelerates at 6 m/s². What is the acceleration of Cart C (4 kg)?',['3 m/s²','4 m/s²','12 m/s²','24 m/s²'],0,'The force is 12 N. a = 12 N ÷ 4 kg = 3 m/s². Double the mass → half the acceleration.'],
+   ['Which must be true for a rocket to accelerate upward from the launch pad?',['The thrust must equal the rocket\'s weight','The thrust must be greater than the rocket\'s weight','The rocket\'s weight must be greater than the thrust','The rocket must have no mass'],1,'Only an unbalanced upward force (thrust > weight) causes upward acceleration.'],
+   ['Two tectonic plates collide at a convergent boundary. Plate A pushes on Plate B. Which statement is true?',['Plate B pushes on Plate A with an equal force in the opposite direction','Plate B does not push on Plate A','Plate B pushes with less force because it moves slower','The larger plate always pushes with more force'],0,'Newton\'s 3rd Law applies to Earth\'s tectonic activity too. The forces are equal and opposite.'],
+   ['Forces of 35 N to the right and 35 N to the left act on a box at rest. What happens to the box?',['It accelerates to the right','It accelerates to the left','It stays at rest because the forces are balanced','It speeds up and then stops'],2,'Net force = 0 N, so the forces are balanced. An object at rest stays at rest (1st Law).'],
+   ['A skateboarder pushes off a wall and rolls away. Which of Newton\'s laws are acting during this event?',['Only the 1st Law','Only the 2nd Law','Only the 3rd Law','All three laws act at the same time'],3,'She pushes the wall and the wall pushes her (3rd), she was at rest until an unbalanced force acted (1st), and her acceleration depends on the force and her mass (2nd).']
+  ];
+  Q.forEach((q,i)=>mc(b,5,'q'+i,`<span style="color:var(--teal)">${i+1}.</span> ${q[0]}`,q[1],q[2],q[3]));
+  checkFinish(5);
+}
+
+/* ====== RESULTS ====== */
+function showResults(){
+  let tot=0,cor=0;const names={1:'Force & Mass',2:'Net Force',3:'Crash Test',4:'Rocket Launch',5:'Certification'};
+  let grid='';
+  for(let st=1;st<=5;st++){const v=Object.values(S.score[st]);const c=v.filter(Boolean).length;tot+=v.length;cor+=c;grid+=`<div class="sg"><small>${names[st]}</small><b>${c} / ${v.length}</b></div>`;}
+  const pct=tot?Math.round(cor/tot*100):0;
+  const mins=Math.round((Date.now()-S.start)/60000);
+  $('certName').textContent=S.name;$('certPct').textContent=pct+'%';$('certRaw').textContent=`${cor} of ${tot} correct on the first try`;
+  $('certGrid').innerHTML=grid;
+  $('certMeta').textContent=`Completed ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · Time: ${mins} min`;
+  show('results');
+}
+</script>
+</body>
+</html>

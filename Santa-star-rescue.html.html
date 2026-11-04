@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Santa's Star Map Rescue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Nunito:wght@500;700;800;900&family=DM+Mono:wght@500&display=swap">
+<style>
+/* Layout: the North Pole on Christmas Eve. Map of 4 station cards + Santa's sleigh lock; each station opens as an elf work order beside a combination lock. */
+:root{
+  --night:#0c1430;      /* midnight over the North Pole */
+  --panel:#142048;
+  --panel-2:#1c2b5c;
+  --line:#2f4280;
+  --card:#eef4fb;       /* icy work order */
+  --card-ink:#132044;
+  --card-line:#c9d8ec;
+  --gold:#f4c84a;       /* accent: starlight */
+  --red:#d9405a;
+  --ice:#8fd3ff;
+  --pine:#6fbf93;
+  --text:#eef3ff;
+  --muted:#aab8dc;
+  --display:"Shrikhand", "Cooper Black", Georgia, serif;
+  --body:"Nunito", "Trebuchet MS", system-ui, sans-serif;
+  --mono:"DM Mono", ui-monospace, Menlo, monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--night);color:var(--text);font-family:var(--body);font-size:17px;line-height:1.5;min-height:100%;
+  background-image:radial-gradient(ellipse at 50% -10%, #23336b 0, transparent 60%),radial-gradient(circle at 100% 100%, #10304a 0, transparent 50%)}
+canvas#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 48px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;padding-bottom:16px;border-bottom:2px dashed var(--line)}
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand small{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:800}
+.brand h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,44px);line-height:1.05;margin:0;text-wrap:balance}
+.status{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-family:var(--mono);font-size:15px;display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.pips{display:flex;gap:6px}
+.pip{width:26px;height:26px;border-radius:6px;border:2px solid var(--line);display:grid;place-items:center;font-family:var(--mono);font-size:14px;color:var(--muted);background:var(--night)}
+.pip.got{background:var(--gold);border-color:var(--gold);color:var(--card-ink);font-weight:700}
+
+.intro{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:center;padding-block:24px}
+.intro p{margin:0 0 10px;max-width:60ch}
+.intro .lead{font-size:19px;font-weight:700}
+.note{background:var(--card);color:var(--card-ink);border-radius:6px;padding:20px 18px 16px;transform:rotate(1.2deg);box-shadow:0 10px 24px #0008;position:relative;font-size:15px;overflow:hidden}
+.note::before{content:"";position:absolute;top:0;left:0;right:0;height:8px;background:repeating-linear-gradient(-45deg,var(--red) 0 10px,#fff 10px 20px)}
+.note h3{font-family:var(--display);font-weight:400;margin:0 0 6px;font-size:20px;color:var(--red)}
+.note ol{margin:0;padding-left:20px}
+.note li{margin-bottom:4px}
+.namefield{display:flex;flex-direction:column;gap:4px;margin-top:12px;max-width:340px}
+.namefield label{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.namefield input{background:var(--panel);border:2px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--text);font:inherit}
+
+.map{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:8px}
+.station{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:18px 16px;text-align:left;display:flex;flex-direction:column;gap:10px;transition:transform .15s, border-color .15s;min-width:0}
+.station:hover{transform:translateY(-3px);border-color:var(--gold)}
+.station svg{width:64px;height:64px}
+.station h3{font-family:var(--display);font-weight:400;font-size:21px;margin:0;line-height:1.1}
+.station .topic{font-size:14px;color:var(--muted);font-weight:700}
+.badge{align-self:flex-start;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:var(--panel-2);color:var(--muted)}
+.station.done{border-color:var(--pine)}
+.station.done .badge{background:var(--pine);color:#0f2a1c}
+.final{margin-top:16px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:18px;background:linear-gradient(120deg,var(--panel),var(--panel-2));border:2px dashed var(--gold);border-radius:16px;padding:18px 20px}
+.final svg{width:84px;height:84px}
+.final h3{font-family:var(--display);font-weight:400;font-size:26px;margin:0}
+.final p{margin:2px 0 0;color:var(--muted)}
+.final.locked{opacity:.6;border-color:var(--line)}
+
+.btn{background:var(--gold);color:var(--card-ink);border:none;border-radius:10px;padding:12px 20px;font-weight:900;font-size:16px;box-shadow:0 4px 0 #a8831c}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #a8831c}
+.btn[disabled]{background:var(--panel-2);color:var(--muted);box-shadow:none;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--text);border:2px solid var(--line);box-shadow:none}
+
+.back{margin-block:18px 6px}
+.stage{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start}
+.stage-head{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+.stage-head svg{width:56px;height:56px;flex:none}
+.stage-head h2{font-family:var(--display);font-weight:400;font-size:clamp(26px,4vw,36px);margin:0;line-height:1.05}
+.stage-head .topic{color:var(--gold);font-weight:800;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.story{color:var(--muted);margin:6px 0 16px;max-width:62ch}
+.order-card{background:var(--card);color:var(--card-ink);border-radius:8px;padding:0 20px 14px;box-shadow:0 12px 30px #0009;overflow:hidden}
+.order-title{display:flex;justify-content:space-between;align-items:center;font-family:var(--display);color:var(--red);font-size:20px;padding:16px 0 10px;border-bottom:2px solid var(--red);margin-bottom:6px;position:relative}
+.order-title::before{content:"";position:absolute;top:0;left:-20px;right:-20px;height:8px;background:repeating-linear-gradient(-45deg,var(--red) 0 10px,#fff 10px 20px)}
+.order-title span{font-family:var(--mono);font-size:13px;color:#5a6b92}
+.q{padding:12px 0;border-bottom:1px dashed var(--card-line)}
+.q:last-child{border-bottom:none}
+.q .num{font-family:var(--mono);background:var(--card-ink);color:var(--card);border-radius:4px;padding:1px 7px;margin-right:8px;font-size:14px}
+.q p{margin:0 0 6px;font-weight:700}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;padding-left:4px;font-size:16px}
+.opts span b{font-family:var(--mono);color:var(--red);margin-right:6px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.legend span{background:var(--card-ink);color:var(--card);border-radius:6px;padding:3px 10px;font-size:14px;font-weight:700}
+.legend b{font-family:var(--mono);color:var(--gold);margin-right:4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0 6px}
+.stagecard{background:#fff;border:2px solid var(--card-line);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start}
+.stagecard b{font-family:var(--mono);font-size:22px;color:var(--red);line-height:1}
+.stagecard span{font-size:14.5px;font-weight:700;line-height:1.3}
+.stagecard small{display:block;font-weight:600;color:#4a5a80;font-size:13px}
+.hr{margin:10px 0 4px;background:#fff;border:2px solid var(--card-line);border-radius:10px;padding:6px;overflow-x:auto}
+.hr svg{display:block;width:100%;min-width:420px;height:auto}
+
+.lock{background:linear-gradient(160deg,#22336a,#121c40);border:3px solid #3c5296;border-radius:20px;padding:20px 18px;position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);box-shadow:inset 0 2px 0 #ffffff14, 0 14px 30px #0009}
+.lock h3{margin:0 0 4px;font-family:var(--display);font-weight:400;font-size:22px;color:var(--gold)}
+.lock .sub{font-size:14px;color:var(--muted);margin:0 0 14px}
+.dials{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.dial{display:flex;flex-direction:column;align-items:center;gap:4px}
+.dial button.arrow{width:46px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-size:14px;line-height:1}
+.dial .face{width:50px;height:64px;border-radius:10px;background:linear-gradient(#070c1e,#16224a 50%,#070c1e);border:2px solid #5068ad;display:grid;place-items:center;font-family:var(--mono);font-size:30px;color:var(--gold);text-shadow:0 0 10px #f4c84a77;user-select:none}
+.dial small{font-family:var(--mono);color:var(--muted);font-size:12px}
+.lock .actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.msg{min-height:24px;font-weight:800;text-align:center;font-size:15px}
+.msg.bad{color:#ff9aac}
+.shake{animation:shake .45s}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.hint{background:var(--panel);border:1px dashed var(--gold);border-radius:10px;padding:10px 12px;font-size:15px;margin-top:8px}
+.attempts{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:center}
+
+.unlocked{margin-top:20px;background:var(--panel);border:2px solid var(--pine);border-radius:14px;padding:16px 18px}
+.unlocked h3{margin:0 0 8px;font-family:var(--display);font-weight:400;color:var(--pine);font-size:24px}
+.unlocked ul{margin:0;padding-left:20px}
+.unlocked li{margin-bottom:6px}
+.prize{display:flex;align-items:center;gap:12px;margin:10px 0 14px}
+.tile{width:54px;height:54px;border-radius:10px;background:var(--gold);color:var(--card-ink);font-family:var(--display);font-size:32px;display:grid;place-items:center;transform:rotate(-4deg);flex:none}
+
+.final-stage{max-width:620px;margin:20px auto;text-align:center}
+.final-stage h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,42px);margin:6px 0}
+.tiles{display:flex;justify-content:center;gap:10px;margin:18px 0}
+.tiles .tile:nth-child(even){transform:rotate(4deg)}
+.wordin{font-family:var(--mono);font-size:28px;text-align:center;letter-spacing:.3em;text-transform:uppercase;width:100%;max-width:280px;padding:12px;border-radius:12px;border:3px solid #5068ad;background:#070c1e;color:var(--gold)}
+.cert{background:var(--card);color:var(--card-ink);border-radius:8px;padding:34px 24px 30px;margin-top:20px;border:6px double var(--red);box-shadow:0 18px 40px #000b;position:relative;overflow:hidden}
+.cert::before{content:"";position:absolute;top:0;left:0;right:0;height:10px;background:repeating-linear-gradient(-45deg,var(--red) 0 12px,#fff 12px 24px)}
+.cert small{letter-spacing:.2em;text-transform:uppercase;font-weight:900;color:var(--red);font-size:12px}
+.cert h2{font-family:var(--display);font-weight:400;font-size:clamp(30px,6vw,46px);margin:6px 0;color:var(--card-ink)}
+.cert .who{font-family:var(--display);font-size:30px;color:var(--red);border-bottom:2px solid var(--card-line);display:inline-block;padding:0 20px 4px;margin:6px 0 12px}
+.cert .stats{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;font-family:var(--mono);margin-top:10px}
+.cert .stats b{display:block;font-size:24px}
+canvas#confetti{position:fixed;inset:0;pointer-events:none;width:100%;height:100%;z-index:50}
+
+.teacher{margin-top:40px;border-top:2px dashed var(--line);padding-top:16px;color:var(--muted);font-size:14px}
+.teacher summary{cursor:pointer;font-weight:800}
+.teacher .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.teacher input{background:var(--panel);border:2px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--text);font:inherit}
+.keytable{margin-top:12px;overflow-x:auto}
+.keytable table{border-collapse:collapse;min-width:420px;font-size:14px}
+.keytable td,.keytable th{border:1px solid var(--line);padding:6px 10px;text-align:left}
+.keytable td.code{font-family:var(--mono);color:var(--gold);font-size:16px}
+
+@media (max-width:860px){
+  .map{grid-template-columns:repeat(2,1fr)}
+  .map .station:last-child{grid-column:span 2}
+  .stage{grid-template-columns:1fr}
+  .lock{position:static}
+  .intro{grid-template-columns:1fr}
+}
+@media (max-width:480px){
+  .opts{grid-template-columns:1fr}
+  .final{grid-template-columns:1fr;text-align:center;justify-items:center}
+  .dial .face{width:42px;height:56px;font-size:25px}
+  .dial button.arrow{width:40px}
+  .dials{gap:6px}
+  .station svg{width:48px;height:48px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+<canvas id="confetti" hidden></canvas>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <small>Science with Mrs. Lennon · Stars &amp; H-R Diagram Escape Room</small>
+      <h1>Santa's Star Map Rescue</h1>
+    </div>
+    <div class="status">
+      <div class="chip" title="Time elapsed"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span id="clock">00:00</span></div>
+      <div class="pips" id="pips" aria-label="Letters collected"></div>
+    </div>
+  </header>
+  <main id="app"></main>
+
+  <details class="teacher">
+    <summary>Teacher answer key</summary>
+    <div class="row">
+      <input id="tpass" aria-label="Teacher passcode" type="password" placeholder="Teacher passcode" autocomplete="off">
+      <button class="btn ghost" id="tgo" type="button">Show key</button>
+      <button class="btn ghost" id="treset" type="button">Reset this device</button>
+    </div>
+    <div id="tkey"></div>
+  </details>
+</div>
+
+<script>
+const ICONS = {
+  workshop:`<svg viewBox="0 0 64 64" fill="none"><path d="M8 28L32 10l24 18v28H8z" fill="#1c2b5c" stroke="#f4c84a" stroke-width="3" stroke-linejoin="round"/><rect x="24" y="38" width="16" height="18" fill="#d9405a"/><circle cx="32" cy="27" r="6" fill="none" stroke="#8fd3ff" stroke-width="2"/><path d="M32 21v-3M32 36v-3M26 27h-3M41 27h-3" stroke="#8fd3ff" stroke-width="2" stroke-linecap="round"/><path d="M4 30l28-22 28 22" stroke="#eef4fb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  stables:`<svg viewBox="0 0 64 64" fill="none"><path d="M20 30c-6-4-8-12-6-20M20 22c-4 0-7-2-9-5M44 30c6-4 8-12 6-20M44 22c4 0 7-2 9-5" stroke="#c99a5b" stroke-width="3.5" stroke-linecap="round"/><path d="M16 56c0-14 7-26 16-26s16 12 16 26z" fill="#1c2b5c" stroke="#f4c84a" stroke-width="3"/><circle cx="26" cy="42" r="2.5" fill="#eef4fb"/><circle cx="38" cy="42" r="2.5" fill="#eef4fb"/><circle cx="32" cy="51" r="4" fill="#d9405a"/></svg>`,
+  gift:`<svg viewBox="0 0 64 64" fill="none"><rect x="10" y="26" width="44" height="30" rx="3" fill="#1c2b5c" stroke="#f4c84a" stroke-width="3"/><rect x="7" y="18" width="50" height="10" rx="2" fill="#d9405a" stroke="#f4c84a" stroke-width="3"/><path d="M32 18v38" stroke="#f4c84a" stroke-width="5"/><path d="M32 18c-4-10-16-10-14-2 1 3 9 3 14 2zM32 18c4-10 16-10 14-2-1 3-9 3-14 2z" fill="#8fd3ff" stroke="#f4c84a" stroke-width="2"/></svg>`,
+  scope:`<svg viewBox="0 0 64 64" fill="none"><path d="M10 34l34-16 5 11-34 16z" fill="#1c2b5c" stroke="#f4c84a" stroke-width="3" stroke-linejoin="round"/><path d="M44 18l8-4 5 11-8 4" fill="#d9405a" stroke="#f4c84a" stroke-width="3" stroke-linejoin="round"/><path d="M28 40l-8 18M30 39l8 19" stroke="#eef4fb" stroke-width="3" stroke-linecap="round"/><path d="M52 6l1.5 3 3 1.5-3 1.5L52 15l-1.5-3-3-1.5 3-1.5z" fill="#f4c84a"/></svg>`,
+  mug:`<svg viewBox="0 0 64 64" fill="none"><path d="M22 18c-3-4 3-6 0-10M32 18c-3-4 3-6 0-10" stroke="#aab8dc" stroke-width="2.5" stroke-linecap="round"/><path d="M12 22h34v20a12 12 0 0 1-12 12H24a12 12 0 0 1-12-12z" fill="#d9405a" stroke="#f4c84a" stroke-width="3"/><path d="M46 28h4a6 6 0 0 1 0 12h-4" stroke="#f4c84a" stroke-width="3"/><path d="M29 30l2 4 4.5.6-3.3 3 .8 4.4-4-2.1-4 2.1.8-4.4-3.3-3 4.5-.6z" fill="#f4c84a"/></svg>`,
+  sleigh:`<svg viewBox="0 0 64 64" fill="none"><path d="M10 26h34c4 0 6 4 6 8v6H16c-4 0-6-6-6-14z" fill="#d9405a" stroke="#f4c84a" stroke-width="3" stroke-linejoin="round"/><path d="M8 50h44c4 0 6-3 6-6" stroke="#eef4fb" stroke-width="3.5" stroke-linecap="round"/><path d="M20 40v10M42 40v10" stroke="#eef4fb" stroke-width="3"/><rect x="20" y="16" width="12" height="10" rx="2" fill="#6fbf93" stroke="#f4c84a" stroke-width="2"/><path d="M50 10l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#f4c84a"/></svg>`
+};
+
+/* H-R diagram: log temperature (hot on left) vs log luminosity */
+function hrDiagram(){
+  const L=70,T=20,W=420,H=290;
+  const x = t => L + (Math.log10(40000)-Math.log10(t))/(Math.log10(40000)-Math.log10(2500))*W;
+  const y = l => T + (6 - Math.log10(l))/(6-(-4.5))*H;
+  const ms = [[38000,3e5],[20000,8000],[10000,50],[7000,5],[5800,1],[4500,0.15],[3500,0.01],[2700,0.0006]];
+  const msPath = ms.map((p,i)=>(i?"L":"M")+x(p[0]).toFixed(1)+" "+y(p[1]).toFixed(1)).join(" ");
+  const stars = [
+    ["A",25000,1e4,"#9cc9ff",13],
+    ["B",12000,0.01,"#e8f1ff",6],
+    ["C",3500,1e5,"#ff7a59",20],
+    ["D",5800,1,"#ffe27a",9],
+    ["E",3100,0.0015,"#ff5a4a",6]
+  ];
+  const yt = [[1e6,"1,000,000"],[1e4,"10,000"],[100,"100"],[1,"1 (Sun)"],[0.01,"0.01"],[0.0001,"0.0001"]];
+  const xt = [[30000,"30,000"],[10000,"10,000"],[6000,"6,000"],[3000,"3,000"]];
+  let s = `<svg viewBox="0 0 ${L+W+20} ${T+H+58}" role="img" aria-label="H-R diagram with five labeled stars, A through E" font-family="Nunito, sans-serif">
+  <defs><clipPath id="plot"><rect x="${L}" y="${T}" width="${W}" height="${H}" rx="4"/></clipPath><linearGradient id="tg" x1="0" x2="1"><stop offset="0" stop-color="#5b8cff"/><stop offset=".45" stop-color="#fff2b0"/><stop offset="1" stop-color="#ff5a3c"/></linearGradient></defs>
+  <rect x="${L}" y="${T}" width="${W}" height="${H}" fill="#0f1a3d" rx="4"/>`;
+  yt.forEach(([v,lab]) => { const yy=y(v); s+=`<line x1="${L}" x2="${L+W}" y1="${yy}" y2="${yy}" stroke="#ffffff18"/><text x="${L-6}" y="${yy+4}" text-anchor="end" font-size="11" fill="#132044">${lab}</text>`; });
+  xt.forEach(([v,lab]) => { const xx=x(v); s+=`<line y1="${T}" y2="${T+H}" x1="${xx}" x2="${xx}" stroke="#ffffff18"/><text x="${xx}" y="${T+H+16}" text-anchor="middle" font-size="11" fill="#132044">${lab}</text>`; });
+  s += `<path clip-path="url(#plot)" d="${msPath}" stroke="#8fd3ff" stroke-opacity=".28" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <text x="${x(9000)}" y="${y(4)}" font-size="12" font-weight="800" fill="#bfe6ff" transform="rotate(37 ${x(9000)} ${y(4)})">MAIN SEQUENCE</text>
+  <text x="${x(8000)}" y="${y(2e5)}" font-size="12" font-weight="800" fill="#ffd2c4" text-anchor="middle">SUPERGIANTS</text>
+  <text x="${x(4700)}" y="${y(300)}" font-size="12" font-weight="800" fill="#ffd2c4" text-anchor="middle">GIANTS</text>
+  <text x="${x(14000)}" y="${y(0.0006)}" font-size="12" font-weight="800" fill="#d8e6ff" text-anchor="middle">WHITE DWARFS</text>`;
+  stars.forEach(([k,t,l,c,r]) => { const cx=x(t), cy=y(l);
+    s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="#ffffff" stroke-width="1.5"/>
+    <circle cx="${cx+r+10}" cy="${cy-r-6}" r="10" fill="#f4c84a"/><text x="${cx+r+10}" y="${cy-r-2}" text-anchor="middle" font-family="DM Mono, monospace" font-size="13" font-weight="700" fill="#132044">${k}</text>`; });
+  s += `<rect x="${L}" y="${T+H+24}" width="${W}" height="8" rx="4" fill="url(#tg)"/>
+  <text x="${L}" y="${T+H+50}" font-size="12" font-weight="800" fill="#132044">◀ HOTTER</text>
+  <text x="${L+W/2}" y="${T+H+50}" font-size="12" font-weight="800" fill="#132044" text-anchor="middle">Surface temperature (K)</text>
+  <text x="${L+W}" y="${T+H+50}" font-size="12" font-weight="800" fill="#132044" text-anchor="end">COOLER ▶</text>
+  <text transform="translate(14 ${T+H/2}) rotate(-90)" font-size="12" font-weight="800" fill="#132044" text-anchor="middle">Luminosity (Sun = 1)</text></svg>`;
+  return s;
+}
+
+const STATIONS = [
+  { id:"workshop", icon:"workshop", name:"The Toy Workshop", topic:"How stars are born", letter:"S",
+    story:"The elves can't print new star maps until the workshop's star-birth chart is fixed. Answer each question, then dial in the letter of each correct answer, in order.",
+    type:"mc", dial:["A","B","C","D"], answer:"BCACAB",
+    questions:[
+      {q:"Stars are born inside huge clouds of gas and dust called a:", opts:["galaxy","nebula","black hole","comet"]},
+      {q:"Which force pulls the gas and dust together to form a protostar?", opts:["magnetism","friction","gravity","electricity"]},
+      {q:"A protostar becomes a main sequence star when its core begins:", opts:["fusing hydrogen into helium","splitting uranium atoms","cooling down","spinning faster"]},
+      {q:"Which kind of star stays on the main sequence the LONGEST?", opts:["A massive blue star","A medium yellow star like the Sun","A small red dwarf","They all last the same time"]},
+      {q:"The light and heat a star gives off come from:", opts:["nuclear fusion in its core","burning gas, like a campfire","reflecting light from other stars","chemical reactions on its surface"]},
+      {q:"What mostly decides how a star will live and how it will die?", opts:["its color at birth","its mass","its distance from Earth","the galaxy it is in"]}
+    ],
+    hint:"Stars form when gravity squeezes a cloud of gas and dust. A real star \"turns on\" when nuclear fusion starts in its core. Small stars use their fuel slowly, so they last the longest.",
+    explain:[
+      "A nebula is a cloud of gas (mostly hydrogen) and dust. It is a star nursery.",
+      "Gravity pulls the gas and dust inward until it forms a hot, dense protostar.",
+      "Once the core is hot enough to fuse hydrogen into helium, the star is on the main sequence.",
+      "Red dwarfs burn their fuel slowly and can shine for trillions of years. Massive stars burn out in a few million.",
+      "Stars shine because of nuclear fusion, not fire. Fusing hydrogen into helium releases enormous energy.",
+      "Mass is the big one. A star's mass controls how hot it burns, how long it lasts, and whether it ends as a white dwarf or a supernova."
+    ]},
+  { id:"stables", icon:"stables", name:"The Reindeer Stables", topic:"Life cycle of a Sun-like star", letter:"O",
+    story:"The reindeer won't leave the stable until their star chart is in order. Set dials 1 to 6 to the life stages of a Sun-like star from FIRST to LAST. Then use the same cards to answer questions 7 and 8.",
+    type:"order", orderLen:6, dial:["A","B","C","D","E","F"], answer:"CFBEADBE",
+    cards:[
+      ["A","Planetary nebula","Outer layers drift away as a glowing shell"],
+      ["B","Main sequence star","Fusing hydrogen into helium for billions of years"],
+      ["C","Nebula","Cloud of gas and dust"],
+      ["D","White dwarf","Small, hot, leftover core that slowly cools"],
+      ["E","Red giant","Swells up and cools after hydrogen runs low"],
+      ["F","Protostar","Hot, dense ball pulled together by gravity"]
+    ],
+    questions:[
+      {q:"Dial 7: Which stage is our Sun in right now?", n:7},
+      {q:"Dial 8: Which stage will our Sun become next?", n:8}
+    ],
+    hint:"A Sun-like star starts as a cloud, spends most of its life on the main sequence, swells up, puffs off its outer layers, and leaves its core behind. The Sun is about halfway through the longest stage.",
+    explain:[
+      "Nebula → protostar → main sequence → red giant → planetary nebula → white dwarf.",
+      "Our Sun is a main sequence star right now, about halfway through its life. In about 5 billion years it will become a red giant."
+    ]},
+  { id:"gift", icon:"gift", name:"The Gift Wrap Room", topic:"Sun-like vs. massive stars", letter:"L",
+    story:"Two piles of star tags got mixed up in the wrap room. Decide whether each stage belongs to a Sun-like star (S) or a massive star (M) and dial it in.",
+    type:"sort", dial:["S","M"], answer:"SMMSMM",
+    legend:[["S","Sun-like (low or medium mass) star"],["M","Massive star (much more mass than the Sun)"]],
+    questions:[
+      {q:"Ends its life as a white dwarf."},
+      {q:"Swells into a red supergiant."},
+      {q:"Explodes in a supernova."},
+      {q:"Gently sheds its outer layers as a planetary nebula."},
+      {q:"Its core collapses into a neutron star or a black hole."},
+      {q:"Burns through its fuel in only a few million years."}
+    ],
+    hint:"Massive stars live fast and end big: supergiant, supernova, neutron star or black hole. Sun-like stars end quietly: red giant, planetary nebula, white dwarf.",
+    explain:[
+      "Sun-like stars leave behind a white dwarf.",
+      "Massive stars become red supergiants, much bigger than red giants.",
+      "Only massive stars explode as supernovas.",
+      "Sun-like stars puff off a planetary nebula. It has nothing to do with planets; early astronomers just thought it looked like one.",
+      "After a supernova, the massive star's core becomes a neutron star, or a black hole if enough mass is left.",
+      "Massive stars burn hot and fast, so they live only millions of years. The Sun will last about 10 billion."
+    ]},
+  { id:"scope", icon:"scope", name:"The Observatory", topic:"Reading the H-R diagram", letter:"R",
+    story:"Santa's navigators plot stars on an H-R diagram. Use the diagram to identify each star, then dial in its letter.",
+    type:"mc", diagram:true, dial:["A","B","C","D","E"], answer:"BDAECE",
+    questions:[
+      {q:"Which star is a white dwarf?"},
+      {q:"Which star is most like our Sun?"},
+      {q:"Which star has the HIGHEST surface temperature?"},
+      {q:"Which star is a cool, dim red dwarf?"},
+      {q:"Which star is cool but extremely luminous because it is enormous?"},
+      {q:"Which star gives off the LEAST light (lowest luminosity)?"}
+    ],
+    hint:"On an H-R diagram, temperature gets HOTTER to the LEFT. Brighter stars are higher up. The Sun has a luminosity of 1. White dwarfs sit low on the left; supergiants sit high on the right.",
+    explain:[
+      "B is a white dwarf: hot (left side) but very dim (low), because it is tiny.",
+      "D sits on the main sequence at about 5,800 K with a luminosity of 1, just like the Sun.",
+      "A is farthest left at about 25,000 K, so it is the hottest. Blue stars are the hottest stars.",
+      "E is a red dwarf: cool (right side) and very dim (low) on the main sequence.",
+      "C is a red supergiant: cool (right side) but very luminous (high) because it is huge.",
+      "E is the lowest point on the diagram, so it gives off the least light. B is dim too, but it sits a little higher."
+    ]}
+];
+/* fifth station goes before the observatory */
+STATIONS.splice(3, 0, { id:"cafe", icon:"mug", name:"The Cocoa Café", topic:"Star color, temperature & size", letter:"A",
+    story:"The elves left a quiz on the café menu board, and the cocoa machine won't run until someone solves it. Answer each question, then dial in your letters.",
+    type:"mc", dial:["A","B","C","D"], answer:"BDBAB",
+    questions:[
+      {q:"What does a star's color tell astronomers?", opts:["its age","its surface temperature","its distance from Earth","the number of planets it has"]},
+      {q:"Which color of star is the HOTTEST?", opts:["red","yellow","orange","blue"]},
+      {q:"Betelgeuse is red. Rigel is blue-white. Which statement is true?", opts:["Betelgeuse is hotter","Rigel is hotter","They are the same temperature","Color has nothing to do with temperature"]},
+      {q:"Two stars have the same surface temperature, but Star X gives off 100 times more light. What is the best explanation?", opts:["Star X is much bigger","Star X is much smaller","Star X is cooler","Star X is closer to Earth"]},
+      {q:"Our Sun is best described as a:", opts:["blue supergiant","yellow main sequence star","red dwarf","white dwarf"]}
+    ],
+    hint:"Think of a stove burner or a flame: red is the coolest, then orange, yellow, white, and blue is the hottest. If two stars are the same temperature, the one with more surface area gives off more light.",
+    explain:[
+      "A star's color shows its surface temperature.",
+      "Blue stars are the hottest (over 10,000 K). Red stars are the coolest (around 3,000 K).",
+      "Blue-white Rigel is much hotter than red Betelgeuse.",
+      "Same temperature means each square meter gives off the same light, so the bigger star gives off more in total. Distance changes how bright a star LOOKS from Earth, not how much light it actually gives off.",
+      "The Sun is a yellow (about 5,800 K) main sequence star."
+    ]});
+const FINAL = "SOLAR";
+const SCRAMBLE = ["L","A","S","R","O"];
+const NAV = { dial:["M","W","G","S","D"], answer:"WSGD",
+  legend:[["M","Main sequence star like the Sun"],["W","White dwarf"],["G","Red giant"],["S","Red supergiant"],["D","Red dwarf"]],
+  clues:[
+    "Guide star 1 is very hot, but it is so tiny that it gives off less light than the Sun.",
+    "Guide star 2 is cool and red, yet it is about 100,000 times more luminous than the Sun.",
+    "Guide star 3 used to be just like the Sun. Its hydrogen ran low, and it swelled up to many times its old size.",
+    "Guide star 4 is small, cool and dim. It will still be shining a trillion years from now."
+  ],
+  explain:[
+    "White dwarf: hot but tiny, so it is dim.",
+    "Red supergiant: cool, but so enormous that it is extremely luminous.",
+    "Red giant: what a Sun-like star becomes when hydrogen in its core runs low.",
+    "Red dwarf: it uses its fuel so slowly that it can shine for trillions of years."
+  ]};
+const TEACHER_PASS = "jingle";
+
+const KEY = "star-map-rescue-v2";
+let S = {name:"", start:null, done:{}, attempts:0, hints:0, finished:null, dials:{}};
+try{ const raw = localStorage.getItem(KEY); if(raw) S = Object.assign(S, JSON.parse(raw)); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+let view = "map";
+const app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function fmt(ms){ const t=Math.max(0,Math.floor(ms/1000)); return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); }
+function tick(){ document.getElementById("clock").textContent = S.start ? fmt((S.finished||Date.now()) - S.start) : "00:00"; }
+setInterval(tick, 1000);
+function renderPips(){
+  document.getElementById("pips").innerHTML = STATIONS.map(st =>
+    `<div class="pip ${S.done[st.id]?'got':''}" title="${esc(st.name)}">${S.done[st.id]?st.letter:'?'}</div>`).join("");
+}
+
+function renderMap(){
+  const all = STATIONS.every(st => S.done[st.id]);
+  app.innerHTML = `
+  <section class="intro">
+    <div>
+      <p class="lead">It's Christmas Eve, and the North Pole's star navigation system just crashed.</p>
+      <p>Santa steers his sleigh by the stars, but every star map at the North Pole is scrambled and locked away. Use what you know about the life cycle of stars and the H-R diagram to crack each lock. Every lock you open gives you a letter. Collect all five letters, then pass Santa's final navigation check to power up the sleigh before midnight.</p>
+      <div class="namefield">
+        <label for="team">Your name or team name</label>
+        <input id="team" type="text" maxlength="40" placeholder="e.g. The Nebula Elves" value="${esc(S.name)}">
+      </div>
+    </div>
+    <aside class="note">
+      <h3>Head Elf's rules</h3>
+      <ol>
+        <li>Open the stations in any order.</li>
+        <li>Read the work order, then dial in your answers on the lock.</li>
+        <li>The lock won't tell you which answer is wrong. Check your work as a team.</li>
+        <li>Each station has one hint. Using it is fine; it shows up on your certificate.</li>
+      </ol>
+    </aside>
+  </section>
+  <div class="map">
+    ${STATIONS.map(st => `
+      <button class="station ${S.done[st.id]?'done':''}" data-go="${st.id}" type="button">
+        ${ICONS[st.icon]}
+        <span class="badge">${S.done[st.id] ? 'Unlocked · ' + st.letter : 'Locked'}</span>
+        <h3>${esc(st.name)}</h3>
+        <span class="topic">${esc(st.topic)}</span>
+      </button>`).join("")}
+  </div>
+  <div class="final ${all?'':'locked'}">
+    ${ICONS.sleigh}
+    <div>
+      <h3>Santa's Sleigh</h3>
+      <p>${all ? "You have all five letters. Unscramble them, then pass the final navigation check." : `Collect all five letters to unlock the sleigh. ${Object.keys(S.done).length} of 5 found.`}</p>
+    </div>
+    <button class="btn" id="goFinal" type="button" ${all?'':'disabled'}>${all?'Power up the sleigh':'Locked'}</button>
+  </div>`;
+  const team = document.getElementById("team");
+  team.addEventListener("input", () => { S.name = team.value; save(); });
+  app.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => { if(!S.start){S.start=Date.now(); save();} view=b.dataset.go; render(); window.scrollTo(0,0); }));
+  if(all) document.getElementById("goFinal").addEventListener("click", () => { view="final"; render(); window.scrollTo(0,0); });
+}
+
+function renderStation(st){
+  const solved = !!S.done[st.id];
+  if(!S.dials[st.id] || S.dials[st.id].length !== st.answer.length) S.dials[st.id] = Array(st.answer.length).fill(0);
+  const dvals = S.dials[st.id];
+  let body = "";
+  if(st.legend) body += `<div class="legend">${st.legend.map(([k,v]) => `<span><b>${k}</b>${esc(v)}</span>`).join("")}</div>`;
+  if(st.cards) body += `<div class="cards">${st.cards.map(([k,n,d]) => `<div class="stagecard"><b>${k}</b><span>${esc(n)}<small>${esc(d)}</small></span></div>`).join("")}</div>`;
+  if(st.diagram) body += `<div class="hr">${hrDiagram()}</div>`;
+  body += st.questions.map((q,i) => `
+    <div class="q">
+      <p><span class="num">${q.n||i+1}</span>${esc(q.q)}</p>
+      ${q.opts ? `<div class="opts">${q.opts.map((o,j) => `<span><b>${"ABCD"[j]}</b>${esc(o)}</span>`).join("")}</div>` : ""}
+    </div>`).join("");
+  const labels = st.type === "order"
+    ? st.answer.split("").map((_,i) => { const n = st.orderLen || st.answer.length; return i===0 ? "first" : i===n-1 ? "last" : i<n ? String(i+1) : "Q"+(i+1); })
+    : st.answer.split("").map((_,i) => "Q" + (i+1));
+
+  app.innerHTML = `
+  <button class="btn ghost back" id="back" type="button">← Back to the North Pole</button>
+  <div class="stage">
+    <section style="min-width:0">
+      <div class="stage-head">${ICONS[st.icon]}<div><div class="topic">${esc(st.topic)}</div><h2>${esc(st.name)}</h2></div></div>
+      <p class="story">${esc(st.story)}</p>
+      <div class="order-card">
+        <div class="order-title">Elf work order <span>NP-${st.id.toUpperCase()}</span></div>
+        ${body}
+      </div>
+      ${solved ? `
+      <div class="unlocked">
+        <h3>Lock opened!</h3>
+        <div class="prize"><div class="tile">${st.letter}</div><div>You found the letter <b>${st.letter}</b>. Here's why each answer works:</div></div>
+        <ul>${st.explain.map(e => `<li>${esc(e)}</li>`).join("")}</ul>
+      </div>` : ""}
+    </section>
+    <aside class="lock">
+      <h3>${solved ? "Unlocked" : "Combination lock"}</h3>
+      <p class="sub">${solved ? "Nice work. Head back to the North Pole for the next lock." : "Tap the arrows to set each dial, then try the lock."}</p>
+      <div class="dials" id="dials">
+        ${dvals.map((v,i) => `
+          <div class="dial">
+            <button class="arrow" data-d="${i}" data-dir="-1" type="button" aria-label="Dial ${i+1} up" ${solved?'disabled':''}>▲</button>
+            <div class="face" aria-live="polite">${solved ? st.answer[i] : st.dial[v]}</div>
+            <button class="arrow" data-d="${i}" data-dir="1" type="button" aria-label="Dial ${i+1} down" ${solved?'disabled':''}>▼</button>
+            <small>${labels[i]}</small>
+          </div>`).join("")}
+      </div>
+      <div class="actions">
+        ${solved ? `<button class="btn" id="toMap" type="button">Back to the North Pole</button>` : `
+        <button class="btn" id="try" type="button">Try the lock</button>
+        <div class="msg" id="msg" role="status"></div>
+        <button class="btn ghost" id="hintBtn" type="button">${S["hint_"+st.id] ? "Hint shown" : "Use my hint"}</button>
+        <div id="hintBox">${S["hint_"+st.id] ? `<div class="hint">${esc(st.hint)}</div>` : ""}</div>
+        <div class="attempts" id="att">${S["att_"+st.id] ? (S["att_"+st.id] + " wrong tries at this lock") : ""}</div>`}
+      </div>
+    </aside>
+  </div>`;
+
+  document.getElementById("back").addEventListener("click", () => { view="map"; render(); });
+  if(solved){ document.getElementById("toMap").addEventListener("click", () => { view="map"; render(); window.scrollTo(0,0); }); return; }
+  app.querySelectorAll(".arrow").forEach(b => b.addEventListener("click", () => {
+    const i = +b.dataset.d, n = st.dial.length;
+    dvals[i] = (dvals[i] + (+b.dataset.dir) + n) % n;
+    b.parentElement.querySelector(".face").textContent = st.dial[dvals[i]];
+    save();
+  }));
+  document.getElementById("try").addEventListener("click", () => {
+    const code = dvals.map(v => st.dial[v]).join("");
+    if(code === st.answer){
+      S.done[st.id] = true; save(); renderPips(); burst(60); render();
+      setTimeout(() => { const u = document.querySelector(".unlocked"); if(u) u.scrollIntoView({behavior:"smooth", block:"center"}); }, 50);
+    } else {
+      S.attempts++; S["att_"+st.id] = (S["att_"+st.id]||0) + 1; save();
+      const msg = document.getElementById("msg"); msg.className = "msg bad";
+      msg.textContent = "The lock didn't budge. At least one dial is off.";
+      const d = document.getElementById("dials"); d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake");
+      document.getElementById("att").textContent = S["att_"+st.id] + " wrong tries at this lock";
+    }
+  });
+  document.getElementById("hintBtn").addEventListener("click", () => {
+    if(!S["hint_"+st.id]){ S["hint_"+st.id] = true; S.hints++; save(); }
+    document.getElementById("hintBox").innerHTML = `<div class="hint">${esc(st.hint)}</div>`;
+    document.getElementById("hintBtn").textContent = "Hint shown";
+  });
+}
+
+function renderFinal(){
+  if(S.finished){ renderWin(); return; }
+  if(!S.wordDone){
+    app.innerHTML = `
+    <button class="btn ghost back" id="back" type="button">← Back to the North Pole</button>
+    <section class="final-stage">
+      ${ICONS.sleigh.replace('<svg','<svg width="110" height="110"')}
+      <div class="topic" style="color:var(--gold);font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:14px">Step 1 of 2</div>
+      <h2>Santa's Sleigh</h2>
+      <p>These are the letters you collected. Unscramble them to spell the word for anything that has to do with our Sun.</p>
+      <div class="tiles">${SCRAMBLE.map(l => `<div class="tile">${l}</div>`).join("")}</div>
+      <input class="wordin" id="word" maxlength="5" autocomplete="off" aria-label="Secret word">
+      <div style="margin-top:14px"><button class="btn" id="tryWord" type="button">Unlock the sleigh</button></div>
+      <div class="msg" id="msg" role="status" style="margin-top:10px"></div>
+    </section>`;
+    document.getElementById("back").addEventListener("click", () => { view="map"; render(); });
+    const w = document.getElementById("word");
+    const go = () => {
+      if(w.value.trim().toUpperCase() === FINAL){ S.wordDone = true; save(); burst(80); renderFinal(); window.scrollTo(0,0); }
+      else {
+        S.attempts++; save();
+        const m = document.getElementById("msg"); m.className="msg bad"; m.textContent="Not quite. Use all five letters once each.";
+        w.classList.remove("shake"); void w.offsetWidth; w.classList.add("shake");
+      }
+    };
+    document.getElementById("tryWord").addEventListener("click", go);
+    w.addEventListener("keydown", e => { if(e.key==="Enter") go(); });
+    return;
+  }
+  if(!S.navDials) S.navDials = Array(NAV.answer.length).fill(0);
+  const dv = S.navDials;
+  app.innerHTML = `
+  <button class="btn ghost back" id="back" type="button">← Back to the North Pole</button>
+  <div class="stage">
+    <section style="min-width:0">
+      <div class="stage-head">${ICONS.sleigh}<div><div class="topic">Step 2 of 2 · Final navigation check</div><h2>Santa's Sleigh</h2></div></div>
+      <p class="story">The sleigh is unlocked, but the navigation computer needs four guide stars before it can take off. Read each clue and identify the type of star.</p>
+      <div class="order-card">
+        <div class="order-title">Flight plan <span>NP-SLEIGH</span></div>
+        <div class="legend">${NAV.legend.map(([k,v]) => `<span><b>${k}</b>${esc(v)}</span>`).join("")}</div>
+        ${NAV.clues.map((c,i) => `<div class="q"><p><span class="num">${i+1}</span>${esc(c)}</p></div>`).join("")}
+      </div>
+    </section>
+    <aside class="lock">
+      <h3>Navigation lock</h3>
+      <p class="sub">Set one dial for each guide star, then launch.</p>
+      <div class="dials" id="dials">
+        ${dv.map((v,i) => `
+          <div class="dial">
+            <button class="arrow" data-d="${i}" data-dir="-1" type="button" aria-label="Dial ${i+1} up">▲</button>
+            <div class="face" aria-live="polite">${NAV.dial[v]}</div>
+            <button class="arrow" data-d="${i}" data-dir="1" type="button" aria-label="Dial ${i+1} down">▼</button>
+            <small>Star ${i+1}</small>
+          </div>`).join("")}
+      </div>
+      <div class="actions">
+        <button class="btn" id="launch" type="button">Launch the sleigh</button>
+        <div class="msg" id="msg" role="status"></div>
+      </div>
+    </aside>
+  </div>`;
+  document.getElementById("back").addEventListener("click", () => { view="map"; render(); });
+  app.querySelectorAll(".arrow").forEach(b => b.addEventListener("click", () => {
+    const i = +b.dataset.d, n = NAV.dial.length;
+    dv[i] = (dv[i] + (+b.dataset.dir) + n) % n;
+    b.parentElement.querySelector(".face").textContent = NAV.dial[dv[i]];
+    save();
+  }));
+  document.getElementById("launch").addEventListener("click", () => {
+    if(dv.map(v => NAV.dial[v]).join("") === NAV.answer){ S.finished = Date.now(); save(); tick(); burst(220); renderWin(); window.scrollTo(0,0); }
+    else {
+      S.attempts++; save();
+      const m = document.getElementById("msg"); m.className="msg bad"; m.textContent="The sleigh won't launch. At least one guide star is wrong.";
+      const d = document.getElementById("dials"); d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake");
+    }
+  });
+}
+
+function renderWin(){
+  app.innerHTML = `
+  <section class="final-stage">
+    <div class="cert">
+      <small>Official North Pole Star Navigator</small>
+      <h2>Christmas is saved!</h2>
+      <p>This certifies that</p>
+      <div class="who">${esc(S.name || "Our Star Experts")}</div>
+      <p>used the life cycle of stars and the H-R diagram to fix every star map and guide Santa's sleigh on Christmas Eve.</p>
+      <div class="stats">
+        <div><b>${fmt(S.finished - S.start)}</b>time</div>
+        <div><b>${S.hints}</b>hints used</div>
+        <div><b>${S.attempts}</b>wrong tries</div>
+      </div>
+    </div>
+    <div class="unlocked" style="text-align:left"><h3>Guide stars locked in</h3><ul>${NAV.explain.map(e => `<li>${esc(e)}</li>`).join("")}</ul></div>
+    <p style="margin-top:18px;color:var(--muted)">Show this screen to your teacher.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn ghost" id="toMap" type="button">Back to the North Pole</button>
+      <button class="btn ghost" id="newGame" type="button">Start a new game</button>
+    </div>
+  </section>`;
+  document.getElementById("toMap").addEventListener("click", () => { view="map"; render(); });
+  const ng = document.getElementById("newGame");
+  ng.addEventListener("click", () => {
+    if(ng.dataset.armed){ try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); }
+    else { ng.dataset.armed="1"; ng.textContent="Tap again to clear this device"; setTimeout(() => { ng.textContent="Start a new game"; delete ng.dataset.armed; }, 4000); }
+  });
+}
+
+function render(){
+  renderPips(); tick();
+  if(view === "map") renderMap();
+  else if(view === "final") renderFinal();
+  else renderStation(STATIONS.find(s => s.id === view));
+}
+
+document.getElementById("tgo").addEventListener("click", () => {
+  const box = document.getElementById("tkey");
+  if(document.getElementById("tpass").value.trim().toLowerCase() !== TEACHER_PASS){ box.innerHTML = `<p class="msg bad" style="text-align:left">That passcode doesn't match.</p>`; return; }
+  box.innerHTML = `<div class="keytable"><table><tr><th>Station</th><th>Code</th><th>Letter</th></tr>
+    ${STATIONS.map(s => `<tr><td>${esc(s.name)}</td><td class="code">${s.answer}</td><td>${s.letter}</td></tr>`).join("")}
+    <tr><td>Santa's Sleigh, step 1</td><td class="code">${FINAL}</td><td>—</td></tr>
+    <tr><td>Santa's Sleigh, step 2</td><td class="code">${NAV.answer}</td><td>—</td></tr></table></div>`;
+});
+document.getElementById("treset").addEventListener("click", () => {
+  const b = document.getElementById("treset");
+  if(b.dataset.armed){ try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); }
+  else { b.dataset.armed = "1"; b.textContent = "Tap again to erase progress"; setTimeout(() => { b.textContent="Reset this device"; delete b.dataset.armed; }, 4000); }
+});
+
+/* twinkling sky */
+const sky = document.getElementById("sky"), sx = sky.getContext("2d");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let stars = [];
+function sizeSky(){
+  sky.width = innerWidth; sky.height = innerHeight;
+  stars = Array.from({length: Math.round(innerWidth*innerHeight/9000)}, () => ({x:Math.random()*innerWidth, y:Math.random()*innerHeight, r:Math.random()*1.3+.3, p:Math.random()*6.28, s:Math.random()*.02+.005}));
+}
+function drawSky(){
+  sx.clearRect(0,0,sky.width,sky.height);
+  stars.forEach(s => { s.p += s.s; sx.globalAlpha = .35 + .45*Math.abs(Math.sin(s.p)); sx.fillStyle = "#eaf2ff"; sx.beginPath(); sx.arc(s.x,s.y,s.r,0,6.28); sx.fill(); });
+  sx.globalAlpha = 1;
+  if(!reduce) requestAnimationFrame(drawSky);
+}
+sizeSky(); drawSky(); addEventListener("resize", () => { sizeSky(); if(reduce) drawSky(); });
+
+/* snow burst */
+const cv = document.getElementById("confetti"), cx = cv.getContext("2d");
+let parts = [], raf = null;
+function burst(n){
+  if(reduce) return;
+  cv.hidden = false; cv.width = innerWidth; cv.height = innerHeight;
+  const cols = ["#f4c84a","#d9405a","#6fbf93","#8fd3ff","#ffffff"];
+  for(let i=0;i<n;i++) parts.push({x:innerWidth/2+(Math.random()-.5)*200,y:innerHeight*.35,vx:(Math.random()-.5)*12,vy:Math.random()*-12-4,r:Math.random()*5+3,c:cols[i%cols.length],a:Math.random()*6,life:0});
+  if(!raf) loop();
+}
+function star(r){ cx.beginPath(); for(let i=0;i<10;i++){ const rr = i%2 ? r*.45 : r; const a = i*Math.PI/5 - Math.PI/2; cx.lineTo(Math.cos(a)*rr, Math.sin(a)*rr); } cx.closePath(); cx.fill(); }
+function loop(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  parts.forEach(p => { p.vy+=.33; p.x+=p.vx; p.y+=p.vy; p.a+=.12; p.life++;
+    cx.save(); cx.translate(p.x,p.y); cx.rotate(p.a); cx.fillStyle=p.c; star(p.r*1.4); cx.restore(); });
+  parts = parts.filter(p => p.y < cv.height+40 && p.life < 240);
+  if(parts.length) raf = requestAnimationFrame(loop); else { raf=null; cv.hidden=true; }
+}
+
+render();
+</script>
+
+</html>
