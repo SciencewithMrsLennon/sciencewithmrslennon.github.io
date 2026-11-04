@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ecosystem Ranger Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --forest:#1f3d2b;--forest2:#2d5a3d;--leaf:#3fa55b;--leaf-l:#dcf3e2;--sun:#f6c445;--sun-l:#fff5d6;--berry:#e0603a;--berry-d:#b5441f;--berry-l:#ffe6dc;
+  --sky:#3b9bd6;--sky-l:#e0f1fb;--bg:#eef3ef;--card:#fff;--ink:#1f3d2b;--muted:#5b6f63;--line:#d4e0d8;
+  --good:#15803d;--good-l:#dcfce7;--bad:#b91c1c;--bad-l:#fee2e2;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Nunito,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45}
+h1,h2,h3{font-family:Fredoka,Nunito,sans-serif;margin:0 0 .35em;line-height:1.15}
+button{font-family:inherit}
+header.top{background:var(--forest);color:#fff;padding:10px 16px;display:none;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header.top.show{display:flex}
+header.top .brand{font-family:Fredoka;font-size:18px}
+header.top .meta{display:flex;gap:12px;font-weight:700;font-size:14px;align-items:center;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.14);padding:4px 10px;border-radius:999px}
+.screen{display:none;max-width:1000px;margin:0 auto;padding:16px 16px 48px}
+.screen.active{display:block}
+.card{background:var(--card);border-radius:18px;padding:18px;box-shadow:0 2px 0 var(--line),0 8px 24px rgba(31,61,43,.06);margin-bottom:16px}
+.btn{border:none;border-radius:12px;padding:11px 18px;font-weight:800;font-size:15px;cursor:pointer;background:var(--leaf);color:#fff;box-shadow:0 4px 0 #2b7a42;transition:transform .08s;touch-action:manipulation}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #2b7a42}
+.btn:disabled{background:#b8c6bd;box-shadow:0 4px 0 #9aab9f;cursor:not-allowed}
+.btn.sun{background:var(--sun);color:var(--forest);box-shadow:0 4px 0 #c99a20}
+.btn.berry{background:var(--berry);box-shadow:0 4px 0 var(--berry-d)}
+.btn.ghost{background:#fff;color:var(--forest);box-shadow:0 4px 0 var(--line);border:2px solid var(--line)}
+.btn.small{padding:7px 12px;font-size:14px}
+.btn.on{background:var(--forest);color:#fff;box-shadow:0 4px 0 #0f2016;border-color:var(--forest)}
+.hero{background:linear-gradient(140deg,#1f3d2b 0%,#2d5a3d 55%,#e0603a 140%);color:#fff;border-radius:24px;padding:28px 24px;position:relative;overflow:hidden;margin-top:8px}
+.hero h1{font-size:clamp(32px,6vw,54px);margin-bottom:6px}
+.hero .tag{display:inline-block;background:var(--sun);color:var(--forest);font-weight:800;border-radius:999px;padding:4px 12px;font-size:13px;margin-bottom:12px}
+.hero p{max-width:560px;font-size:17px;opacity:.95;position:relative;z-index:2}
+.hero .art{position:absolute;right:3%;bottom:6px;font-size:min(13vw,96px);line-height:1;opacity:.95}
+.namebox{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;max-width:560px;position:relative;z-index:2}
+.namebox input{flex:1;min-width:200px;padding:13px 14px;border-radius:12px;border:none;font-size:16px;font-family:inherit}
+.overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:16px}
+.ov{background:var(--card);border-radius:16px;padding:14px;border-top:6px solid var(--leaf)}
+.ov:nth-child(2){border-color:var(--berry)}.ov:nth-child(3){border-color:var(--sun)}.ov:nth-child(4){border-color:var(--sky)}.ov:nth-child(5){border-color:#8b5cf6}
+.ov b{font-family:Fredoka;font-size:17px;display:block}
+.ov small{color:var(--muted);font-weight:700}
+.hubgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.station{background:var(--card);border-radius:18px;padding:16px;border:3px solid transparent;cursor:pointer;position:relative;box-shadow:0 2px 0 var(--line)}
+.station:hover{border-color:var(--leaf)}
+.station.locked{opacity:.55;cursor:not-allowed}.station.locked:hover{border-color:transparent}
+.station .num{font-family:Fredoka;background:var(--forest);color:#fff;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;margin-bottom:8px}
+.station .status{position:absolute;top:14px;right:14px;font-weight:800;font-size:13px;padding:3px 9px;border-radius:999px;background:var(--sun-l)}
+.station.done .status{background:var(--good-l);color:var(--good)}
+.station.locked .status{background:#e7ece9;color:var(--muted)}
+.station .teks{font-size:12px;font-weight:800;color:var(--berry-d)}
+.progressbar{height:12px;background:#dbe5de;border-radius:999px;overflow:hidden;margin:6px 0 2px}
+.progressbar div{height:100%;background:linear-gradient(90deg,var(--leaf),var(--sun),var(--berry));width:0;transition:width .4s}
+.stHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.stHead .teks{background:var(--berry-l);color:var(--berry-d);font-weight:800;font-size:13px;border-radius:999px;padding:4px 10px}
+.brief{background:var(--sun-l);border-left:6px solid var(--sun);border-radius:12px;padding:12px 14px;margin:10px 0}
+.howto{display:flex;align-items:center;gap:10px;background:var(--sky-l);border-radius:12px;padding:9px 12px;font-weight:800;color:#155f8a;margin:10px 0;font-size:15px}
+.howto .hand{font-size:22px}
+canvas{width:100%;height:auto;display:block;border-radius:14px;background:#f7faf8;touch-action:none}
+canvas.drag{cursor:grab}canvas.click{cursor:pointer}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;align-items:center}
+.ctrl{background:#f4f8f5;border-radius:12px;padding:10px 12px;flex:1;min-width:240px;margin-top:10px}
+.ctrl label{font-weight:800;font-size:14px;display:flex;justify-content:space-between}
+.ctrl label span{color:var(--berry-d);font-family:Fredoka;font-size:17px}
+input[type=range]{width:100%;accent-color:var(--leaf)}
+.readouts{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.ro{background:var(--forest);color:#fff;border-radius:12px;padding:8px 12px;min-width:110px;flex:1}
+.ro small{display:block;font-size:11px;opacity:.75;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.ro b{font-family:Fredoka;font-size:17px}
+.meter{height:16px;background:rgba(255,255,255,.2);border-radius:999px;overflow:hidden;margin-top:4px}
+.meter div{height:100%;width:0;background:linear-gradient(90deg,var(--sun),var(--leaf));transition:width .15s}
+.msg{font-weight:700;padding:10px 12px;border-radius:10px;background:#f4f8f5;margin:8px 0;min-height:20px}
+table.data{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+table.data th{background:var(--forest);color:#fff;padding:7px;text-align:center;font-weight:800}
+table.data td{padding:6px;text-align:center;border-bottom:1px solid var(--line)}
+table.data tr:nth-child(even) td{background:#f7faf8}
+.scroll{overflow-x:auto}
+.tasks{list-style:none;padding:0;margin:8px 0}
+.tasks li{padding:9px 12px;border-radius:10px;background:#f4f8f5;margin-bottom:6px;font-weight:700;display:flex;gap:10px;align-items:flex-start}
+.tasks li .box{flex:0 0 22px;height:22px;border-radius:6px;border:2px solid var(--muted);display:grid;place-items:center;font-size:14px;margin-top:1px}
+.tasks li.ok{background:var(--good-l)}
+.tasks li.ok .box{background:var(--good);border-color:var(--good);color:#fff}
+.q{border:2px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;background:#fff}
+.q .qp{font-weight:800;margin:0 0 10px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;font-size:15px;cursor:pointer;display:flex;gap:10px;align-items:flex-start;color:var(--ink)}
+.opt:hover:not(:disabled){border-color:var(--leaf);background:var(--leaf-l)}
+.opt .letter{flex:0 0 26px;height:26px;border-radius:8px;background:var(--forest);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.opt.right{border-color:var(--good);background:var(--good-l)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-l);opacity:.75}
+.fb{margin-top:8px;font-weight:700;font-size:15px}
+.fb.good{color:var(--good)}.fb.bad{color:var(--bad)}
+.hidden{display:none!important}
+.locknote{background:#f4f8f5;border:2px dashed var(--line);border-radius:14px;padding:14px;color:var(--muted);font-weight:700;text-align:center}
+.finishbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.match{display:grid;gap:8px;margin:10px 0}
+.mrow{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#f4f8f5;padding:10px 12px;border-radius:12px;flex-wrap:wrap}
+.mrow span{font-weight:700;flex:1;min-width:200px}
+.mrow select{padding:8px;border-radius:10px;border:2px solid var(--line);font-size:15px;font-family:inherit}
+.mrow.right{background:var(--good-l)}.mrow.wrong{background:var(--bad-l)}
+.dis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:10px 0}
+.dis button{text-align:left;border:3px solid var(--line);background:#fff;border-radius:14px;padding:10px 12px;cursor:pointer;font-family:inherit;color:var(--ink)}
+.dis button b{display:block;font-family:Fredoka;font-size:17px}
+.dis button small{font-weight:800;font-size:12px;color:var(--muted)}
+.dis button.on{border-color:var(--berry);background:var(--berry-l)}
+.dis button.done::after{content:" ✓";color:var(--good);font-weight:900}
+.cert{background:linear-gradient(135deg,#fff 0%,#f2fbe9 100%);border:4px solid var(--sun);border-radius:24px;padding:26px;text-align:center}
+.cert h1{font-size:clamp(26px,5vw,38px)}
+.bigscore{font-family:Fredoka;font-size:64px;color:var(--leaf);line-height:1}
+.scoregrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:18px 0;text-align:left}
+.sg{background:#fff;border-radius:12px;padding:10px 12px;border:2px solid var(--line)}
+.sg small{display:block;color:var(--muted);font-weight:800;font-size:12px}
+.sg b{font-family:Fredoka;font-size:22px}
+@media print{header.top,.noprint{display:none!important}body{background:#fff}.screen{padding:0}}
+@media (max-width:600px){.hero .art{opacity:.3}.card{padding:14px}}
+</style>
+</head>
+<body>
+
+<header class="top" id="topbar">
+  <div class="brand">🌿 Ecosystem Ranger Lab</div>
+  <div class="meta"><span class="pill" id="who"></span><span class="pill">⏱ <span id="clock">0:00</span></span><button class="btn small ghost" onclick="goHub()">🏠 Ranger Map</button></div>
+</header>
+
+<!-- INTRO -->
+<section class="screen active" id="intro">
+  <div class="hero">
+    <span class="tag">TEKS 8.12A · 8.12B · STAAR Readiness</span>
+    <h1>Ecosystem Ranger Lab</h1>
+    <p>Welcome, ranger! You protect a Texas prairie and forest. Trace how energy flows through its food web, see what happens when droughts, hunters, pesticides and disease disrupt it, and watch the land heal itself after a wildfire and a volcano.</p>
+    <div class="namebox">
+      <input id="nameIn" placeholder="Type your first and last name" maxlength="40" autocomplete="off">
+      <button class="btn sun" onclick="startGame()">Start Patrol ➜</button>
+    </div>
+    <div class="art" aria-hidden="true">🦅🌾</div>
+  </div>
+  <div class="overview">
+    <div class="ov"><b>1 · Food Web Builder</b><small>Trace energy flow · ~10 min</small></div>
+    <div class="ov"><b>2 · Disruption Simulator</b><small>Break the food web · ~11 min</small></div>
+    <div class="ov"><b>3 · Wildfire Recovery</b><small>Secondary succession · ~8 min</small></div>
+    <div class="ov"><b>4 · New Volcanic Island</b><small>Primary succession · ~8 min</small></div>
+    <div class="ov"><b>5 · Final Certification</b><small>STAAR-style check · ~8 min</small></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3>Ranger Field Guide</h3>
+    <p style="margin:.2em 0 .5em"><b style="color:var(--leaf)">Food web:</b> all the connected food chains in an ecosystem. Arrows point the way <b>energy flows</b>, from the food to the eater.</p>
+    <p style="margin:.2em 0 .5em"><b style="color:var(--berry-d)">Disruption:</b> a population change, natural disaster or human action that changes how energy moves through a food web.</p>
+    <p style="margin:.2em 0 0"><b style="color:#8a6400">Succession:</b> the slow, predictable change in which species live in an area after a disruption. <b>Primary</b> succession starts on bare rock with no soil. <b>Secondary</b> succession starts where soil is left behind.</p>
+  </div>
+</section>
+
+<!-- HUB -->
+<section class="screen" id="hub">
+  <div class="card">
+    <h2>Ranger Map</h2>
+    <p style="margin:0;color:var(--muted);font-weight:700">Complete each station in order. Your first answer on every question counts toward your score, so think before you click!</p>
+    <div class="progressbar"><div id="hubBar"></div></div>
+    <small id="hubTxt" style="font-weight:800;color:var(--muted)"></small>
+  </div>
+  <div class="hubgrid" id="hubGrid"></div>
+</section>
+
+<!-- STATION 1 -->
+<section class="screen" id="s1">
+  <div class="card">
+    <div class="stHead"><h2>Station 1 · Food Web Builder</h2><span class="teks">TEKS 8.12A</span></div>
+    <div class="brief"><b>Ranger Briefing:</b> Energy enters this prairie food web when <b>producers</b> (plants) capture sunlight. Every time one organism eats another, energy moves up a level, but only about <b>10%</b> of it is passed on. The rest is used for living and given off as heat.</div>
+    <div class="howto"><span class="hand">👆</span><span>Build a food chain: click a PRODUCER first, then click something that eats it, and keep going to a top predator.</span></div>
+    <canvas id="c1" class="click" width="900" height="430"></canvas>
+    <div class="readouts">
+      <div class="ro" style="flex:3"><small>Your food chain</small><b id="r1c">Click a producer to start</b></div>
+      <div class="ro"><small>Energy at the top</small><b id="r1e">—</b></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" id="clear1">↺ Start a new chain</button></div>
+    <div class="msg" id="m1">Producers are on the bottom row. Energy flows UP the web.</div>
+  </div>
+  <div class="card">
+    <h3>📋 Food Chain Log</h3>
+    <table class="data"><thead><tr><th>#</th><th>Food chain (energy flows →)</th><th>Energy at producer</th><th>Energy at top</th></tr></thead><tbody id="t1"><tr><td colspan="4" style="color:var(--muted)">No complete chains yet</td></tr></tbody></table>
+    <h3 style="margin-top:14px">🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k1a"><span class="box"></span><span>Build a food chain with <b>4 organisms</b> that ends at a top predator.</span></li>
+      <li id="k1b"><span class="box"></span><span>Build a <b>second, different</b> complete food chain.</span></li>
+      <li id="k1c"><span class="box"></span><span>Click the <b>fungi</b> to find out what decomposers do.</span></li>
+    </ul>
+  </div>
+  <div class="card"><h3>🧠 Analyze the Food Web</h3><div id="q1lock" class="locknote">🔒 Finish all three lab tasks to unlock the questions.</div><div id="q1box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f1txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f1" disabled onclick="finishStation(1)">Complete Station ✔</button></div>
+</section>
+
+<!-- STATION 2 -->
+<section class="screen" id="s2">
+  <div class="card">
+    <div class="stHead"><h2>Station 2 · Disruption Simulator</h2><span class="teks">TEKS 8.12A</span></div>
+    <div class="brief"><b>Ranger Briefing:</b> Ecosystems can be disrupted by <b>natural disasters</b>, <b>human intervention</b> and <b>population changes</b>. Because every organism is connected, one change ripples through the whole food web. Choose a disruption, run 20 years, and track every population.</div>
+    <div class="dis" id="dis2">
+      <button data-k="drought"><b>☀️ Drought</b><small>NATURAL DISASTER</small></button>
+      <button data-k="hawks"><b>🎯 Hawks hunted</b><small>HUMAN INTERVENTION</small></button>
+      <button data-k="pest"><b>🧴 Pesticide spray</b><small>HUMAN INTERVENTION</small></button>
+      <button data-k="disease"><b>🦠 Rabbit disease</b><small>POPULATION CHANGE</small></button>
+    </div>
+    <div class="howto"><span class="hand">👆</span><span>Pick a disruption, press Run, then drag across the graph to move through the years.</span></div>
+    <canvas id="c2" class="drag" width="900" height="400"></canvas>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><button class="btn berry" id="run2">▶ Run 20 years</button></div>
+    <div class="msg" id="m2">Choose a disruption to start. The disruption happens in year 2.</div>
+  </div>
+  <div class="card">
+    <h3>📋 Disruption Log</h3>
+    <div class="scroll"><table class="data"><thead><tr><th>Disruption</th><th>Type</th><th>Populations that went UP</th><th>Populations that went DOWN</th></tr></thead><tbody id="t2"><tr><td colspan="4" style="color:var(--muted)">Run a disruption for 20 years to log it</td></tr></tbody></table></div>
+    <h3 style="margin-top:14px">🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k2a"><span class="box"></span><span>Run a <b>natural disaster</b> (drought).</span></li>
+      <li id="k2b"><span class="box"></span><span>Run a <b>human intervention</b> (hawks hunted or pesticide).</span></li>
+      <li id="k2c"><span class="box"></span><span>Run a <b>population change</b> (rabbit disease).</span></li>
+    </ul>
+  </div>
+  <div class="card"><h3>🧠 Analyze the Disruptions</h3><div id="q2lock" class="locknote">🔒 Finish all three lab tasks to unlock the questions.</div><div id="q2box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f2txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f2" disabled onclick="finishStation(2)">Complete Station ✔</button></div>
+</section>
+
+<!-- STATION 3 -->
+<section class="screen" id="s3">
+  <div class="card">
+    <div class="stHead"><h2>Station 3 · Wildfire Recovery</h2><span class="teks">TEKS 8.12B</span></div>
+    <div class="brief"><b>Ranger Briefing:</b> This is a mature oak forest in East Texas. A lightning strike is about to start a wildfire. Fire destroys plants and animals, but it <b>leaves the soil behind</b>. Watch how the forest rebuilds itself.</div>
+    <div class="howto"><span class="hand">👆</span><span id="how3">Press ⚡ Lightning to start the fire.</span></div>
+    <canvas id="c3" class="drag" width="900" height="380"></canvas>
+    <div class="readouts">
+      <div class="ro"><small>Years after fire</small><b id="r3t">—</b></div>
+      <div class="ro" style="flex:2"><small>Stage</small><b id="r3s">Mature forest</b></div>
+      <div class="ro" style="flex:2"><small>Species diversity</small><b id="r3d">—</b><div class="meter"><div id="r3m"></div></div></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn berry" id="fire3">⚡ Lightning strike</button><button class="btn sun" id="play3" disabled>▶ Play 150 years</button></div>
+    <div class="ctrl"><label>Years after the fire <span id="v3t">0</span></label><input type="range" id="i3t" min="0" max="150" step="1" value="0" disabled></div>
+  </div>
+  <div class="card">
+    <h3>🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k3a"><span class="box"></span><span>Start the <b>wildfire</b> and look at what is left behind.</span></li>
+      <li id="k3b"><span class="box"></span><span>Move time forward to the <b>shrub</b> stage.</span></li>
+      <li id="k3c"><span class="box"></span><span>Keep going until the <b>mature forest</b> returns.</span></li>
+    </ul>
+  </div>
+  <div class="card"><h3>🧠 Analyze the Recovery</h3><div id="q3lock" class="locknote">🔒 Finish all three lab tasks to unlock the questions.</div><div id="q3box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f3txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f3" disabled onclick="finishStation(3)">Complete Station ✔</button></div>
+</section>
+
+<!-- STATION 4 -->
+<section class="screen" id="s4">
+  <div class="card">
+    <div class="stHead"><h2>Station 4 · New Volcanic Island</h2><span class="teks">TEKS 8.12B</span></div>
+    <div class="brief"><b>Ranger Briefing:</b> An undersea volcano is erupting. Its lava will build a brand-new island of <b>bare rock</b>: no soil, no plants, no animals. Life will have to start completely from scratch.</div>
+    <div class="howto"><span class="hand">👆</span><span id="how4">Press 🌋 Erupt to build the island.</span></div>
+    <canvas id="c4" class="drag" width="900" height="380"></canvas>
+    <div class="readouts">
+      <div class="ro"><small>Years after eruption</small><b id="r4t">—</b></div>
+      <div class="ro" style="flex:2"><small>Stage</small><b id="r4s">Open ocean</b></div>
+      <div class="ro"><small>Soil depth</small><b id="r4soil">none</b></div>
+      <div class="ro" style="flex:1.4"><small>Species diversity</small><b id="r4d">—</b><div class="meter"><div id="r4m"></div></div></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn berry" id="erupt4">🌋 Erupt</button><button class="btn sun" id="play4" disabled>▶ Play 1,000 years</button></div>
+    <div class="ctrl"><label>Years after the eruption <span id="v4t">0</span></label><input type="range" id="i4t" min="0" max="1000" step="5" value="0" disabled></div>
+  </div>
+  <div class="card">
+    <h3>📋 Succession Comparison</h3>
+    <table class="data"><thead><tr><th></th><th>Wildfire (Station 3)</th><th>Volcanic island (Station 4)</th></tr></thead>
+      <tbody><tr><td><b>Soil at the start?</b></td><td>Yes</td><td id="cmp1">?</td></tr><tr><td><b>First organisms</b></td><td>Grasses &amp; wildflowers</td><td id="cmp2">?</td></tr><tr><td><b>Time to forest</b></td><td>about 100–150 years</td><td id="cmp3">?</td></tr><tr><td><b>Type</b></td><td>Secondary succession</td><td id="cmp4">?</td></tr></tbody></table>
+    <h3 style="margin-top:14px">🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k4a"><span class="box"></span><span>Erupt the volcano and look at the new island.</span></li>
+      <li id="k4b"><span class="box"></span><span>Find the first living things: the <b>pioneer species</b>.</span></li>
+      <li id="k4c"><span class="box"></span><span>Keep going until a <b>forest</b> grows. Watch the soil depth.</span></li>
+    </ul>
+  </div>
+  <div class="card"><h3>🧠 Analyze the Island</h3><div id="q4lock" class="locknote">🔒 Finish all three lab tasks to unlock the questions.</div><div id="q4box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f4txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f4" disabled onclick="finishStation(4)">Complete Station ✔</button></div>
+</section>
+
+<!-- STATION 5 -->
+<section class="screen" id="s5">
+  <div class="card">
+    <div class="stHead"><h2>Station 5 · Final Certification</h2><span class="teks">TEKS 8.12A · 8.12B</span></div>
+    <div class="brief"><b>Ranger Briefing:</b> To earn your Ecosystem Ranger certification, answer these STAAR-style questions. Read every answer choice before you click. Your <b>first try</b> counts!</div>
+    <div id="q5box"></div>
+  </div>
+  <div class="card finishbar"><span id="f5txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f5" disabled onclick="finishStation(5)">Get My Certificate 🏆</button></div>
+</section>
+
+<!-- RESULTS -->
+<section class="screen" id="results">
+  <div class="cert">
+    <div style="font-size:46px">🌿</div>
+    <h1>Certified Ecosystem Ranger</h1>
+    <p style="font-weight:700;color:var(--muted);margin:0">This certifies that</p>
+    <h2 id="certName" style="font-size:32px;color:var(--forest2);margin:6px 0 12px"></h2>
+    <p style="font-weight:700;color:var(--muted);margin:0 0 10px">has shown how energy flows through food webs and how ecosystems recover through succession.</p>
+    <div class="bigscore" id="certPct"></div>
+    <div style="font-weight:800;color:var(--muted)" id="certRaw"></div>
+    <div class="scoregrid" id="certGrid"></div>
+    <p style="font-weight:700;color:var(--muted);margin:0" id="certMeta"></p>
+    <p style="font-weight:800;margin:14px 0 0">📸 Show this screen to your teacher or take a screenshot.</p>
+    <div class="noprint" style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn" onclick="window.print()">🖨 Print</button><button class="btn ghost" onclick="goHub()">Back to Ranger Map</button></div>
+  </div>
+</section>
+
+<script>
+/* ===== Core ===== */
+const S={name:'',start:null,done:{},score:{1:{},2:{},3:{},4:{},5:{}},need:{1:[],2:[],3:[],4:[],5:[]},got:{1:new Set(),2:new Set(),3:new Set(),4:new Set(),5:new Set()},built:{}};
+const STATIONS=[
+ {n:1,title:'Food Web Builder',teks:'TEKS 8.12A',desc:'Trace how energy flows through a food web.'},
+ {n:2,title:'Disruption Simulator',teks:'TEKS 8.12A',desc:'Disrupt the food web and track every population.'},
+ {n:3,title:'Wildfire Recovery',teks:'TEKS 8.12B',desc:'Watch secondary succession rebuild a forest.'},
+ {n:4,title:'New Volcanic Island',teks:'TEKS 8.12B',desc:'Watch primary succession start on bare rock.'},
+ {n:5,title:'Final Certification',teks:'STAAR-Style',desc:'Prove what you learned and earn your certificate.'}
+];
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt=n=>Number(n).toLocaleString('en-US');
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');window.scrollTo(0,0);}
+function startGame(){const n=$('nameIn').value.trim();if(!n){$('nameIn').focus();$('nameIn').placeholder='Please type your name first!';return;}
+  S.name=n;S.start=Date.now();$('who').textContent='🧑‍🌾 '+n;$('topbar').classList.add('show');
+  setInterval(()=>{const s=Math.floor((Date.now()-S.start)/1000);$('clock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');},1000);goHub();}
+$('nameIn').addEventListener('keydown',e=>{if(e.key==='Enter')startGame();});
+function unlocked(n){return n===1||S.done[n-1];}
+function goHub(){if(!S.name){show('intro');return;}const g=$('hubGrid');g.innerHTML='';
+  STATIONS.forEach(st=>{const d=document.createElement('div');const isDone=S.done[st.n],isOpen=unlocked(st.n);
+    d.className='station'+(isDone?' done':'')+(!isOpen?' locked':'');
+    d.innerHTML=`<div class="num">${st.n}</div><span class="status">${isDone?'✔ Complete':isOpen?'Ready':'🔒 Locked'}</span><div class="teks">${st.teks}</div><h3>${st.title}</h3><div style="color:var(--muted);font-weight:600;font-size:14px">${st.desc}</div>`;
+    d.onclick=()=>{if(isOpen)openStation(st.n);};g.appendChild(d);});
+  const c=Object.keys(S.done).length;$('hubBar').style.width=(c/5*100)+'%';$('hubTxt').textContent=`${c} of 5 stations complete`;show('hub');}
+function openStation(n){if(!S.built[n]){({1:build1,2:build2,3:build3,4:build4,5:build5})[n]();S.built[n]=true;}show('s'+n);({1:draw1,2:draw2,3:draw3,4:draw4,5:()=>{}})[n]();}
+function finishStation(n){S.done[n]=true;if(n===5)showResults();else goHub();}
+
+/* ===== Scoring + questions ===== */
+function record(st,qid,ok){if(!(qid in S.score[st]))S.score[st][qid]=ok;}
+function need(st,k){S.need[st].push(k);}
+function got(st,k){S.got[st].add(k);checkFinish(st);}
+function checkFinish(st){const all=S.need[st].length>0&&S.need[st].every(k=>S.got[st].has(k));$('f'+st).disabled=!all;
+  $('f'+st+'txt').textContent=all?'✅ Station complete! Click the button to save your progress.':`Progress: ${S.need[st].filter(k=>S.got[st].has(k)).length} of ${S.need[st].length} questions correct.`;}
+function mc(box,st,qid,prompt,options,correct,explain){need(st,qid);const d=document.createElement('div');d.className='q';d.innerHTML=`<p class="qp">${prompt}</p>`;
+  const o=document.createElement('div');o.className='opts';const fb=document.createElement('div');fb.className='fb';
+  options.forEach((t,i)=>{const b=document.createElement('button');b.className='opt';b.innerHTML=`<span class="letter">${'ABCD'[i]}</span><span>${t}</span>`;
+    b.onclick=()=>{if(d.dataset.solved)return;const ok=i===correct;record(st,qid,ok);
+      if(ok){b.classList.add('right');d.dataset.solved=1;o.querySelectorAll('.opt').forEach(x=>x.disabled=true);fb.className='fb good';fb.innerHTML='✅ Correct! '+explain;got(st,qid);}
+      else{b.classList.add('wrong');b.disabled=true;fb.className='fb bad';fb.textContent='❌ Not quite. Think about what you saw in the lab and try again.';}};o.appendChild(b);});
+  d.appendChild(o);d.appendChild(fb);box.appendChild(d);}
+function selq(box,st,qid,prompt,rows,choices,explain){need(st,qid);const d=document.createElement('div');d.className='q';d.innerHTML=`<p class="qp">${prompt}</p>`;
+  const m=document.createElement('div');m.className='match';
+  const sels=rows.map(r=>{const row=document.createElement('div');row.className='mrow';row.innerHTML=`<span>${r[0]}</span><select><option value="">Choose…</option>${choices.map((c,i)=>`<option value="${i}">${c}</option>`).join('')}</select>`;m.appendChild(row);return{row,sel:row.querySelector('select'),ans:String(r[1])};});
+  d.appendChild(m);const btn=document.createElement('button');btn.className='btn small';btn.textContent='Check';const fb=document.createElement('div');fb.className='fb';
+  btn.onclick=()=>{if(d.dataset.solved)return;if(sels.some(s=>!s.sel.value)){fb.className='fb bad';fb.textContent='Choose an answer for every row first.';return;}
+    let all=true;sels.forEach(s=>{const ok=s.sel.value===s.ans;s.row.classList.toggle('right',ok);s.row.classList.toggle('wrong',!ok);if(!ok)all=false;});record(st,qid,all);
+    if(all){d.dataset.solved=1;btn.disabled=true;sels.forEach(s=>s.sel.disabled=true);fb.className='fb good';fb.innerHTML='✅ All correct! '+explain;got(st,qid);}
+    else{fb.className='fb bad';fb.textContent='❌ The red rows need another look. Fix them and check again.';}};
+  d.appendChild(btn);d.appendChild(fb);box.appendChild(d);}
+function tick(id){const e=$(id);if(e.classList.contains('ok'))return false;e.classList.add('ok');e.querySelector('.box').textContent='✓';return true;}
+function allTicked(ids){return ids.every(id=>$(id).classList.contains('ok'));}
+function unlockQ(n,ids){if(allTicked(ids)){$('q'+n+'lock').classList.add('hidden');$('q'+n+'box').classList.remove('hidden');}}
+
+/* ===== Drawing helpers ===== */
+function label(ctx,t,x,y,color,size,align){ctx.font=`800 ${size||15}px Nunito, sans-serif`;ctx.textAlign=align||'center';ctx.lineJoin='round';const light=/^#(fff|e5e7eb|ecfdf5)/i.test(color||'');ctx.lineWidth=light?3.5:4;ctx.strokeStyle=light?'rgba(20,35,25,.75)':'rgba(255,255,255,.88)';ctx.strokeText(t,x,y);ctx.fillStyle=color||'#1f3d2b';ctx.fillText(t,x,y);}
+function emoji(ctx,e,x,y,size){ctx.fillStyle='#000';ctx.globalAlpha=1;ctx.font=`${size}px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(e,x,y);ctx.textBaseline='alphabetic';}
+function arrow(ctx,x1,y1,x2,y2,color,w,r){const a=Math.atan2(y2-y1,x2-x1);const sx=x1+Math.cos(a)*r,sy=y1+Math.sin(a)*r,ex=x2-Math.cos(a)*r,ey=y2-Math.sin(a)*r;
+  ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex-Math.cos(a)*w*1.6,ey-Math.sin(a)*w*1.6);ctx.stroke();
+  const h=6+w*2;ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-Math.cos(a-.45)*h,ey-Math.sin(a-.45)*h);ctx.lineTo(ex-Math.cos(a+.45)*h,ey-Math.sin(a+.45)*h);ctx.closePath();ctx.fill();}
+function canvasPos(c,e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};}
+function dragger(c,onStart,onMove,onEnd){let on=false;c.addEventListener('pointerdown',e=>{on=true;c.setPointerCapture(e.pointerId);onStart(canvasPos(c,e));});
+  c.addEventListener('pointermove',e=>{if(on)onMove(canvasPos(c,e));});const end=()=>{if(on){on=false;onEnd&&onEnd();}};c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end);}
+function rng(seed){let s=seed;return()=>{s=(s*9301+49297)%233280;return s/233280;};}
+
+/* ===== STATION 1: Food Web Builder ===== */
+const ORG={
+ grass:{e:'🌾',n:'Grass',x:250,y:370,lv:0},flowers:{e:'🌼',n:'Wildflowers',x:560,y:370,lv:0},
+ grasshopper:{e:'🦗',n:'Grasshopper',x:140,y:270,lv:1},rabbit:{e:'🐇',n:'Rabbit',x:400,y:270,lv:1},mouse:{e:'🐁',n:'Mouse',x:650,y:270,lv:1},
+ bird:{e:'🐦',n:'Meadowlark',x:240,y:170,lv:2},snake:{e:'🐍',n:'Rat snake',x:560,y:170,lv:2},
+ hawk:{e:'🦅',n:'Red-tailed hawk',x:300,y:70,lv:3},coyote:{e:'🐺',n:'Coyote',x:600,y:70,lv:3},
+ fungi:{e:'🍄',n:'Fungi (decomposer)',x:820,y:330,lv:-1}
+};
+const EATS={grasshopper:['grass','flowers'],rabbit:['grass','flowers'],mouse:['grass','flowers'],bird:['grasshopper'],snake:['mouse','rabbit'],hawk:['snake','bird','mouse','rabbit'],coyote:['rabbit','mouse','bird']};
+const LV=['Producers','Primary consumers','Secondary consumers','Tertiary consumers'];
+const s1={chain:[],logged:new Set(),log:[],fungi:false,pulse:0};
+function draw1(){
+  const c=$('c1'),ctx=c.getContext('2d');ctx.clearRect(0,0,900,430);
+  const g=ctx.createLinearGradient(0,0,0,430);g.addColorStop(0,'#eaf6ff');g.addColorStop(.75,'#f1f9ee');g.addColorStop(1,'#dcefd6');ctx.fillStyle=g;ctx.fillRect(0,0,900,430);
+  // level bands
+  [370,270,170,70].forEach((y,i)=>{ctx.fillStyle=i%2?'rgba(63,165,91,.06)':'rgba(246,196,69,.08)';ctx.fillRect(0,y-46,700,92);label(ctx,LV[i],10,y-30,'#5b6f63',12,'left');});
+  emoji(ctx,'☀️',60,395,34);label(ctx,'Sun',60,425,'#8a6400',12);
+  arrow(ctx,90,390,ORG.grass.x-30,ORG.grass.y+6,'rgba(246,196,69,.9)',3,0);
+  // all web arrows faint
+  for(const eater in EATS)EATS[eater].forEach(food=>{const a=ORG[food],b=ORG[eater];arrow(ctx,a.x,a.y,b.x,b.y,'rgba(31,61,43,.18)',2,34);});
+  // decomposer arrows
+  ['hawk','coyote','snake','rabbit','grass'].forEach(k=>{const a=ORG[k];ctx.setLineDash([5,6]);arrow(ctx,a.x,a.y,ORG.fungi.x,ORG.fungi.y,s1.fungi?'rgba(146,98,52,.55)':'rgba(146,98,52,.12)',2,34);ctx.setLineDash([]);});
+  // chain
+  for(let i=1;i<s1.chain.length;i++){const a=ORG[s1.chain[i-1]],b=ORG[s1.chain[i]];arrow(ctx,a.x,a.y,b.x,b.y,'#e0603a',6,36);
+}
+  // nodes
+  for(const k in ORG){const o=ORG[k];const inChain=s1.chain.includes(k);const last=s1.chain[s1.chain.length-1];
+    let can=false;if(s1.chain.length===0)can=o.lv===0;else if(EATS[k]&&EATS[k].includes(last))can=true;
+    ctx.beginPath();ctx.arc(o.x,o.y,34,0,7);ctx.fillStyle=inChain?'#fff1e8':'#fff';ctx.fill();ctx.lineWidth=inChain?5:can?4:2;ctx.strokeStyle=inChain?'#e0603a':can?'#3fa55b':'#c9d6cd';ctx.stroke();
+    if(can&&s1.chain.length<4){ctx.strokeStyle=`rgba(63,165,91,${.3+.3*Math.sin(s1.pulse)})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(o.x,o.y,41,0,7);ctx.stroke();}
+    emoji(ctx,o.e,o.x,o.y+2,34);label(ctx,o.n,o.x,o.y+52,'#1f3d2b',13);
+    if(inChain){const i=s1.chain.indexOf(k);label(ctx,`${fmt(10000/Math.pow(10,i))} kcal`,o.x+40,o.y-26,'#b5441f',13,'left');}
+  }
+  // pyramid
+  const px=760,py=40;label(ctx,'ENERGY PYRAMID',px+60,py-14,'#1f3d2b',12);
+  const vals=[10000,1000,100,10];for(let i=0;i<4;i++){const w=140-i*30,y=py+(3-i)*44;const lit=s1.chain.length>i;
+    ctx.fillStyle=lit?['#3fa55b','#f6c445','#e0603a','#8b5cf6'][i]:'#e3ebe5';ctx.fillRect(px+60-w/2,y,w,38);
+    label(ctx,fmt(vals[i]),px+60,y+25,lit?'#fff':'#9aab9f',13);}
+  label(ctx,'kcal at each level',px+60,py+196,'#5b6f63',11);
+}
+function updChain(){
+  const names=s1.chain.map(k=>ORG[k].n);$('r1c').textContent=names.length?names.join(' → '):'Click a producer to start';
+  $('r1e').textContent=s1.chain.length?fmt(10000/Math.pow(10,s1.chain.length-1))+' kcal':'—';
+}
+function click1(p){
+  let hit=null;for(const k in ORG){const o=ORG[k];if(Math.hypot(p.x-o.x,p.y-o.y)<42)hit=k;}
+  if(!hit)return;
+  if(hit==='fungi'){s1.fungi=true;tick('k1c');$('m1').innerHTML='🍄 <b>Decomposers</b> like fungi and bacteria break down dead plants, animals and waste. They return nutrients to the soil so producers can use them again. They get energy from every level of the food web.';unlockQ(1,['k1a','k1b','k1c']);draw1();return;}
+  const o=ORG[hit];
+  if(s1.chain.length===0){if(o.lv!==0){$('m1').innerHTML=`❌ Start with a <b>producer</b>. Energy enters the food web when plants capture sunlight.`;return;}s1.chain=[hit];$('m1').innerHTML=`✅ <b>${o.n}</b> is a producer. It stores <b>10,000 kcal</b> of energy from the Sun. What eats it?`;updChain();draw1();return;}
+  const last=s1.chain[s1.chain.length-1];
+  if(s1.chain.includes(hit))return;
+  if(!(EATS[hit]&&EATS[hit].includes(last))){$('m1').innerHTML=`❌ ${o.n==='Wildflowers'||o.n==='Grass'?'A producer':'The '+o.n.toLowerCase()} does not eat ${ORG[last].n.toLowerCase()}. Look for a green ring: those organisms eat the last one in your chain.`;return;}
+  s1.chain.push(hit);updChain();draw1();
+  const e=10000/Math.pow(10,s1.chain.length-1);
+  if(o.lv===3){const key=s1.chain.join('>');
+    if(!s1.logged.has(key)){s1.logged.add(key);s1.log.push(s1.chain.map(k=>ORG[k].n).join(' → '));
+      $('t1').innerHTML=s1.log.map((x,i)=>{const n=x.split(' → ').length;return `<tr><td>${i+1}</td><td>${x}</td><td>10,000 kcal</td><td>${fmt(10000/Math.pow(10,n-1))} kcal</td></tr>`;}).join('');}
+    $('m1').innerHTML=`🏆 Complete! The <b>${o.n.toLowerCase()}</b> gets only <b>${fmt(e)} kcal</b>, about ${e===10?'0.1%':'1%'} of the energy the producer captured. The rest was used for living and lost as heat at each step.`;
+    if(s1.chain.length===4)tick('k1a');if(s1.log.length>=2)tick('k1b');unlockQ(1,['k1a','k1b','k1c']);
+    setTimeout(()=>{},0);
+  }else $('m1').innerHTML=`✅ Energy moved to the <b>${o.n.toLowerCase()}</b>: only <b>${fmt(e)} kcal</b> (10%) is passed on. Keep going up!`;
+}
+function build1(){
+  $('c1').addEventListener('pointerdown',e=>click1(canvasPos($('c1'),e)));
+  $('clear1').onclick=()=>{s1.chain=[];updChain();draw1();$('m1').textContent='Start a new chain with a producer.';};
+  setInterval(()=>{if($('s1').classList.contains('active')){s1.pulse+=.25;draw1();}},140);
+  const b=$('q1box');
+  mc(b,1,'a','In a food web, what do the arrows show?',['Which animal is bigger','The direction energy flows, from the food to the organism that eats it','Which organism eats the other, pointing at the predator\'s food','Where each animal lives'],1,'Arrows point from the food to the eater. They show the direction energy flows.');
+  mc(b,1,'b','About how much of the energy at one level is passed on to the next level?',['100%','50%','10%','0%'],2,'Only about 10% is passed on. The rest is used for life processes and lost as heat.');
+  mc(b,1,'c','Your hawk received only 10 kcal from 10,000 kcal of grass. Why are there far fewer hawks than grasshoppers in an ecosystem?',['Less energy is available at each higher level, so it can support fewer organisms','Hawks eat only once a year','Grasshoppers are producers','Hawks get their energy directly from the Sun'],0,'With so little energy reaching the top, an ecosystem can only support a few top predators.');
+  mc(b,1,'d','What is the role of fungi in this ecosystem?',['They are producers that make food from sunlight','They are top predators','They are herbivores that eat only grass','They are decomposers that break down dead matter and return nutrients to the soil'],3,'Decomposers recycle nutrients from every level back to the producers.');
+  mc(b,1,'e','Where does almost all of the energy in this food web originally come from?',['The Sun','The soil','The water','The decomposers'],0,'Producers capture energy from sunlight through photosynthesis. Every other organism depends on that energy.');
+  checkFinish(1);
+}
+
+/* ===== STATION 2: Disruption Simulator ===== */
+const SP=[['grass','Grass','#3fa55b'],['grasshopper','Grasshoppers','#a3c93a'],['rabbit','Rabbits','#9a6b3f'],['bird','Meadowlarks','#3b9bd6'],['snake','Rat snakes','#8b5cf6'],['hawk','Hawks','#e0603a']];
+const DIS={
+ drought:{name:'Drought',type:'Natural disaster',fx:{grass:[-60,0,.35],grasshopper:[-45,1,.4],rabbit:[-45,1,.4],bird:[-35,2,.5],snake:[-35,2,.5],hawk:[-30,3,.5]},
+   msg:'A drought killed much of the grass. With less energy entering the food web, every level above it went down, even the hawks.'},
+ hawks:{name:'Hawks hunted',type:'Human intervention',fx:{hawk:[-85,0,1],snake:[40,1,1],bird:[30,1,1],rabbit:[60,1,1],grasshopper:[-20,2,1],grass:[-40,2,1]},
+   msg:'Without hawks, their prey (rabbits, snakes and meadowlarks) boomed. So many rabbits overgrazed the grass, and more meadowlarks ate more grasshoppers.'},
+ pest:{name:'Pesticide spray',type:'Human intervention',fx:{grasshopper:[-75,0,.5],bird:[-45,1,.6],grass:[25,1,.6],hawk:[-15,2,.6],rabbit:[10,2,.6]},
+   msg:'The pesticide killed most grasshoppers. Meadowlarks lost their food and declined, while the grass grew back with fewer grasshoppers eating it.'},
+ disease:{name:'Rabbit disease',type:'Population change',fx:{rabbit:[-65,0,.4],grass:[20,1,.5],grasshopper:[15,1,.5],snake:[-30,1,.5],hawk:[-20,2,.5]},
+   msg:'A disease wiped out most rabbits. Snakes and hawks that eat rabbits declined, while grass and grasshoppers had more food and space.'}
+};
+const s2={k:null,t:0,anim:null,done:new Set(),logged:new Set()};
+function pop(sp,t){if(!s2.k)return 100;const f=DIS[s2.k].fx[sp];if(!f)return 100;const [A,lag,keep]=f;const tt=t-2;if(tt<lag)return 100;
+  const g=1-Math.exp(-(tt-lag)/1.4);const r=tt<8?1:keep+(1-keep)*Math.exp(-(tt-8)/4);return 100+A*g*r;}
+function draw2(){
+  const c=$('c2'),ctx=c.getContext('2d');ctx.clearRect(0,0,900,400);ctx.fillStyle='#fff';ctx.fillRect(0,0,900,400);
+  const L=70,R=740,T=30,B=340;const X=t=>L+(R-L)*t/20,Y=v=>B-(B-T)*v/200;
+  ctx.strokeStyle='#e3ebe5';ctx.lineWidth=1;for(let v=0;v<=200;v+=50){ctx.beginPath();ctx.moveTo(L,Y(v));ctx.lineTo(R,Y(v));ctx.stroke();label(ctx,v===100?'normal':String(v),L-8,Y(v)+4,'#5b6f63',12,'right');}
+  for(let t=0;t<=20;t+=2){label(ctx,String(t),X(t),B+20,'#5b6f63',12);}
+  label(ctx,'Years',(L+R)/2,B+42,'#1f3d2b',13);
+  ctx.save();ctx.translate(18,(T+B)/2);ctx.rotate(-Math.PI/2);label(ctx,'Population size',0,0,'#1f3d2b',13);ctx.restore();
+  ctx.strokeStyle='#1f3d2b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(L,T);ctx.lineTo(L,B);ctx.lineTo(R,B);ctx.stroke();
+  if(s2.k){ctx.fillStyle='rgba(224,96,58,.12)';ctx.fillRect(X(2)-2,T,4,B-T);label(ctx,DIS[s2.k].name+' ▼',X(2)+6,T+14,'#b5441f',13,'left');}
+  const tEnd=s2.t;
+  SP.forEach(([k,nm,col])=>{ctx.strokeStyle=col;ctx.lineWidth=3.5;ctx.beginPath();for(let t=0;t<=tEnd+1e-6;t+=0.1){const x=X(t),y=Y(pop(k,t));t===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();
+    ctx.fillStyle=col;ctx.beginPath();ctx.arc(X(tEnd),Y(pop(k,tEnd)),5,0,7);ctx.fill();});
+  // cursor
+  ctx.strokeStyle='rgba(31,61,43,.5)';ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(X(tEnd),T);ctx.lineTo(X(tEnd),B);ctx.stroke();ctx.setLineDash([]);
+  label(ctx,`Year ${Math.round(tEnd)}`,X(tEnd),T-8,'#1f3d2b',13);
+  // legend with values
+  SP.forEach(([k,nm,col],i)=>{const y=T+18+i*48;ctx.fillStyle=col;ctx.fillRect(760,y-12,16,16);label(ctx,nm,782,y+1,'#1f3d2b',13,'left');
+    const v=Math.round(pop(k,tEnd));const d=v-100;label(ctx,`${v}  ${d>4?'▲':d<-4?'▼':'='}`,782,y+19,d>4?'#15803d':d<-4?'#b91c1c':'#5b6f63',13,'left');});
+}
+function finishRun2(){
+  const d=DIS[s2.k];$('m2').innerHTML=`📈 <b>${d.name}</b> (${d.type.toLowerCase()}): ${d.msg}`;
+  if(!s2.logged.has(s2.k)){s2.logged.add(s2.k);
+    const up=SP.filter(([k])=>pop(k,10)>104).map(x=>x[1]).join(', ')||'none',down=SP.filter(([k])=>pop(k,10)<96).map(x=>x[1]).join(', ')||'none';
+    const rows=[...s2.logged].map(k=>{const dd=DIS[k];const u=SP.filter(([s])=>{const f=dd.fx[s];return f&&f[0]>0;}).map(x=>x[1]).join(', ')||'none';const dn=SP.filter(([s])=>{const f=dd.fx[s];return f&&f[0]<0;}).map(x=>x[1]).join(', ')||'none';return `<tr><td>${dd.name}</td><td>${dd.type}</td><td>${u}</td><td>${dn}</td></tr>`;});
+    $('t2').innerHTML=rows.join('');}
+  document.querySelector(`#dis2 [data-k="${s2.k}"]`).classList.add('done');
+  if(s2.k==='drought')tick('k2a');if(s2.k==='hawks'||s2.k==='pest')tick('k2b');if(s2.k==='disease')tick('k2c');unlockQ(2,['k2a','k2b','k2c']);
+}
+function build2(){
+  document.querySelectorAll('#dis2 button').forEach(b=>b.onclick=()=>{cancelAnimationFrame(s2.anim);s2.k=b.dataset.k;s2.t=0;document.querySelectorAll('#dis2 button').forEach(x=>x.classList.toggle('on',x===b));$('m2').innerHTML=`Selected: <b>${DIS[s2.k].name}</b>. Press Run 20 years, or drag across the graph.`;draw2();});
+  $('run2').onclick=()=>{if(!s2.k){$('m2').innerHTML='⚠️ Choose a disruption first.';return;}cancelAnimationFrame(s2.anim);const t0=performance.now();
+    const step=now=>{s2.t=Math.min(20,(now-t0)/220);draw2();if(s2.t<20)s2.anim=requestAnimationFrame(step);else finishRun2();};s2.anim=requestAnimationFrame(step);};
+  dragger($('c2'),p=>{cancelAnimationFrame(s2.anim);},p=>{if(!s2.k)return;s2.t=clamp((p.x-70)/(670)*20,0,20);draw2();if(s2.t>=19.9)finishRun2();});
+  const b=$('q2box');
+  mc(b,2,'a','The drought only killed grass. Why did the hawk population also go down?',['Hawks drink a lot of water','Less energy entered the food web, so less energy reached every level above the grass','Hawks eat grass','The drought made hawks migrate to a new food web'],1,'Producers are the energy source for the whole web. Fewer producers means less energy for every consumer.');
+  mc(b,2,'b','When people hunted the hawks, what happened to the rabbits and the grass?',['Rabbits decreased and grass increased','Both decreased','Rabbits increased and grass decreased','Nothing changed'],2,'With fewer predators, rabbits boomed and overgrazed the grass.');
+  mc(b,2,'c','Spraying pesticide on the prairie is an example of which kind of disruption?',['Human intervention','Natural disaster','Population change caused by disease','Primary succession'],0,'People chose to spray the pesticide, so it is a human intervention.');
+  selq(b,2,'d','Classify each disruption.',[['A drought dries up the prairie',0],['Hunters remove most of the hawks',1],['A disease wipes out most of the rabbits',2]],['Natural disaster','Human intervention','Population change'],'Drought = natural disaster, hunting = human intervention, disease = population change.');
+  checkFinish(2);
+}
+
+/* ===== Succession scene helpers ===== */
+const TREES=(()=>{const r=rng(7),a=[];for(let i=0;i<34;i++)a.push({x:20+r()*860,s:.75+r()*.5,k:r()});return a;})();
+function grass(ctx,x,base,h,col){ctx.strokeStyle=col||'#4caf50';ctx.lineWidth=2;for(let i=-3;i<=3;i++){ctx.beginPath();ctx.moveTo(x+i*2,base);ctx.quadraticCurveTo(x+i*3,base-h*.6,x+i*5,base-h);ctx.stroke();}}
+function flower(ctx,x,base,h,col){ctx.strokeStyle='#4caf50';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,base);ctx.lineTo(x,base-h);ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,base-h,4,0,7);ctx.fill();}
+function shrub(ctx,x,base,s){ctx.fillStyle='#3e8e41';[[-10,12,14],[10,12,14],[0,22,15]].forEach(([dx,dy,r])=>{ctx.beginPath();ctx.arc(x+dx*s,base-dy*s,r*s,0,Math.PI*2);ctx.fill();});}
+function pine(ctx,x,base,s){ctx.fillStyle='#6b4a2b';ctx.fillRect(x-3*s,base-18*s,6*s,18*s);ctx.fillStyle='#22683a';for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(x,base-(78-i*14)*s);ctx.lineTo(x-(16+i*7)*s,base-(30-i*2+ -i*10)*s);ctx.lineTo(x+(16+i*7)*s,base-(30-i*2+ -i*10)*s);ctx.closePath();ctx.fill();}}
+function oak(ctx,x,base,s){ctx.fillStyle='#6b4a2b';ctx.fillRect(x-5*s,base-50*s,10*s,50*s);ctx.fillStyle='#2f7d32';[[-20,62,24],[20,62,24],[0,82,28]].forEach(([dx,dy,r])=>{ctx.beginPath();ctx.arc(x+dx*s,base-dy*s,r*s,0,Math.PI*2);ctx.fill();});ctx.fillStyle='rgba(255,255,255,.1)';ctx.beginPath();ctx.arc(x-8*s,base-90*s,12*s,0,Math.PI*2);ctx.fill();}
+function stump(ctx,x,base){ctx.fillStyle='#2b2118';ctx.fillRect(x-5,base-14,10,14);ctx.strokeStyle='#2b2118';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,base-14);ctx.lineTo(x-8,base-30);ctx.stroke();}
+const ease=(t)=>clamp(t,0,1);
+
+/* ===== STATION 3: Wildfire ===== */
+const s3={state:'forest',T:0,fire:0,anim:null};
+function stage3(T){if(T<1)return['Burned land: ash, stumps and SOIL',2];if(T<6)return['Grasses & wildflowers',12];if(T<20)return['Shrubs & young trees',24];if(T<70)return['Young pine forest',36];return['Mature oak forest (climax community)',48];}
+function draw3(){
+  const c=$('c3'),ctx=c.getContext('2d');ctx.clearRect(0,0,900,380);const G=270;
+  const burned=s3.state!=='forest';const T=s3.T;
+  const sky=ctx.createLinearGradient(0,0,0,G);sky.addColorStop(0,s3.fire>0?'#f2a25c':burned&&T<1?'#b9b2a8':'#bfe3fb');sky.addColorStop(1,'#eef7ff');ctx.fillStyle=sky;ctx.fillRect(0,0,900,G);
+  // soil
+  ctx.fillStyle='#7a5432';ctx.fillRect(0,G,900,55);ctx.fillStyle='#5a3d24';for(let i=0;i<40;i++){ctx.fillRect((i*53)%900,G+10+(i*17)%40,6,3);}
+  ctx.fillStyle='#9a9a9a';ctx.fillRect(0,G+55,900,55);ctx.fillStyle='#868686';for(let i=0;i<30;i++){ctx.beginPath();ctx.arc((i*71)%900,G+70+(i*13)%30,8,0,7);ctx.fill();}
+  label(ctx,'SOIL',12,G+30,'#fff',12,'left');label(ctx,'BEDROCK',12,G+88,'#fff',12,'left');
+  ctx.fillStyle=burned&&T<1?'#3a3027':T<1&&!burned?'#5a9a3c':'#5a9a3c';ctx.fillRect(0,G-4,900,6);
+  if(!burned||s3.fire>0){TREES.forEach(t=>oak(ctx,t.x,G,t.s));grass(ctx,450,G,10);
+    if(!burned){emoji(ctx,'🦉',300,G-150,26);emoji(ctx,'🦌',620,G-22,30);emoji(ctx,'🐿️',150,G-14,22);}
+    if(s3.fire>0){const f=s3.fire;for(let i=0;i<60;i++){const x=(i*37)%900,h=40+((i*29)%60);ctx.fillStyle=`rgba(255,${80+(i%5)*30},20,${.7*f})`;ctx.beginPath();ctx.moveTo(x-14,G);ctx.quadraticCurveTo(x,G-h*1.6*f-Math.random()*20,x+14,G);ctx.fill();}
+      ctx.fillStyle=`rgba(60,50,45,${.5*f})`;for(let i=0;i<8;i++){ctx.beginPath();ctx.arc(80+i*110,60+(i%3)*20,50,0,7);ctx.fill();}label(ctx,'WILDFIRE!',450,50,'#b91c1c',28);}
+  }else{
+    const r=rng(3);
+    if(T<1){TREES.forEach(t=>stump(ctx,t.x,G));ctx.fillStyle='#57524b';for(let i=0;i<50;i++)ctx.fillRect(r()*900,G-3,10,3);label(ctx,'The fire burned the plants, but the SOIL is still here',450,G-40,'#b5441f',16);}
+    else{
+      const gA=ease(T/3)*(T<40?1:Math.max(.25,1-(T-40)/80));for(let i=0;i<120;i++){const x=r()*900;if(r()<gA)grass(ctx,x,G,8+r()*14*ease(T/3));}
+      for(let i=0;i<40;i++){const x=r()*900;if(r()<gA*.8)flower(ctx,x,G,10+r()*10,['#f6c445','#e0603a','#c084fc','#fff'][i%4]);}
+      TREES.forEach((t,i)=>{if(T>=4&&T<60&&i%2===0)shrub(ctx,t.x+15,G,ease((T-4)/10)*(T<40?1:Math.max(.3,1-(T-40)/40)));});
+      TREES.forEach((t,i)=>{if(T>=15&&i%3!==2){const g=ease((T-15)/40);const fade=T<70?1:Math.max(.35,1-(T-70)/60);pine(ctx,t.x-12,G,g*t.s*1.1*(i%3===0?fade:1));}});
+      TREES.forEach((t,i)=>{if(T>=50&&i%2===1){oak(ctx,t.x,G,ease((T-50)/90)*t.s);}});
+      TREES.forEach(t=>{if(T<12)stump(ctx,t.x,G);});
+      if(T>=1&&T<20){emoji(ctx,'🐇',200,G-10,24);emoji(ctx,'🦗',520,G-8,18);}
+      if(T>=6){emoji(ctx,'🐦',700,G-90,22);}
+      if(T>=12&&T<90){emoji(ctx,'🦌',380,G-22,30);}
+      if(T>=40){emoji(ctx,'🐿️',600,G-14,22);emoji(ctx,'🦃',120,G-16,24);}
+      if(T>=80){emoji(ctx,'🦉',300,G-150,26);emoji(ctx,'🦌',650,G-22,30);emoji(ctx,'🐻',820,G-24,28);}
+    }
+  }
+  if(burned&&s3.fire<=0){const st=stage3(T);$('r3t').textContent=Math.round(T)+' years';$('r3s').textContent=st[0];$('r3d').textContent=st[1]+' species';$('r3m').style.width=(st[1]/50*100)+'%';$('v3t').textContent=Math.round(T);}
+  else if(!burned){$('r3t').textContent='—';$('r3s').textContent='Mature oak forest';$('r3d').textContent='48 species';$('r3m').style.width='96%';}
+}
+function check3(){const T=s3.T;if(s3.state==='burned'&&s3.fire<=0){if(T>=6&&T<20)tick('k3b');if(T>=70)tick('k3c');}unlockQ(3,['k3a','k3b','k3c']);}
+function build3(){
+  $('fire3').onclick=()=>{cancelAnimationFrame(s3.anim);s3.state='burned';s3.T=0;const t0=performance.now();$('fire3').disabled=true;
+    const step=now=>{const t=(now-t0)/2600;s3.fire=Math.max(0,1-t)*(t<.2?t*5:1);if(t<1){draw3();s3.anim=requestAnimationFrame(step);}else{s3.fire=0;draw3();tick('k3a');
+      $('i3t').disabled=false;$('play3').disabled=false;$('how3').textContent='Drag across the picture (or use the slider) to move forward in time after the fire.';
+      $('fire3').disabled=false;$('fire3').textContent='⚡ Start another fire';}};s3.anim=requestAnimationFrame(step);};
+  $('i3t').oninput=()=>{if(s3.state!=='burned')return;s3.T=+$('i3t').value;draw3();check3();};
+  let sx,t0;dragger($('c3'),p=>{cancelAnimationFrame(s3.anim);sx=p.x;t0=s3.T;},p=>{if(s3.state!=='burned'||s3.fire>0)return;s3.T=clamp(t0+(p.x-sx)/5,0,150);$('i3t').value=Math.round(s3.T);draw3();check3();});
+  $('play3').onclick=()=>{cancelAnimationFrame(s3.anim);const st=performance.now(),from=s3.T>=150?0:s3.T;const step=now=>{s3.T=Math.min(150,from+(now-st)/45);$('i3t').value=Math.round(s3.T);draw3();check3();if(s3.T<150)s3.anim=requestAnimationFrame(step);};s3.anim=requestAnimationFrame(step);};
+  const b=$('q3box');
+  mc(b,3,'a','Why is the recovery after this wildfire called SECONDARY succession?',['The soil was left behind, so plants could grow back quickly','It happened on bare rock','It was the second fire in the forest','Animals moved in before plants'],0,'Secondary succession starts where soil remains after a disruption.');
+  mc(b,3,'b','Which organisms grew back FIRST after the fire?',['Oak trees','Grasses and wildflowers','Pine trees','Lichens on bare rock'],1,'Fast-growing grasses and wildflowers sprout first from seeds and roots left in the soil.');
+  mc(b,3,'c','What happened to species diversity as succession went on?',['It stayed the same','It went down to zero','It increased as more kinds of plants and animals moved in','It only changed for plants, not animals'],2,'As new habitats and food sources appeared, more species could live there.');
+  selq(b,3,'d','Put the stages of secondary succession in order.',[['Young pine forest',2],['Grasses and wildflowers',0],['Mature oak forest',3],['Shrubs and young trees',1]],['1st','2nd','3rd','4th'],'Grasses → shrubs → young pines → mature oak forest (the climax community).');
+  checkFinish(3);
+}
+
+/* ===== STATION 4: Volcanic island ===== */
+const s4={state:'ocean',T:0,lava:0,anim:null};
+function stage4(T){if(T<20)return['Bare lava rock: no soil, no life',0,0];if(T<150)return['Lichens (pioneer species)',3,T/150*1];if(T<300)return['Mosses & thin soil',8,1+(T-150)/150*3];if(T<500)return['Grasses & ferns',16,4+(T-300)/200*8];if(T<750)return['Shrubs',26,12+(T-500)/250*14];return['Forest',40,26+(T-750)/250*14];}
+function draw4(){
+  const c=$('c4'),ctx=c.getContext('2d');ctx.clearRect(0,0,900,380);const SL=260;
+  const sky=ctx.createLinearGradient(0,0,0,SL);sky.addColorStop(0,'#bfe3fb');sky.addColorStop(1,'#eef7ff');ctx.fillStyle=sky;ctx.fillRect(0,0,900,SL);
+  ctx.fillStyle='#2f8fcf';ctx.fillRect(0,SL,900,120);
+  const isl=[[120,SL+30],[210,SL-40],[330,SL-80],[450,SL-110],[570,SL-80],[690,SL-40],[780,SL+30]];
+  const T=s4.T;
+  if(s4.state==='ocean'&&s4.lava<=0){ctx.fillStyle='rgba(255,255,255,.25)';for(let i=0;i<12;i++)ctx.fillRect((i*83)%900,SL+20+(i*19)%80,40,3);label(ctx,'Open ocean. A volcano is rumbling below…',450,SL-60,'#1f3d2b',17);updRO4();return;}
+  const grow=s4.state==='ocean'?s4.lava:1;
+  ctx.save();ctx.translate(0,(1-grow)*150);
+  ctx.fillStyle='#2a2a2e';ctx.beginPath();ctx.moveTo(isl[0][0],isl[0][1]);isl.forEach(p=>ctx.lineTo(p[0],p[1]));ctx.closePath();ctx.fill();
+  if(s4.lava>0&&s4.state==='ocean'){ctx.fillStyle='#ff5a1f';for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(450,SL-110);ctx.quadraticCurveTo(380+i*28,SL-60,330+i*50,SL+10);ctx.lineWidth=7;ctx.strokeStyle='#ff6a1f';ctx.stroke();}
+    ctx.fillStyle='rgba(80,80,80,.6)';for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(450+i*12,SL-140-i*25,24+i*6,0,7);ctx.fill();}}
+  ctx.restore();
+  if(s4.state==='island'){
+    const st=stage4(T);const soil=st[2];
+    // soil layer on top of rock
+    const th=soil>0?Math.min(14,soil*.4+2):0;if(soil>0){ctx.fillStyle='#7a5432';ctx.beginPath();isl.forEach((p,i)=>{const y=p[1]-(i===0||i===isl.length-1?0:th);i?ctx.lineTo(p[0],y):ctx.moveTo(p[0],y);});isl.slice().reverse().forEach(p=>ctx.lineTo(p[0],p[1]));ctx.closePath();ctx.fill();}
+    const pts=[];const r=rng(11);for(let i=0;i<90;i++){const a=r();const x=150+a*600;let y;for(let j=1;j<isl.length;j++){if(x<=isl[j][0]){const p=isl[j-1],q=isl[j];y=p[1]+(q[1]-p[1])*(x-p[0])/(q[0]-p[0]);break;}}pts.push([x,y-th,r()]);}
+    pts.forEach(([x,y,k],i)=>{
+      if(T>=20&&k<ease((T-20)/120)){ctx.fillStyle=['#e8c547','#c7d36b','#e08b3a'][i%3];ctx.beginPath();ctx.ellipse(x,y-1,6,3,0,0,7);ctx.fill();}
+      if(T>=150&&k<ease((T-150)/150)){ctx.fillStyle='#5f9e3b';ctx.beginPath();ctx.ellipse(x+4,y-2,8,4,0,0,7);ctx.fill();}
+      if(T>=300&&k<ease((T-300)/200))grass(ctx,x,y,10+k*10);
+      if(T>=500&&i%3===0&&k<ease((T-500)/250))shrub(ctx,x,y,.6+k*.4);
+      if(T>=750&&i%4===0&&k<ease((T-750)/250)*1.2)oak(ctx,x,y+2,.55+k*.35);
+    });
+    if(T<20)label(ctx,'Bare rock: NO soil at all',450,SL-140,'#b5441f',16);
+    else if(T<150)label(ctx,'Lichens break down rock into the first soil',450,40,'#8a6400',16);
+    else if(T<300)label(ctx,'Mosses add to the thin layer of soil',450,40,'#3f7d2a',16);
+    if(T>=300)emoji(ctx,'🦋',300,SL-150,20);if(T>=500)emoji(ctx,'🐦',600,SL-170,22);if(T>=750){emoji(ctx,'🦎',380,SL-96,20);emoji(ctx,'🐦',200,SL-80,20);}
+    updRO4();
+  }
+}
+function updRO4(){if(s4.state!=='island'){$('r4t').textContent='—';$('r4s').textContent=s4.lava>0?'Eruption!':'Open ocean';$('r4soil').textContent='none';$('r4d').textContent='—';$('r4m').style.width='0';return;}
+  const st=stage4(s4.T);$('r4t').textContent=fmt(Math.round(s4.T))+' years';$('r4s').textContent=st[0];$('r4soil').textContent=st[2]<.3?'none':st[2].toFixed(st[2]<2?1:0)+' cm';$('r4d').textContent=st[1]+' species';$('r4m').style.width=(st[1]/40*100)+'%';$('v4t').textContent=fmt(Math.round(s4.T));}
+function check4(){const T=s4.T;if(s4.state==='island'){if(T>=20&&T<300){if(tick('k4b')){$('cmp2').textContent='Lichens & mosses';}}if(T>=750){if(tick('k4c')){$('cmp3').textContent='about 750–1,000 years';$('cmp4').textContent='Primary succession';}}}unlockQ(4,['k4a','k4b','k4c']);}
+function build4(){
+  $('erupt4').onclick=()=>{if(s4.state==='island')return;cancelAnimationFrame(s4.anim);const t0=performance.now();$('erupt4').disabled=true;
+    const step=now=>{const t=(now-t0)/2800;s4.lava=Math.min(1,t);draw4();if(t<1)s4.anim=requestAnimationFrame(step);else{s4.state='island';s4.T=0;draw4();tick('k4a');$('cmp1').textContent='No: bare rock';
+      $('i4t').disabled=false;$('play4').disabled=false;$('how4').textContent='Drag across the picture (or use the slider) to move forward in time on the new island.';$('erupt4').textContent='🌋 Island formed';}};s4.anim=requestAnimationFrame(step);};
+  $('i4t').oninput=()=>{if(s4.state!=='island')return;s4.T=+$('i4t').value;draw4();check4();};
+  let sx,t0;dragger($('c4'),p=>{cancelAnimationFrame(s4.anim);sx=p.x;t0=s4.T;},p=>{if(s4.state!=='island')return;s4.T=clamp(t0+(p.x-sx)*1.4,0,1000);$('i4t').value=Math.round(s4.T);draw4();check4();});
+  $('play4').onclick=()=>{cancelAnimationFrame(s4.anim);const st=performance.now(),from=s4.T>=1000?0:s4.T;const step=now=>{s4.T=Math.min(1000,from+(now-st)/7);$('i4t').value=Math.round(s4.T);draw4();check4();if(s4.T<1000)s4.anim=requestAnimationFrame(step);};s4.anim=requestAnimationFrame(step);};
+  const b=$('q4box');
+  mc(b,4,'a','Primary succession happens in places that have:',['Rich soil left after a fire','A farm field that was abandoned','A forest cut down for lumber','Bare rock with no soil, like new lava'],3,'Primary succession starts from scratch, with no soil.');
+  mc(b,4,'b','What were the PIONEER SPECIES on the new island?',['Oak trees','Lichens (and then mosses)','Grasses','Birds'],1,'Lichens can live on bare rock, so they are the first organisms to move in.');
+  mc(b,4,'c','How did the lichens and mosses help other plants grow later?',['They broke down rock and added organic matter, slowly making soil','They ate the other plants','They made the island bigger','They brought animals to the island'],0,'Pioneer species weather rock and add dead material, building the soil that grasses and trees need.');
+  mc(b,4,'d','Why did the forest take about 1,000 years on the island but only about 100–150 years after the wildfire?',['Fire makes trees grow faster','The island had more rain','Primary succession must build soil first; secondary succession already had soil','The island had no sunlight'],2,'Building soil from bare rock takes a very long time. Secondary succession skips that step.');
+  checkFinish(4);
+}
+
+/* ===== STATION 5 ===== */
+function build5(){
+  const b=$('q5box');
+  const Q=[
+   ['In a pond, algae → zooplankton → small fish → bass. Pollution kills most of the zooplankton. What will most likely happen FIRST?',['The algae population will decrease','The small fish population will decrease','The bass population will increase','Nothing will change'],1,'Small fish depend on zooplankton for energy, so they decline first. Algae would likely increase.'],
+   ['When gray wolves were returned to Yellowstone, elk populations went down. What most likely happened to the willow trees that elk eat?',['The willows increased','The willows decreased','The willows became predators','Nothing happened to the willows'],0,'Fewer elk ate fewer willows, so the willows recovered. One change ripples through the food web.'],
+   ['Grass stores 5,000 kcal of energy. A rabbit eats the grass, and a fox eats the rabbit. About how much of that energy reaches the fox?',['5,000 kcal','500 kcal','50 kcal','0 kcal'],2,'About 10% passes each step: 5,000 → 500 (rabbit) → 50 (fox).'],
+   ['A brand-new volcanic island forms from cooled lava. Which organisms will most likely live there first?',['Oak trees','Lichens and mosses','Deer','Pine trees'],1,'Lichens and mosses are pioneer species that can grow on bare rock.'],
+   ['A farmer stops planting a field and leaves it alone for 100 years. Which sequence is most likely?',['Grasses → shrubs → trees','Trees → shrubs → grasses','Lichens → bare rock → grasses','Trees → lichens → grasses'],0,'An abandoned field still has soil, so secondary succession goes grasses → shrubs → trees.'],
+   ['A hurricane knocks down the trees in a forest, but the soil stays in place. What will happen next?',['Primary succession','No succession, because the forest is gone forever','Secondary succession','The soil will turn into bare rock'],2,'Soil remains, so secondary succession begins.'],
+   ['Which area most likely has the HIGHEST species diversity?',['Bare rock 5 years after a lava flow','A field 2 years after a fire','A lawn sprayed with weed killer','A mature forest 200 years after a fire'],3,'Diversity increases as succession continues, so the mature forest has the most species.'],
+   ['Which human activity disrupts an ecosystem and starts SECONDARY succession?',['A lava flow covering a valley','A glacier melting back from bare rock','Clear-cutting a forest for timber','A new island forming in the ocean'],2,'Clear-cutting removes the trees but leaves the soil, so secondary succession begins.']
+  ];
+  Q.forEach((q,i)=>mc(b,5,'q'+i,`<span style="color:var(--berry-d)">${i+1}.</span> ${q[0]}`,q[1],q[2],q[3]));
+  checkFinish(5);
+}
+
+/* ===== RESULTS ===== */
+function showResults(){let tot=0,cor=0;const names={1:'Food Web',2:'Disruptions',3:'Wildfire',4:'Volcanic Island',5:'Certification'};let grid='';
+  for(let st=1;st<=5;st++){const v=Object.values(S.score[st]);const c=v.filter(Boolean).length;tot+=v.length;cor+=c;grid+=`<div class="sg"><small>${names[st]}</small><b>${c} / ${v.length}</b></div>`;}
+  const pct=tot?Math.round(cor/tot*100):0;const mins=Math.round((Date.now()-S.start)/60000);
+  $('certName').textContent=S.name;$('certPct').textContent=pct+'%';$('certRaw').textContent=`${cor} of ${tot} correct on the first try`;$('certGrid').innerHTML=grid;
+  $('certMeta').textContent=`Completed ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · Time: ${mins} min`;show('results');}
+</script>
+</body>
+</html>
