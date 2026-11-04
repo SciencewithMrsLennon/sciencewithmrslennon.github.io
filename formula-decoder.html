@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Formula Decoder Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --deep:#0f2942;--deep2:#173a5e;--violet:#f97316;--violet-l:#ffedd5;--teal:#0891b2;--teal-d:#0e7490;--teal-l:#cffafe;--pink:#db2777;--pink-d:#be185d;--pink-l:#fce7f3;--lime:#84cc16;--sun:#facc15;--sun-l:#fef9c3;
+  --bg:#eef3f8;--card:#fff;--ink:#2a2350;--muted:#526077;--line:#d5dee9;--good:#15803d;--good-l:#dcfce7;--bad:#b91c1c;--bad-l:#fee2e2;
+}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Nunito,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45}
+h1,h2,h3{font-family:Fredoka,Nunito,sans-serif;margin:0 0 .35em;line-height:1.15}
+button{font-family:inherit}
+header.top{background:var(--deep);color:#fff;padding:10px 16px;display:none;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header.top.show{display:flex}header.top .brand{font-family:Fredoka,Nunito,sans-serif;font-size:18px}
+header.top .meta{display:flex;gap:12px;font-weight:700;font-size:14px;align-items:center;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.14);padding:4px 10px;border-radius:999px}
+.screen{display:none;max-width:1000px;margin:0 auto;padding:16px 16px 48px}.screen.active{display:block}
+.card{background:var(--card);border-radius:18px;padding:18px;box-shadow:0 2px 0 var(--line),0 8px 24px rgba(15,41,66,.06);margin-bottom:16px}
+.btn{border:none;border-radius:12px;padding:11px 18px;font-weight:800;font-size:15px;cursor:pointer;background:var(--violet);color:#fff;box-shadow:0 4px 0 #c2410c;touch-action:manipulation}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #c2410c}
+.btn:disabled{background:#c3bed6;box-shadow:0 4px 0 #a7a1bf;cursor:not-allowed}
+.btn.sun{background:var(--sun);color:var(--deep);box-shadow:0 4px 0 #c99a14}
+.btn.pink{background:var(--pink);box-shadow:0 4px 0 var(--pink-d)}
+.btn.teal{background:var(--teal);box-shadow:0 4px 0 var(--teal-d)}
+.btn.ghost{background:#fff;color:var(--deep);box-shadow:0 4px 0 var(--line);border:2px solid var(--line)}
+.btn.small{padding:7px 12px;font-size:14px}
+.btn.on{background:var(--deep);color:#fff;box-shadow:0 4px 0 #06131f;border-color:var(--deep)}
+.hero{background:linear-gradient(140deg,#0f2942 0%,#173a5e 55%,#f97316 150%);color:#fff;border-radius:24px;padding:28px 24px;position:relative;overflow:hidden;margin-top:8px}
+.hero h1{font-size:clamp(32px,6vw,54px);margin-bottom:6px}
+.hero .tag{display:inline-block;background:var(--sun);color:var(--deep);font-weight:800;border-radius:999px;padding:4px 12px;font-size:13px;margin-bottom:12px}
+.hero p{max-width:560px;font-size:17px;opacity:.95;position:relative;z-index:2}
+.hero svg{position:absolute;right:3%;bottom:-16px;width:min(32vw,220px)}
+.namebox{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;max-width:560px;position:relative;z-index:2}
+.namebox input{flex:1;min-width:200px;padding:13px 14px;border-radius:12px;border:none;font-size:16px;font-family:inherit}
+.overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:16px}
+.ov{background:var(--card);border-radius:16px;padding:14px;border-top:6px solid var(--violet)}
+.ov:nth-child(2){border-color:var(--teal)}.ov:nth-child(3){border-color:var(--pink)}.ov:nth-child(4){border-color:var(--lime)}.ov:nth-child(5){border-color:var(--sun)}
+.ov b{font-family:Fredoka,Nunito,sans-serif;font-size:17px;display:block}.ov small{color:var(--muted);font-weight:700}
+.hubgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.station{background:var(--card);border-radius:18px;padding:16px;border:3px solid transparent;cursor:pointer;position:relative;box-shadow:0 2px 0 var(--line)}
+.station:hover{border-color:var(--violet)}.station.locked{opacity:.55;cursor:not-allowed}.station.locked:hover{border-color:transparent}
+.station .num{font-family:Fredoka,Nunito,sans-serif;background:var(--deep);color:#fff;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;margin-bottom:8px}
+.station .status{position:absolute;top:14px;right:14px;font-weight:800;font-size:13px;padding:3px 9px;border-radius:999px;background:var(--sun-l)}
+.station.done .status{background:var(--good-l);color:var(--good)}.station.locked .status{background:#ebe8f3;color:var(--muted)}
+.station .teks{font-size:12px;font-weight:800;color:var(--pink-d)}
+.progressbar{height:12px;background:#ddd9ea;border-radius:999px;overflow:hidden;margin:6px 0 2px}
+.progressbar div{height:100%;background:linear-gradient(90deg,var(--violet),var(--teal),var(--pink));width:0;transition:width .4s}
+.stHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.stHead .teks{background:var(--pink-l);color:var(--pink-d);font-weight:800;font-size:13px;border-radius:999px;padding:4px 10px}
+.brief{background:var(--sun-l);border-left:6px solid var(--sun);border-radius:12px;padding:12px 14px;margin:10px 0}
+.howto{display:flex;align-items:center;gap:10px;background:var(--teal-l);border-radius:12px;padding:9px 12px;font-weight:800;color:#0b6359;margin:10px 0;font-size:15px}
+.howto .hand{font-size:22px}
+canvas{width:100%;height:auto;display:block;border-radius:14px;background:#f8fafc;touch-action:none}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;align-items:center}
+.group{background:#f1f5f9;border-radius:12px;padding:8px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.group b{font-size:13px;color:var(--muted);margin-right:4px}
+.readouts{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.ro{background:var(--deep);color:#fff;border-radius:12px;padding:8px 12px;min-width:110px;flex:1}
+.ro small{display:block;font-size:11px;opacity:.75;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.ro b{font-family:Fredoka,Nunito,sans-serif;font-size:17px}
+.msg{font-weight:700;padding:10px 12px;border-radius:10px;background:#f1f5f9;margin:8px 0;min-height:20px}
+table.data{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+table.data th{background:var(--deep);color:#fff;padding:7px;text-align:center;font-weight:800}
+table.data td{padding:6px;text-align:center;border-bottom:1px solid var(--line)}
+table.data tr:nth-child(even) td{background:#f8fafc}
+.tasks{list-style:none;padding:0;margin:8px 0}
+.tasks li{padding:9px 12px;border-radius:10px;background:#f1f5f9;margin-bottom:6px;font-weight:700;display:flex;gap:10px;align-items:flex-start}
+.tasks li .box{flex:0 0 22px;height:22px;border-radius:6px;border:2px solid var(--muted);display:grid;place-items:center;font-size:14px;margin-top:1px}
+.tasks li.ok{background:var(--good-l)}.tasks li.ok .box{background:var(--good);border-color:var(--good);color:#fff}
+.q{border:2px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;background:#fff}
+.q .qp{font-weight:800;margin:0 0 10px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;font-size:15px;cursor:pointer;display:flex;gap:10px;align-items:flex-start;color:var(--ink)}
+.opt:hover:not(:disabled){border-color:var(--violet);background:var(--violet-l)}
+.opt .letter{flex:0 0 26px;height:26px;border-radius:8px;background:var(--deep);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.opt.right{border-color:var(--good);background:var(--good-l)}.opt.wrong{border-color:var(--bad);background:var(--bad-l);opacity:.75}
+.fb{margin-top:8px;font-weight:700;font-size:15px}.fb.good{color:var(--good)}.fb.bad{color:var(--bad)}
+.hidden{display:none!important}
+.locknote{background:#f1f5f9;border:2px dashed var(--line);border-radius:14px;padding:14px;color:var(--muted);font-weight:700;text-align:center}
+.finishbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.cert{background:linear-gradient(135deg,#fff 0%,#fff7ed 100%);border:4px solid var(--sun);border-radius:24px;padding:26px;text-align:center}
+.cert h1{font-size:clamp(26px,5vw,38px)}
+.bigscore{font-family:Fredoka,Nunito,sans-serif;font-size:64px;color:var(--violet);line-height:1}
+.scoregrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:18px 0;text-align:left}
+.sg{background:#fff;border-radius:12px;padding:10px 12px;border:2px solid var(--line)}
+.sg small{display:block;color:var(--muted);font-weight:800;font-size:12px}.sg b{font-family:Fredoka,Nunito,sans-serif;font-size:22px}
+@media print{header.top,.noprint{display:none!important}body{background:#fff}.screen{padding:0}}
+@media (max-width:600px){.hero svg{opacity:.3}.card{padding:14px}}
+
+.fm{font-family:Fredoka,Nunito,sans-serif;font-weight:700;white-space:nowrap;letter-spacing:.01em}
+.fm sub{font-size:.62em;color:var(--violet);font-weight:700;vertical-align:-.28em;line-height:0}
+.fm .co{color:#c2410c;margin-right:.06em}
+.fm.big{font-size:clamp(46px,9vw,78px);color:var(--deep);display:inline-block;padding:4px 18px;border-radius:16px;background:#fff;border:3px solid var(--line)}
+.fbox{text-align:center;margin:10px 0}
+.fm.spot .el{opacity:.18;transition:all .25s}.fm.spot .el.lit{opacity:1;background:var(--sun);border-radius:10px;padding:0 4px;box-shadow:0 0 0 4px var(--sun-l)}
+.fm.spot .co,.fm.spot .pa{opacity:.35}.fm.spot .mlit{opacity:1!important;color:#fff!important;background:#f97316;border-radius:10px;padding:0 6px}.fm.spot .mlit sub{color:#fff}
+.pt{display:grid;grid-template-columns:repeat(18,minmax(44px,1fr));grid-template-rows:repeat(4,auto);gap:3px;min-width:820px}
+.ptwrap{overflow-x:auto;padding:4px 2px 8px}
+.pe{border:2px solid var(--line);background:#fff;border-radius:7px;padding:3px 2px 2px;cursor:pointer;text-align:center;font-family:inherit;color:var(--deep);line-height:1.05;min-height:52px}
+.pe small{display:block;font-size:9px;color:var(--muted);font-weight:700}.pe b{display:block;font-family:Fredoka,Nunito,sans-serif;font-size:18px}.pe i{display:block;font-style:normal;font-size:8.5px;font-weight:700;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pe:hover{border-color:var(--violet);background:var(--violet-l)}.pe.hit{background:var(--good);border-color:var(--good);color:#fff}.pe.hit i,.pe.hit small{color:#e7fbe9}
+.pe.no{background:var(--bad-l);border-color:var(--bad);animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.tiles{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.tile{border:3px dashed var(--line);border-radius:14px;padding:8px 14px;min-width:120px;text-align:center;background:#fff}
+.tile b{display:block;font-family:Fredoka,Nunito,sans-serif;font-size:28px}.tile span{font-weight:800;font-size:13px}.tile.on{border-style:solid}
+.counter{text-align:center;font-weight:900;color:var(--teal-d)}
+.stepbar{display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,var(--deep),var(--deep2));color:#fff;border-radius:14px;padding:10px 16px;margin:10px 0;font-weight:800}
+.stepbar small{opacity:.8}
+.steppers{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:10px 0}
+.stepper{display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:12px;padding:6px 10px}
+.stepper b{font-family:Fredoka,Nunito,sans-serif;font-size:20px;width:26px}.stepper span{flex:1;font-weight:700;font-size:14px;color:var(--muted)}
+.stepper output{font-family:Fredoka,Nunito,sans-serif;font-size:20px;min-width:24px;text-align:center}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
+.rule{border-radius:12px;padding:9px 12px;font-weight:700;font-size:14.5px;border-left:7px solid}
+.rule b{display:block;font-family:Fredoka,Nunito,sans-serif;font-size:16px}
+.rule.m{background:#fff1e6;border-color:#f97316}.rule.m b{color:#c2410c}
+.rule.a{background:#e0f7fb;border-color:#0891b2}.rule.a b{color:#0e7490}
+.rule.s{background:#fef9c3;border-color:#eab308}.rule.s b{color:#854d0e}
+.rule.k{background:#f1f5f9;border-color:#64748b}.rule.k b{color:#334155}
+table.coach{width:100%;border-collapse:collapse;margin-top:8px}
+table.coach th{background:var(--deep);color:#fff;padding:7px 6px;font-size:13px}table.coach th small{font-weight:600;opacity:.8}
+table.coach td{padding:6px;text-align:center;border-bottom:1px solid var(--line)}
+.ci{width:78px;padding:8px;border-radius:10px;border:2px solid var(--line);font-size:18px;font-family:Fredoka,Nunito,sans-serif;text-align:center}
+.ci.bad{border-color:var(--bad);background:var(--bad-l)}.ci.right{border-color:var(--good);background:var(--good-l)}
+.opbtn{display:inline-flex;gap:4px}.opbtn button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:7px 9px;font-weight:800;cursor:pointer;font-family:inherit;font-size:13px;color:var(--deep)}
+.opbtn button[data-o="x"].on{background:#f97316;border-color:#f97316;color:#fff}.opbtn button[data-o="+"].on{background:#0891b2;border-color:#0891b2;color:#fff}
+tr.totrow td{background:#e0f7fb;text-align:right}tr.totrow td:last-child{text-align:center}
+.numrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.numrow .nl{font-weight:800;color:var(--muted)}
+.numin{width:110px;padding:10px;border-radius:10px;border:2px solid var(--line);font-size:20px;font-family:Fredoka,Nunito,sans-serif;text-align:center}.numin.right{border-color:var(--good);background:var(--good-l)}
+.qbar{font-size:22px;font-weight:800;text-align:center;margin:6px 0}.qbar .hl{background:var(--sun);padding:0 8px;border-radius:8px}
+.spotbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+.work{background:var(--deep);color:#fff;border-radius:12px;padding:10px 14px;font-family:Fredoka,Nunito,sans-serif;font-size:22px;text-align:center}
+.ansrow{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin:8px 0}
+/* ===== CODE-BREAKER THEME ===== */
+:root{--bg:#050b14;--card:#0b1726;--ink:#d7f9ec;--muted:#86a7bb;--line:#1d3a5c;--deep:#10223a;--deep2:#163252;
+ --violet:#22f59a;--violet-l:rgba(34,245,154,.12);--teal:#22d3ee;--teal-d:#22d3ee;--teal-l:rgba(34,211,238,.1);--pink:#ff4d9d;--pink-d:#ff7ab5;--pink-l:rgba(255,77,157,.14);
+ --sun:#fbbf24;--sun-l:rgba(251,191,36,.12);--good:#22f59a;--good-l:rgba(34,245,154,.14);--bad:#ff5c6c;--bad-l:rgba(255,92,108,.14);--mult:#fb923c;--neon:#22f59a;--cyan:#22d3ee}
+body{background:#050b14;background-image:linear-gradient(rgba(34,211,238,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,.05) 1px,transparent 1px),radial-gradient(ellipse at top,#0c2440 0%,#050b14 65%);background-size:32px 32px,32px 32px,100% 100%;background-attachment:fixed;color:var(--ink)}
+h1,h2,h3{font-family:"Share Tech Mono","JetBrains Mono",ui-monospace,monospace;letter-spacing:.02em}
+h2{color:var(--neon);text-shadow:0 0 12px rgba(34,245,154,.45)}h3{color:var(--cyan)}
+header.top{background:rgba(5,11,20,.92);border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+header.top .brand{font-family:"Share Tech Mono",monospace;color:var(--neon);text-shadow:0 0 10px rgba(34,245,154,.6)}
+.pill{background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.35);color:var(--cyan)}
+.card{background:linear-gradient(180deg,#0c1a2c,#0a1524);border:1px solid var(--line);box-shadow:0 0 0 1px rgba(34,245,154,.04),0 10px 30px rgba(0,0,0,.45)}
+.btn{background:var(--neon);color:#03140b;box-shadow:0 4px 0 #0f9a5c,0 0 18px rgba(34,245,154,.35);font-family:"Share Tech Mono",monospace;letter-spacing:.03em;font-size:16px}
+.btn:active{box-shadow:0 1px 0 #0f9a5c}
+.btn.sun{background:var(--cyan);color:#021318;box-shadow:0 4px 0 #0e8aa0,0 0 18px rgba(34,211,238,.35)}
+.btn.ghost{background:transparent;color:var(--cyan);border:1.5px solid rgba(34,211,238,.5);box-shadow:none}
+.btn.ghost:hover{background:rgba(34,211,238,.1)}
+.btn.on{background:var(--neon);color:#03140b;border-color:var(--neon);box-shadow:0 0 16px rgba(34,245,154,.55)}
+.btn:disabled{background:#1b2c40;color:#57718a;box-shadow:none}
+.hero{background:linear-gradient(140deg,#071426 0%,#0b2240 60%,#0d3a3a 120%);border:1px solid rgba(34,245,154,.35);box-shadow:0 0 40px rgba(34,245,154,.12) inset,0 0 30px rgba(34,211,238,.12)}
+.hero h1{font-family:"Orbitron","Share Tech Mono",monospace;font-weight:900;color:var(--neon);text-shadow:0 0 18px rgba(34,245,154,.6);letter-spacing:.04em}
+.hero .tag{background:transparent;color:var(--cyan);border:1px solid var(--cyan);font-family:"Share Tech Mono",monospace;letter-spacing:.08em}
+.hero p{color:#c8e6dc}
+.namebox input{background:#06101c;color:var(--neon);border:1.5px solid var(--neon);font-family:"Share Tech Mono",monospace;font-size:18px}
+.namebox input::placeholder{color:#3f7a62}
+.ov,.station{background:#0b1726;border:1px solid var(--line);box-shadow:none}
+.ov{border-top:4px solid var(--neon)}.ov b{font-family:"Share Tech Mono",monospace;color:var(--ink)}
+.ov:nth-child(2){border-top-color:var(--cyan)}.ov:nth-child(3){border-top-color:var(--mult)}.ov:nth-child(4){border-top-color:var(--sun)}.ov:nth-child(5){border-top-color:var(--pink)}
+.station:hover{border-color:var(--neon);box-shadow:0 0 18px rgba(34,245,154,.25)}
+.station .num{background:transparent;border:1.5px solid var(--neon);color:var(--neon);font-family:"Share Tech Mono",monospace}
+.station .status{background:rgba(251,191,36,.14);color:var(--sun)}.station.done .status{background:var(--good-l);color:var(--good)}.station.locked .status{background:#13253a;color:var(--muted)}
+.station .teks,.stHead .teks{color:var(--pink-d)}.stHead .teks{background:var(--pink-l);border:1px solid rgba(255,77,157,.4)}
+.progressbar{background:#13253a}.progressbar div{background:linear-gradient(90deg,var(--neon),var(--cyan));box-shadow:0 0 12px rgba(34,245,154,.6)}
+.brief{background:rgba(34,211,238,.07);border-left:4px solid var(--cyan);color:#cfe9f2}
+.brief b{color:var(--cyan)}
+.howto{background:rgba(34,245,154,.08);color:var(--neon);border:1px dashed rgba(34,245,154,.4)}
+.msg{background:#081322;border:1px solid var(--line);color:var(--ink)}
+canvas{background:#081322}
+table.data th{background:#10223a;color:var(--cyan)}table.data td{border-color:var(--line)}table.data tr:nth-child(even) td{background:#0a1828}
+.tasks li{background:#0a1828;border:1px solid var(--line)}.tasks li.ok{background:var(--good-l);border-color:rgba(34,245,154,.5)}
+.tasks li.ok .box{background:var(--neon);border-color:var(--neon);color:#03140b}
+.q{background:#081322;border-color:var(--line)}
+.opt{background:#0b1726;color:var(--ink);border-color:var(--line)}
+.opt:hover:not(:disabled){border-color:var(--neon);background:rgba(34,245,154,.08)}
+.opt .letter{background:transparent;border:1.5px solid var(--cyan);color:var(--cyan)}
+.opt.right{border-color:var(--neon);background:var(--good-l)}.opt.wrong{border-color:var(--bad);background:var(--bad-l)}
+.locknote{background:#081322;border-color:var(--line)}
+.stepbar{background:linear-gradient(90deg,#0b2240,#0d2f3f);border:1px solid rgba(34,211,238,.35);font-family:"Share Tech Mono",monospace;letter-spacing:.06em;color:var(--cyan)}
+.stepbar small{color:#9fc7d6}
+.fm sub{color:var(--cyan)}.fm .co{color:var(--mult)}
+.fm.big{background:#03080f;color:var(--neon);border:1.5px solid rgba(34,245,154,.55);text-shadow:0 0 16px rgba(34,245,154,.55);box-shadow:0 0 30px rgba(34,245,154,.15) inset}
+.fm.big sub{text-shadow:0 0 12px rgba(34,211,238,.6)}.fm.big .co{text-shadow:0 0 12px rgba(251,146,60,.6)}
+.fm.spot .el.lit{background:var(--neon);color:#03140b;box-shadow:0 0 22px rgba(34,245,154,.7);text-shadow:none}.fm.spot .el.lit sub{color:#03140b;text-shadow:none}
+.fm.spot .mlit{background:var(--mult)!important;color:#1a0b02!important;text-shadow:none!important}.fm.spot .mlit sub{color:#1a0b02!important}
+.pe{background:#0a1828;border-color:var(--line);color:var(--ink)}.pe small,.pe i{color:var(--muted)}
+.pe:hover{border-color:var(--neon);background:rgba(34,245,154,.1)}
+.pe.hit{background:var(--neon);border-color:var(--neon);color:#03140b;box-shadow:0 0 14px rgba(34,245,154,.6)}.pe.hit i,.pe.hit small{color:#064a2b}
+.tile{background:#081322;border-color:var(--line);color:var(--muted)}
+.counter{color:var(--neon);font-family:"Share Tech Mono",monospace;font-size:18px}
+.stepper{background:#0a1828;border:1px solid var(--line)}.stepper b{color:var(--neon)}
+.rule{background:#0a1828!important;color:#cfe3ee}.rule.m{border-color:var(--mult)}.rule.m b{color:var(--mult)}.rule.a{border-color:var(--cyan)}.rule.a b{color:var(--cyan)}.rule.s{border-color:var(--sun)}.rule.s b{color:var(--sun)}.rule.k{border-color:#86a7bb}.rule.k b{color:var(--ink)}
+table.coach th{background:#10223a;color:var(--cyan)}table.coach td{border-color:var(--line)}
+.ci,.numin{background:#03080f;color:var(--neon);border-color:var(--line)}
+.ci.right,.numin.right{background:var(--good-l);border-color:var(--neon)}.ci.bad{background:var(--bad-l);border-color:var(--bad);color:#ffd0d5}
+.opbtn button{background:#0a1828;color:var(--ink);border-color:var(--line)}
+.opbtn button[data-o="x"].on{background:var(--mult);border-color:var(--mult);color:#1a0b02;box-shadow:0 0 14px rgba(251,146,60,.5)}
+.opbtn button[data-o="+"].on{background:var(--cyan);border-color:var(--cyan);color:#021318;box-shadow:0 0 14px rgba(34,211,238,.5)}
+tr.totrow td{background:rgba(34,211,238,.08)}
+.qbar{color:var(--ink)}.qbar .hl{background:var(--neon);color:#03140b;box-shadow:0 0 14px rgba(34,245,154,.5)}
+.work{background:#03080f;border:1px solid var(--mult);color:var(--mult);font-family:"Share Tech Mono",monospace;text-shadow:0 0 10px rgba(251,146,60,.5)}
+.fb.good{color:var(--neon)}.fb.bad{color:var(--bad)}
+.cert{background:radial-gradient(circle at top,#0d2a3f,#06101c);border:2px solid var(--neon);box-shadow:0 0 40px rgba(34,245,154,.25)}
+.cert h1{font-family:"Orbitron","Share Tech Mono",monospace;color:var(--neon);text-shadow:0 0 14px rgba(34,245,154,.6)}
+.cert .stamp{display:inline-block;border:2px solid var(--cyan);color:var(--cyan);font-family:"Share Tech Mono",monospace;letter-spacing:.25em;padding:6px 16px;border-radius:8px;font-size:18px;text-shadow:0 0 10px rgba(34,211,238,.6);margin-bottom:8px}
+.bigscore{color:var(--neon);text-shadow:0 0 20px rgba(34,245,154,.6);font-family:"Orbitron","Share Tech Mono",monospace}
+.sg{background:#081322;border-color:var(--line)}.sg small{color:var(--muted)}.sg b{color:var(--neon);font-family:"Share Tech Mono",monospace}
+#certName{color:var(--ink)!important}
+@media print{body{background:#fff!important;color:#000}.cert{background:#fff;box-shadow:none}}
+.btn.ghost.on{background:var(--neon);color:#03140b;border-color:var(--neon);box-shadow:0 0 16px rgba(34,245,154,.55)}
+</style>
+</head>
+<body>
+<header class="top" id="topbar">
+  <div class="brand">🧪 Formula Decoder Lab</div>
+  <div class="meta"><span class="pill" id="who"></span><span class="pill">⏱ <span id="clock">0:00</span></span><button class="btn small ghost" onclick="goHub()">⌂ Decoder Map</button></div>
+</header>
+<section class="screen active" id="intro">
+  <div class="hero">
+    <span class="tag">TEKS 7.6B · STAAR Readiness</span>
+    <h1>Formula Decoder Lab</h1>
+    <p>Every chemical formula is a code. It tells you which elements are in a substance and exactly how many atoms of each. Learn to read the symbols, know when to <b>multiply</b> and when to <b>add</b>, and count just the atoms a question asks about.</p>
+    <div class="namebox"><input id="nameIn" placeholder="Type your first and last name" maxlength="40" autocomplete="off"><button class="btn sun" onclick="startGame()">Start Decoding ➜</button></div>
+    <svg viewBox="0 0 220 180" aria-hidden="true"><line x1="110" y1="95" x2="55" y2="140" stroke="#94a3b8" stroke-width="9" stroke-linecap="round"/><line x1="110" y1="95" x2="165" y2="140" stroke="#94a3b8" stroke-width="9" stroke-linecap="round"/><circle cx="110" cy="85" r="46" fill="#ef4444"/><circle cx="96" cy="70" r="14" fill="#fff" opacity=".45"/><circle cx="50" cy="143" r="28" fill="#f8fafc" stroke="#94a3b8" stroke-width="3"/><circle cx="170" cy="143" r="28" fill="#f8fafc" stroke="#94a3b8" stroke-width="3"/><text x="110" y="100" text-anchor="middle" font-family="Fredoka,sans-serif" font-size="42" font-weight="700" fill="#fff">O</text><text x="50" y="155" text-anchor="middle" font-family="Fredoka,sans-serif" font-size="30" font-weight="700" fill="#334155">H</text><text x="170" y="155" text-anchor="middle" font-family="Fredoka,sans-serif" font-size="30" font-weight="700" fill="#334155">H</text></svg>
+  </div>
+  <div class="overview">
+    <div class="ov"><b>1 · Symbol Decoder</b><small>Read symbols on the periodic table · ~8 min</small></div>
+    <div class="ov"><b>2 · Atom Builder</b><small>What subscripts mean · ~9 min</small></div>
+    <div class="ov"><b>3 · Multiply or Add?</b><small>Coefficients &amp; parentheses · ~11 min</small></div>
+    <div class="ov"><b>4 · Spotlight</b><small>Count just ONE element · ~9 min</small></div>
+    <div class="ov"><b>5 · Final Certification</b><small>STAAR-style check · ~8 min</small></div>
+  </div>
+</section>
+<section class="screen" id="hub">
+  <div class="card"><h2>Decoder Map</h2><p style="margin:0;color:var(--muted);font-weight:700">Complete each station in order. Your first answer on every question counts toward your score, so think before you click!</p>
+    <div class="progressbar"><div id="hubBar"></div></div><small id="hubTxt" style="font-weight:800;color:var(--muted)"></small></div>
+  <div class="hubgrid" id="hubGrid"></div>
+</section>
+
+<section class="screen" id="s1">
+  <div class="card">
+    <div class="stHead"><h2>Station 1 · Symbol Decoder</h2><span class="teks">TEKS 7.6B</span></div>
+    <div class="brief"><b>Decoder Briefing:</b> Every element has a symbol. A symbol is either ONE capital letter (like <b>C</b> or <b>O</b>) or a capital letter followed by a lowercase letter (like <b>Ca</b> or <b>Cl</b>). <b>Every capital letter starts a new element.</b></div>
+    <div class="stepbar"><span id="n1">FORMULA 1 OF 5</span><small>· Click each element on the periodic table</small></div>
+    <div class="fbox" id="fx1"></div>
+    <div class="tiles" id="tiles1"></div><div class="counter" id="cnt1"></div>
+    <div class="howto"><span class="hand">👆</span><span>Find each symbol in the formula on the periodic table below and click it.</span></div>
+    <div class="ptwrap" id="pt1"></div>
+    <div class="msg" id="m1"></div>
+    <button class="btn sun hidden" id="next1">Next formula ➜</button>
+  </div>
+  <div class="card"><h3>🎯 Lab Task</h3><ul class="tasks"><li id="k1a"><span class="box"></span><span>Decode all <b>5 formulas</b> by finding every element on the periodic table.</span></li></ul></div>
+  <div class="card"><h3>🧠 Check Your Decoding</h3><div id="q1lock" class="locknote">🔒 Decode all 5 formulas to unlock the questions.</div><div id="q1box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f1txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f1" disabled onclick="finishStation(1)">Complete Station ✔</button></div>
+</section>
+
+<section class="screen" id="s2">
+  <div class="card">
+    <div class="stHead"><h2>Station 2 · Atom Builder</h2><span class="teks">TEKS 7.6B</span></div>
+    <div class="brief"><b>Decoder Briefing:</b> The <b>small number</b> written after a symbol is a <b>subscript</b>. It counts only the atom right before it. If there is no small number, there is just <b>1</b> atom. Read the target formula and collect exactly the right atoms.</div>
+    <div class="stepbar"><span id="n2">MOLECULE 1 OF 5</span><small>· Build the target molecule</small></div>
+    <canvas id="c2" width="900" height="330"></canvas>
+    <div class="steppers" id="ctl2"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="chk2">🔨 Build it</button><button class="btn sun hidden" id="next2">Next molecule ➜</button></div>
+    <div class="msg" id="m2">Use + and − to collect the atoms, then press Build.</div>
+  </div>
+  <div class="card"><h3>🎯 Lab Task</h3><ul class="tasks"><li id="k2a"><span class="box"></span><span>Build all <b>5 molecules</b> correctly.</span></li></ul></div>
+  <div class="card"><h3>🧠 Check Your Building</h3><div id="q2lock" class="locknote">🔒 Build all 5 molecules to unlock the questions.</div><div id="q2box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f2txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f2" disabled onclick="finishStation(2)">Complete Station ✔</button></div>
+</section>
+
+<section class="screen" id="s3">
+  <div class="card">
+    <div class="stHead"><h2>Station 3 · Multiply or Add?</h2><span class="teks">TEKS 7.6B</span></div>
+    <div class="brief"><b>Decoder Briefing:</b> Some numbers make <b>copies</b>. A big number in front copies the whole formula. A number after parentheses copies what is inside. Copies mean <b>✖ MULTIPLY</b>. Putting different elements together for a total means <b>➕ ADD</b>.</div>
+    <div class="stepbar"><span id="n3">FORMULA 1 OF 4</span><small>· Unpack it, then fill in the Count Coach</small></div>
+    <div class="fbox" id="fx3"></div>
+    <canvas id="c3" width="900" height="250"></canvas>
+    <h3 style="margin-top:12px">🧮 Count Coach</h3>
+    <div style="overflow-x:auto"><table class="coach" id="t3"></table></div>
+    <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap"><button class="btn" id="chk3">Check ✔</button><button class="btn sun hidden" id="next3">Next formula ➜</button></div>
+    <div class="msg" id="m3"></div>
+  </div>
+  <div class="card"><h3>📏 Counting Rules</h3><div class="rules">
+<div class="rule k"><b>Small number after a symbol</b>Counts only the ONE atom right before it. No number = 1.</div>
+<div class="rule m"><b>✖ Big number in FRONT</b>Copies of the whole formula. MULTIPLY every atom.</div>
+<div class="rule m"><b>✖ Number after ( )</b>Copies of what is inside. MULTIPLY only the atoms inside.</div>
+<div class="rule a"><b>➕ Same element in 2 places</b>ADD those counts together.</div>
+<div class="rule a"><b>➕ "Total atoms"</b>ADD the counts of every element.</div>
+<div class="rule s"><b>🔦 "How many CARBON atoms?"</b>Count ONLY carbon. Ignore every other element.</div>
+</div></div>
+  <div class="card"><h3>🎯 Lab Task</h3><ul class="tasks"><li id="k3a"><span class="box"></span><span>Complete the Count Coach for all <b>4 formulas</b>.</span></li></ul></div>
+  <div class="card"><h3>🧠 Multiply or Add?</h3><div id="q3lock" class="locknote">🔒 Finish all 4 formulas to unlock the questions.</div><div id="q3box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f3txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f3" disabled onclick="finishStation(3)">Complete Station ✔</button></div>
+</section>
+
+<section class="screen" id="s4">
+  <div class="card">
+    <div class="stHead"><h2>Station 4 · Spotlight Challenge</h2><span class="teks">TEKS 7.6B</span></div>
+    <div class="brief"><b>Decoder Briefing:</b> STAAR questions often ask about just ONE element, like "How many <b>carbon</b> atoms…?" Use the spotlight to light up only that element. Everything else fades away, so you count only what the question asks.</div>
+    <div class="stepbar"><span id="n4">CHALLENGE 1 OF 6</span><small>· Spotlight first, then count</small></div>
+    <div class="qbar" id="qq4"></div>
+    <div class="fbox" id="fx4"></div>
+    <div class="spotbtns" id="sp4"></div>
+    <div class="ansrow"><b>Answer:</b><input class="numin" id="a4" type="number" min="0" disabled><button class="btn" id="go4" disabled>Check ✔</button><button class="btn sun hidden" id="next4">Next challenge ➜</button></div>
+    <div class="work hidden" id="w4"></div>
+    <div class="msg" id="m4"></div>
+  </div>
+  <div class="card"><h3>📏 Counting Rules</h3><div class="rules">
+<div class="rule k"><b>Small number after a symbol</b>Counts only the ONE atom right before it. No number = 1.</div>
+<div class="rule m"><b>✖ Big number in FRONT</b>Copies of the whole formula. MULTIPLY every atom.</div>
+<div class="rule m"><b>✖ Number after ( )</b>Copies of what is inside. MULTIPLY only the atoms inside.</div>
+<div class="rule a"><b>➕ Same element in 2 places</b>ADD those counts together.</div>
+<div class="rule a"><b>➕ "Total atoms"</b>ADD the counts of every element.</div>
+<div class="rule s"><b>🔦 "How many CARBON atoms?"</b>Count ONLY carbon. Ignore every other element.</div>
+</div></div>
+  <div class="card"><h3>🎯 Lab Task</h3><ul class="tasks"><li id="k4a"><span class="box"></span><span>Complete all <b>6 spotlight challenges</b>.</span></li></ul></div>
+  <div class="card"><h3>🧠 Spotlight Check</h3><div id="q4lock" class="locknote">🔒 Finish all 6 challenges to unlock the questions.</div><div id="q4box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f4txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f4" disabled onclick="finishStation(4)">Complete Station ✔</button></div>
+</section>
+
+<section class="screen" id="s5">
+  <div class="card"><div class="stHead"><h2>Station 5 · Final Certification</h2><span class="teks">TEKS 7.6B</span></div>
+    <div class="brief"><b>Decoder Briefing:</b> These questions look like STAAR. Some are multiple choice, and some ask you to type a number. Read each question carefully: does it ask for the <b>total</b> atoms or just <b>one element</b>? Your <b>first try</b> counts!</div><div id="q5box"></div></div>
+  <div class="card finishbar"><span id="f5txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f5" disabled onclick="finishStation(5)">Get My Certificate 🏆</button></div>
+</section>
+
+<section class="screen" id="results">
+  <div class="cert"><div class="stamp">🔓 CODE CRACKED</div><h1>Certified Formula Decoder</h1>
+    <p style="font-weight:700;color:var(--muted);margin:0">This certifies that</p><h2 id="certName" style="font-size:32px;color:var(--deep2);margin:6px 0 12px"></h2>
+    <p style="font-weight:700;color:var(--muted);margin:0 0 10px">can identify the atoms and count the number of each kind in a chemical formula.</p>
+    <div class="bigscore" id="certPct"></div><div style="font-weight:800;color:var(--muted)" id="certRaw"></div><div class="scoregrid" id="certGrid"></div>
+    <p style="font-weight:700;color:var(--muted);margin:0" id="certMeta"></p><p style="font-weight:800;margin:14px 0 0">📸 Show this screen to your teacher or take a screenshot.</p>
+    <div class="noprint" style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn" onclick="window.print()">🖨 Print</button><button class="btn ghost" onclick="goHub()">Back to Decoder Map</button></div></div>
+</section>
+
+<script>
+/* ===== Core ===== */
+const S={name:'',start:null,done:{},score:{1:{},2:{},3:{},4:{},5:{}},need:{1:[],2:[],3:[],4:[],5:[]},got:{1:new Set(),2:new Set(),3:new Set(),4:new Set(),5:new Set()},built:{}};
+const STATIONS=[{n:1,title:'Symbol Decoder',desc:'Find each element on the periodic table.'},{n:2,title:'Atom Builder',desc:'Learn what subscripts mean by building molecules.'},{n:3,title:'Multiply or Add?',desc:'Unpack coefficients and parentheses.'},{n:4,title:'Spotlight Challenge',desc:'Count just the element the question asks about.'},{n:5,title:'Final Certification',desc:'Prove what you learned and earn your certificate.'}];
+const $=id=>document.getElementById(id);const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');window.scrollTo(0,0);}
+function startGame(){const n=$('nameIn').value.trim();if(!n){$('nameIn').focus();$('nameIn').placeholder='Please type your name first!';return;}S.name=n;S.start=Date.now();$('who').textContent='🧑‍🔬 '+n;$('topbar').classList.add('show');
+  setInterval(()=>{const s=Math.floor((Date.now()-S.start)/1000);$('clock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');},1000);goHub();}
+$('nameIn').addEventListener('keydown',e=>{if(e.key==='Enter')startGame();});
+function unlocked(n){return n===1||S.done[n-1];}
+function goHub(){if(!S.name){show('intro');return;}const g=$('hubGrid');g.innerHTML='';STATIONS.forEach(st=>{const d=document.createElement('div');const isDone=S.done[st.n],isOpen=unlocked(st.n);
+  d.className='station'+(isDone?' done':'')+(!isOpen?' locked':'');d.innerHTML=`<div class="num">${st.n}</div><span class="status">${isDone?'✔ Complete':isOpen?'Ready':'🔒 Locked'}</span><div class="teks">TEKS 7.6B</div><h3>${st.title}</h3><div style="color:var(--muted);font-weight:600;font-size:14px">${st.desc}</div>`;
+  d.onclick=()=>{if(isOpen)openStation(st.n);};g.appendChild(d);});const c=Object.keys(S.done).length;$('hubBar').style.width=(c/5*100)+'%';$('hubTxt').textContent=`${c} of 5 stations complete`;show('hub');}
+function openStation(n){if(!S.built[n]){({1:build1,2:build2,3:build3,4:build4,5:build5})[n]();S.built[n]=true;}show('s'+n);({1:draw1,2:draw2,3:draw3,4:draw4,5:()=>{}})[n]();}
+function finishStation(n){S.done[n]=true;if(n===5)showResults();else goHub();}
+function record(st,qid,ok){if(!(qid in S.score[st]))S.score[st][qid]=ok;}
+function need(st,k){S.need[st].push(k);}function got(st,k){S.got[st].add(k);checkFinish(st);}
+function checkFinish(st){const all=S.need[st].length>0&&S.need[st].every(k=>S.got[st].has(k));$('f'+st).disabled=!all;
+  $('f'+st+'txt').textContent=all?'✅ Station complete! Click the button to save your progress.':`Progress: ${S.need[st].filter(k=>S.got[st].has(k)).length} of ${S.need[st].length} questions correct.`;}
+function mc(box,st,qid,prompt,options,correct,explain){need(st,qid);const d=document.createElement('div');d.className='q';d.innerHTML=`<p class="qp">${prompt}</p>`;
+  const o=document.createElement('div');o.className='opts';const fb=document.createElement('div');fb.className='fb';
+  options.forEach((t,i)=>{const b=document.createElement('button');b.className='opt';b.innerHTML=`<span class="letter">${'ABCD'[i]}</span><span>${t}</span>`;
+    b.onclick=()=>{if(d.dataset.solved)return;const ok=i===correct;record(st,qid,ok);
+      if(ok){b.classList.add('right');d.dataset.solved=1;o.querySelectorAll('.opt').forEach(x=>x.disabled=true);fb.className='fb good';fb.innerHTML='✅ Correct! '+explain;got(st,qid);}
+      else{b.classList.add('wrong');b.disabled=true;fb.className='fb bad';fb.textContent='❌ Not quite. Think about what you saw in the lab and try again.';}};o.appendChild(b);});
+  d.appendChild(o);d.appendChild(fb);box.appendChild(d);}
+function tick(id){const e=$(id);if(e.classList.contains('ok'))return false;e.classList.add('ok');e.querySelector('.box').textContent='✓';return true;}
+function unlockQ(n,ids){if(ids.every(id=>$(id).classList.contains('ok'))){$('q'+n+'lock').classList.add('hidden');$('q'+n+'box').classList.remove('hidden');}}
+function label(ctx,t,x,y,color,size,align){ctx.font=`800 ${size||15}px Nunito, sans-serif`;ctx.textAlign=align||'center';ctx.lineJoin='round';const light=/^#fff/i.test(color||'');ctx.lineWidth=light?3.5:4;ctx.strokeStyle=light?'rgba(30,20,60,.75)':'rgba(255,255,255,.9)';ctx.strokeText(t,x,y);ctx.fillStyle=color||'#2a2350';ctx.fillText(t,x,y);}
+function wrap(ctx,text,x,y,maxW,lh,color,size,weight){ctx.font=`${weight||700} ${size||14}px Nunito, sans-serif`;ctx.fillStyle=color||'#2a2350';ctx.textAlign='left';const words=text.split(' ');let line='';
+  for(const w of words){const t=line?line+' '+w:w;if(ctx.measureText(t).width>maxW&&line){ctx.fillText(line,x,y);y+=lh;line=w;}else line=t;}if(line)ctx.fillText(line,x,y);return y+lh;}
+function emoji(ctx,e,x,y,size){ctx.fillStyle='#000';ctx.globalAlpha=1;ctx.font=`${size}px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(e,x,y);ctx.textBaseline='alphabetic';}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function canvasPos(c,e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};}
+
+
+/* ===== Chemistry helpers ===== */
+const EL={H:['Hydrogen',1,1,1],He:['Helium',2,18,1],Li:['Lithium',3,1,2],Be:['Beryllium',4,2,2],B:['Boron',5,13,2],C:['Carbon',6,14,2],N:['Nitrogen',7,15,2],O:['Oxygen',8,16,2],F:['Fluorine',9,17,2],Ne:['Neon',10,18,2],
+Na:['Sodium',11,1,3],Mg:['Magnesium',12,2,3],Al:['Aluminum',13,13,3],Si:['Silicon',14,14,3],P:['Phosphorus',15,15,3],S:['Sulfur',16,16,3],Cl:['Chlorine',17,17,3],Ar:['Argon',18,18,3],
+K:['Potassium',19,1,4],Ca:['Calcium',20,2,4],Sc:['Scandium',21,3,4],Ti:['Titanium',22,4,4],V:['Vanadium',23,5,4],Cr:['Chromium',24,6,4],Mn:['Manganese',25,7,4],Fe:['Iron',26,8,4],Co:['Cobalt',27,9,4],Ni:['Nickel',28,10,4],Cu:['Copper',29,11,4],Zn:['Zinc',30,12,4],Ga:['Gallium',31,13,4],Ge:['Germanium',32,14,4],As:['Arsenic',33,15,4],Se:['Selenium',34,16,4],Br:['Bromine',35,17,4],Kr:['Krypton',36,18,4]};
+const COL={H:['#f8fafc','#334155','#94a3b8'],C:['#3b4658','#fff','#8aa0b8'],O:['#ef4444','#fff'],N:['#3b82f6','#fff'],Na:['#a855f7','#fff'],Cl:['#22c55e','#fff'],Ca:['#64748b','#fff'],Mg:['#65a30d','#fff'],S:['#eab308','#3b2f00'],Al:['#a1a1aa','#fff'],P:['#f97316','#fff'],K:['#8b5cf6','#fff'],Co:['#1d4ed8','#fff']};
+const NAME=s=>EL[s][0];
+function parse(f){let i=0,coef=1;const m=f.match(/^\d+/);if(m){coef=+m[0];i=m[0].length;}const tokens=[];let gs=-1;
+  const num=()=>{let d='';while(i<f.length&&/\d/.test(f[i]))d+=f[i++];return d;};
+  while(i<f.length){const ch=f[i];
+    if(ch==='('){tokens.push({t:'('});gs=tokens.length;i++;}
+    else if(ch===')'){i++;const d=num();const n=d?+d:1;tokens.push({t:')',n});for(let k=gs;k<tokens.length-1;k++)if(tokens[k].t==='el')tokens[k].mult*=n;}
+    else{let s=ch;i++;if(i<f.length&&/[a-z]/.test(f[i]))s+=f[i++];const d=num();tokens.push({t:'el',s,sub:d?+d:1,written:!!d,mult:1});}}
+  const counts={};tokens.forEach(t=>{if(t.t==='el')counts[t.s]=(counts[t.s]||0)+t.sub*t.mult*coef;});
+  return{coef,tokens,counts,els:Object.keys(counts),total:Object.values(counts).reduce((a,b)=>a+b,0)};}
+function F(f,cls){const p=parse(f);let h=`<span class="fm ${cls||''}">`;if(p.coef>1)h+=`<span class="co">${p.coef}</span>`;
+  p.tokens.forEach(t=>{if(t.t==='(')h+='<span class="pa">(</span>';else if(t.t===')')h+=`<span class="pa pm">)${t.n>1?'<sub>'+t.n+'</sub>':''}</span>`;
+    else h+=`<span class="el" data-el="${t.s}">${t.s}${t.written?'<sub>'+t.sub+'</sub>':''}</span>`;});return h+'</span>';}
+function ball(ctx,s,x,y,r){const c=COL[s]||['#ec4899','#fff'];ctx.save();ctx.shadowColor='rgba(15,41,66,.28)';ctx.shadowBlur=6;ctx.shadowOffsetY=3;
+  ctx.fillStyle=c[0];ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.restore();
+  const g=ctx.createRadialGradient(x-r*.35,y-r*.4,r*.1,x,y,r);g.addColorStop(0,'rgba(255,255,255,.75)');g.addColorStop(.45,'rgba(255,255,255,.12)');g.addColorStop(1,'rgba(0,0,0,.18)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();if(c[2]){ctx.strokeStyle=c[2];ctx.lineWidth=2;ctx.stroke();}
+  ctx.font=`900 ${Math.round(r*.9)}px Nunito, sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=c[1];ctx.fillText(s,x,y+1);ctx.textBaseline='alphabetic';}
+const RAD=s=>s==='H'?15:22;
+/* draw a molecule: heavy atoms in a chain, hs = H count on each heavy atom */
+function drawMol(ctx,cx,cy,heavy,hs,sc){sc=sc||1;const n=heavy.length,L=74*sc,HL=46*sc;const pos=heavy.map((s,i)=>({s,x:cx+(i-(n-1)/2)*L,y:cy}));const hp=[];
+  pos.forEach((p,i)=>{const k=hs[i]||0;let ang;if(n===1)ang={1:[0],2:[150,30],3:[90,210,330],4:[45,135,225,315]}[k]||[];
+    else if(i===0)ang=[180,125,235].slice(0,k);else if(i===n-1)ang=[0,55,305].slice(0,k);else ang=[90,270].slice(0,k);
+    ang.forEach(a=>hp.push({x:p.x+Math.cos(a*Math.PI/180)*HL,y:p.y+Math.sin(a*Math.PI/180)*HL,px:p.x,py:p.y}));});
+  ctx.strokeStyle='#5b7590';ctx.lineWidth=6*sc;ctx.lineCap='round';
+  for(let i=1;i<n;i++){ctx.beginPath();ctx.moveTo(pos[i-1].x,pos[i-1].y);ctx.lineTo(pos[i].x,pos[i].y);ctx.stroke();}
+  hp.forEach(h=>{ctx.beginPath();ctx.moveTo(h.px,h.py);ctx.lineTo(h.x,h.y);ctx.stroke();});
+  hp.forEach(h=>ball(ctx,'H',h.x,h.y,RAD('H')*sc));pos.forEach(p=>ball(ctx,p.s,p.x,p.y,RAD(p.s)*sc));}
+/* compact cluster for a list of atoms: center atom + others around */
+function drawCluster(ctx,cx,cy,atoms,sc){sc=sc||1;if(atoms.length===1){ball(ctx,atoms[0],cx,cy,RAD(atoms[0])*sc);return;}
+  const cnt={};atoms.forEach(a=>cnt[a]=(cnt[a]||0)+1);const heavy=Object.keys(cnt).filter(a=>a!=='H').sort((a,b)=>cnt[a]-cnt[b]);const center=heavy[0]||atoms[0];
+  const rest=atoms.slice();rest.splice(rest.indexOf(center),1);const R=40*sc;
+  ctx.strokeStyle='#5b7590';ctx.lineWidth=5*sc;ctx.lineCap='round';
+  const pts=rest.map((a,i)=>{const an=(rest.length===2?[150,30][i]:(-90+i*360/rest.length))*Math.PI/180;return{a,x:cx+Math.cos(an)*R,y:cy+Math.sin(an)*R};});
+  pts.forEach(p=>{ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(p.x,p.y);ctx.stroke();});pts.forEach(p=>ball(ctx,p.a,p.x,p.y,RAD(p.a)*sc));ball(ctx,center,cx,cy,RAD(center)*sc);}
+function atomsOf(tokens,useMult){const a=[];tokens.forEach(t=>{if(t.t==='el')for(let k=0;k<t.sub*(useMult?t.mult:1);k++)a.push(t.s);});return a;}
+const UP=s=>NAME(s).toUpperCase();
+
+/* numeric-entry question (STAAR griddable style) */
+function numq(box,st,qid,prompt,answer,explain,hint){need(st,qid);const d=document.createElement('div');d.className='q';
+  d.innerHTML=`<p class="qp">${prompt}</p><div class="numrow"><span class="nl">Type your answer:</span><input type="number" inputmode="numeric" min="0" class="numin"><button class="btn small">Check ✔</button></div><div class="fb"></div>`;
+  const inp=d.querySelector('input'),btn=d.querySelector('button'),fb=d.querySelector('.fb');
+  const go=()=>{if(d.dataset.solved)return;if(inp.value===''){fb.className='fb bad';fb.textContent='⚠️ Type a number first.';return;}const ok=+inp.value===answer;record(st,qid,ok);
+    if(ok){d.dataset.solved=1;inp.disabled=btn.disabled=true;inp.classList.add('right');fb.className='fb good';fb.innerHTML='✅ Correct! '+explain;got(st,qid);}
+    else{fb.className='fb bad';fb.textContent='❌ Not quite. '+(hint||'Check your counting and try again.');}};
+  btn.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go();});box.appendChild(d);}
+
+/* ===== STATION 1: Symbol Decoder ===== */
+const D1=['H2O','NaCl','CO2','Co','CaCO3'];
+const s1={i:0,found:new Set(),miss:false,done:0};
+function buildPT(host,onPick){const g=document.createElement('div');g.className='pt';
+  Object.entries(EL).forEach(([s,[n,z,c,r]])=>{const b=document.createElement('button');b.className='pe';b.dataset.s=s;b.style.gridColumn=c;b.style.gridRow=r;b.innerHTML=`<small>${z}</small><b>${s}</b><i>${n}</i>`;b.onclick=()=>onPick(s,b);g.appendChild(b);});
+  host.innerHTML='';host.appendChild(g);}
+function show1(){const f=D1[s1.i],p=parse(f);s1.found=new Set();s1.miss=false;
+  $('fx1').innerHTML=F(f,'big');$('n1').textContent=`FORMULA ${s1.i+1} OF ${D1.length}`;$('next1').classList.add('hidden');
+  $('m1').innerHTML='Click each element in this formula on the periodic table.';document.querySelectorAll('#pt1 .pe').forEach(b=>b.classList.remove('hit','no'));draw1();}
+function draw1(){if(!$('tiles1'))return;const f=D1[s1.i],p=parse(f);
+  $('tiles1').innerHTML=p.els.map(s=>{const k=s1.found.has(s);const c=COL[s]||['#ec4899','#fff'];return `<div class="tile ${k?'on':''}" style="${k?`background:${c[0]};color:${c[1]};border-color:${c[2]||c[0]}`:''}"><b>${k?s:'?'}</b><span>${k?NAME(s):'not found yet'}</span></div>`;}).join('');
+  $('cnt1').textContent=s1.found.size===p.els.length?`✔ ${p.els.length} different element${p.els.length>1?'s':''}`:`${s1.found.size} of ${p.els.length} elements found`;}
+function pick1(s,b){const f=D1[s1.i],p=parse(f);if(s1.found.size===p.els.length)return;
+  if(p.els.includes(s)){if(s1.found.has(s))return;s1.found.add(s);b.classList.add('hit');$('m1').innerHTML=`✅ <b>${s}</b> is <b>${NAME(s)}</b>.`;
+    if(s1.found.size===p.els.length){record(1,'d'+s1.i,!s1.miss);got(1,'d'+s1.i);s1.done++;
+      $('m1').innerHTML=`🎉 Decoded! <b>${F(f)}</b> has <b>${p.els.length} different element${p.els.length>1?'s':''}</b>: ${p.els.map(NAME).join(', ')}.`+(f==='Co'?' Co is ONE symbol because the o is lowercase.':'');
+      if(s1.i<D1.length-1)$('next1').classList.remove('hidden');else{tick('k1a');unlockQ(1,['k1a']);$('m1').innerHTML+=' All 5 formulas decoded!';}}}
+  else{s1.miss=true;b.classList.add('no');setTimeout(()=>b.classList.remove('no'),700);let why=`❌ <b>${s}</b> (${NAME(s)}) is not in this formula. A capital letter starts a symbol, and a lowercase letter belongs with the capital right before it.`;
+    if(s==='Co'&&p.els.includes('C')&&p.els.includes('O'))why='❌ Careful! <b>Co</b> is cobalt, with a lowercase o. In this formula the O is a CAPITAL letter, so it is a separate element: oxygen.';
+    if(f==='Co'&&(s==='C'||s==='O'))why='❌ Look closely: the o is lowercase. That means <b>Co</b> is ONE symbol. Find it on the table.';
+    if(f==='CaCO3'&&s==='Co')why='❌ In CaCO₃ the O is a capital letter, so C and O are separate symbols. Co (cobalt) is not here.';
+    $('m1').innerHTML=why;}draw1();}
+function build1(){buildPT($('pt1'),pick1);$('next1').onclick=()=>{s1.i++;show1();};show1();
+  const b=$('q1box');
+  mc(b,1,'a',`Which formula contains the element <b>cobalt</b>?`,[F('CO'),F('CO2'),F('Co'),F('C2O')],2,'Co has a capital C and a lowercase o, so it is one symbol: cobalt. CO and CO₂ are carbon and oxygen.');
+  mc(b,1,'b',`Baking soda is ${F('NaHCO3')}. How many <b>different elements</b> are in it?`,['3','4','5','6'],1,'Na, H, C and O: four capital letters, four different elements.');
+  mc(b,1,'c','Use the periodic table. What element does the symbol <b>K</b> stand for?',['Krypton','Calcium','Carbon','Potassium'],3,'K is potassium (atomic number 19). Not every symbol matches the English name!');
+  mc(b,1,'d',`Why is the l in ${F('NaCl')} written as a lowercase letter?`,['A lowercase letter belongs to the same symbol as the capital letter before it','It means there is one less atom','It shows the atom is very small','Lowercase letters are always oxygen'],0,'Cl is ONE symbol: chlorine. Only a capital letter starts a new element.');}
+
+/* ===== STATION 2: Atom Builder (subscripts) ===== */
+const B2=[{f:'H2O',n:'Water',heavy:['O'],hs:[2]},{f:'CO2',n:'Carbon dioxide',heavy:['O','C','O'],hs:[0,0,0]},{f:'NH3',n:'Ammonia',heavy:['N'],hs:[3]},{f:'CH4',n:'Methane',heavy:['C'],hs:[4]},{f:'C2H6O',n:'Ethanol',heavy:['C','C','O'],hs:[3,2,1]}];
+const s2={i:0,c:{H:0,C:0,N:0,O:0},built:false,tried:false};
+function draw2(){const c=$('c2');if(!c)return;const ctx=c.getContext('2d');ctx.clearRect(0,0,900,330);ctx.fillStyle='#081322';ctx.fillRect(0,0,900,330);const t=B2[s2.i];
+  ctx.fillStyle='#03080f';rr(ctx,610,20,270,290,18);ctx.fill();ctx.strokeStyle='rgba(34,245,154,.55)';ctx.lineWidth=2;ctx.stroke();label(ctx,'TARGET CODE',745,52,'#22d3ee',14);ctx.font='700 60px Fredoka, Nunito, sans-serif';ctx.textAlign='center';ctx.fillStyle='#0f2942';
+  let x=745;const p=parse(t.f);let parts=[];p.tokens.forEach(k=>parts.push([k.s,k.written?String(k.sub):'']));
+  ctx.font='700 58px Fredoka, Nunito, sans-serif';let w=0;parts.forEach(([s,d])=>{ctx.font='700 58px Fredoka, Nunito, sans-serif';w+=ctx.measureText(s).width;ctx.font='700 32px Fredoka, Nunito, sans-serif';w+=ctx.measureText(d).width;});
+  x=745-w/2;parts.forEach(([s,d])=>{ctx.textAlign='left';ctx.font='700 58px Fredoka, Nunito, sans-serif';ctx.fillStyle='#22f59a';ctx.fillText(s,x,140);x+=ctx.measureText(s).width;ctx.font='700 32px Fredoka, Nunito, sans-serif';ctx.fillStyle='#22d3ee';ctx.fillText(d,x,154);x+=ctx.measureText(d).width;});
+  label(ctx,t.n,745,200,'#d7f9ec',18);wrap(ctx,'Small blue numbers are subscripts. No number means 1.',632,240,230,20,'#86a7bb',14,700);
+  if(s2.built){drawMol(ctx,300,165,t.heavy,t.hs,1.25);label(ctx,'✔ '+t.n+' molecule built!',300,300,'#22f59a',18);return;}
+  const els=['C','H','N','O'];let y=40;label(ctx,'YOUR ATOMS',300,30,'#22d3ee',14);
+  els.forEach((s,i)=>{const n=s2.c[s];const yy=75+i*64;label(ctx,NAME(s),70,yy+6,'#d7f9ec',15,'left');if(n===0){label(ctx,'none',190,yy+6,'#4d6a80',14,'left');}
+    for(let k=0;k<n;k++)ball(ctx,s,200+k*40,yy,RAD(s)*.95);});}
+function build2(){const host=$('ctl2');host.innerHTML=['C','H','N','O'].map(s=>`<div class="stepper"><b>${s}</b><span>${NAME(s)}</span><button class="btn small ghost" data-s="${s}" data-d="-1">−</button><output id="o2${s}">0</output><button class="btn small ghost" data-s="${s}" data-d="1">+</button></div>`).join('');
+  host.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(s2.built)return;const s=b.dataset.s;s2.c[s]=clamp(s2.c[s]+ +b.dataset.d,0,8);$('o2'+s).textContent=s2.c[s];draw2();});
+  $('chk2').onclick=()=>{if(s2.built)return;const t=B2[s2.i],p=parse(t.f);const wrong=['C','H','N','O'].filter(s=>(p.counts[s]||0)!==s2.c[s]);const ok=!wrong.length;record(2,'b'+s2.i,ok);
+    if(ok){s2.built=true;got(2,'b'+s2.i);$('m2').innerHTML=`✅ Correct! ${F(t.f)}: `+p.els.map(s=>`<b>${p.counts[s]} ${NAME(s).toLowerCase()}</b>`).join(', ')+`. Total: <b>${p.total} atoms</b>.`;
+      if(s2.i<B2.length-1)$('next2').classList.remove('hidden');else{tick('k2a');unlockQ(2,['k2a']);}}
+    else{const s=wrong[0],need=p.counts[s]||0;let tip;if(!need)tip=`There is no ${NAME(s).toLowerCase()} (${s}) in ${F(t.f)}. Remove it.`;
+      else{const tk=p.tokens.find(k=>k.s===s);tip=tk.written?`Look at the small number right after <b>${s}</b>. It tells you how many ${NAME(s).toLowerCase()} atoms.`:`<b>${s}</b> has no small number after it. No number means just <b>1</b> atom.`;}
+      $('m2').innerHTML='❌ Not quite. '+tip;}draw2();};
+  $('next2').onclick=()=>{s2.i++;s2.built=false;['C','H','N','O'].forEach(s=>{s2.c[s]=0;$('o2'+s).textContent=0;});$('next2').classList.add('hidden');$('n2').textContent=`MOLECULE ${s2.i+1} OF ${B2.length}`;$('m2').textContent='Use + and − to collect the atoms, then press Build.';draw2();};
+  const b=$('q2box');
+  mc(b,2,'a',`In ${F('NH3')}, what does the 3 tell you?`,['There are 3 nitrogen atoms','There are 3 hydrogen atoms','There are 3 molecules','There are 3 elements'],1,'A subscript counts only the atom right before it. The 3 is after H, so there are 3 hydrogen atoms.');
+  mc(b,2,'b',`This model shows one molecule of propane. Which formula matches the model?<canvas id="m2c" width="520" height="190" style="max-width:420px;margin:10px 0 0"></canvas>`,[F('CH'),F('3CH8'),F('C3H8'),F('C8H3')],2,'Count each kind: 3 carbon (dark) atoms and 8 hydrogen (white) atoms. That is C₃H₈.');
+  const mctx=$('m2c').getContext('2d');mctx.fillStyle='#081322';mctx.fillRect(0,0,520,190);drawMol(mctx,260,95,['C','C','C'],[3,2,3],1.05);
+  numq(b,2,'c',`Glucose is ${F('C6H12O6')}. How many <b>oxygen</b> atoms are in one molecule of glucose?`,6,'The subscript after O is 6.','Find O. Read only the small number right after it.');
+  numq(b,2,'d',`Ethanol is ${F('C2H6O')}. How many atoms <b>in total</b> are in one molecule?`,9,'2 + 6 + 1 = 9. To get the total, ADD the counts of every element.','For the total, add the atoms of every element. Remember: O with no number means 1.');}
+
+/* ===== STATION 3: Multiply or Add? ===== */
+const F3=['3H2O','Ca(OH)2','2CH4','Mg(NO3)2'];
+const s3={i:0,ops:{},done:false};
+function rows3(f){const p=parse(f);return p.els.map(s=>{const t=p.tokens.find(k=>k.t==='el'&&k.s===s);return{s,w:t.sub,m:t.mult*p.coef,tot:p.counts[s],inP:t.mult>1};});}
+function draw3(){const c=$('c3');if(!c)return;const ctx=c.getContext('2d');ctx.clearRect(0,0,900,250);ctx.fillStyle='#081322';ctx.fillRect(0,0,900,250);const f=F3[s3.i],p=parse(f);
+  if(p.coef>1){const n=p.coef,W=Math.min(230,820/n);const atoms=atomsOf(p.tokens);
+    for(let k=0;k<n;k++){const x=450+(k-(n-1)/2)*(W+20);ctx.setLineDash([8,6]);ctx.strokeStyle='#fb923c';ctx.lineWidth=3;rr(ctx,x-W/2,30,W,180,16);ctx.stroke();ctx.setLineDash([]);drawCluster(ctx,x,120,atoms,1.1);label(ctx,'copy '+(k+1),x,200,'#fb923c',14);}
+    label(ctx,`The ${n} in front = ${n} whole copies → MULTIPLY every atom by ${n}`,450,24,'#fb923c',16);}
+  else{const out=p.tokens.filter(t=>t.t==='el'&&t.mult===1).map(t=>t.s);const grpT=p.tokens.filter(t=>t.t==='el'&&t.mult>1);const n=grpT[0].mult;const grp=atomsOf(grpT);
+    ball(ctx,out[0],140,120,26);label(ctx,'outside ( )',140,175,'#86a7bb',14);label(ctx,'× 1',140,200,'#86a7bb',14);
+    for(let k=0;k<n;k++){const x=420+k*250;ctx.setLineDash([8,6]);ctx.strokeStyle='#fb923c';ctx.lineWidth=3;rr(ctx,x-100,30,200,180,16);ctx.stroke();ctx.setLineDash([]);drawCluster(ctx,x,115,grp,1.1);label(ctx,'group '+(k+1),x,200,'#fb923c',14);}
+    label(ctx,`The ${n} after the ( ) = ${n} copies of what is INSIDE → MULTIPLY only those atoms`,490,24,'#fb923c',16);}}
+function show3(){const f=F3[s3.i];s3.ops={};$('fx3').innerHTML=F(f,'big');$('n3').textContent=`FORMULA ${s3.i+1} OF ${F3.length}`;$('next3').classList.add('hidden');$('m3').textContent='Fill in every box, then press Check.';
+  const R=rows3(f);$('t3').innerHTML=`<tr><th>Element</th><th>Small number written<br><small>(subscript)</small></th><th>Add or multiply?</th><th>How many copies?</th><th>Atoms of this element</th></tr>`+
+   R.map((r,i)=>`<tr><td><b>${r.s}</b><br><small>${NAME(r.s)}</small></td><td><input class="ci" id="w3_${i}" type="number" min="0"></td><td><div class="opbtn" data-i="${i}"><button data-o="x">✖ Multiply</button><button data-o="+">➕ Add</button></div></td><td><input class="ci" id="m3_${i}" type="number" min="0"></td><td><input class="ci" id="t3_${i}" type="number" min="0"></td></tr>`).join('')+
+   `<tr class="totrow"><td colspan="4"><b>➕ ADD the elements together.</b> Total atoms =</td><td><input class="ci" id="tot3" type="number" min="0"></td></tr>`;
+  $('t3').querySelectorAll('.opbtn button').forEach(b=>b.onclick=()=>{const i=b.parentNode.dataset.i;s3.ops[i]=b.dataset.o;b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});draw3();}
+function check3(){const f=F3[s3.i],p=parse(f),R=rows3(f);if($('next3').classList.contains('hidden')===false)return;let err=null;$('t3').querySelectorAll('input').forEach(x=>x.classList.remove('bad','right'));
+  R.forEach((r,i)=>{if(err)return;const w=+$('w3_'+i).value,m=+$('m3_'+i).value,t=+$('t3_'+i).value;
+    if($('w3_'+i).value===''||w!==r.w){err=[`w3_${i}`,`Look right after <b>${r.s}</b>. `+(p.tokens.find(k=>k.s===r.s).written?'Copy the small number you see there. Ignore numbers anywhere else.':'There is no small number after it, so it is <b>1</b>.')];return;}
+    if(s3.ops[i]!=='x'){err=[null,s3.ops[i]==='+'?`For <b>${r.s}</b> you chose ADD. A big number in front or a number after ( ) means <b>copies</b>. Copies → <b>MULTIPLY</b>.`:`Choose ✖ Multiply or ➕ Add for <b>${r.s}</b>.`];return;}
+    if($('m3_'+i).value===''||m!==r.m){err=[`m3_${i}`,p.coef>1?`The big ${p.coef} in front makes ${p.coef} copies of the WHOLE formula, so every element has ${p.coef} copies.`:(r.inP?`${r.s} is inside the parentheses, so the ${r.m} after the ) gives it ${r.m} copies.`:`${r.s} is OUTSIDE the parentheses. The number after the ) does not touch it, so it has just 1 copy.`)];return;}
+    if($('t3_'+i).value===''||t!==r.tot){err=[`t3_${i}`,`Multiply: ${r.w} × ${r.m} = ?`];return;}
+    ['w3_','m3_','t3_'].forEach(k=>$(k+i).classList.add('right'));});
+  if(!err&&(+$('tot3').value!==p.total||$('tot3').value===''))err=['tot3',`Now ADD the totals of every element: ${R.map(r=>r.tot).join(' + ')} = ?`];
+  const ok=!err;record(3,'f'+s3.i,ok);
+  if(ok){$('tot3').classList.add('right');got(3,'f'+s3.i);$('m3').innerHTML=`✅ ${F(f)}: `+R.map(r=>`${r.s} ${r.w} × ${r.m} = <b>${r.tot}</b>`).join(' · ')+` → total ${R.map(r=>r.tot).join(' + ')} = <b>${p.total} atoms</b>`;
+    if(s3.i<F3.length-1)$('next3').classList.remove('hidden');else{tick('k3a');unlockQ(3,['k3a']);}}
+  else{if(err[0])$(err[0]).classList.add('bad');$('m3').innerHTML='❌ '+err[1];}}
+function build3(){$('chk3').onclick=check3;$('next3').onclick=()=>{s3.i++;show3();};show3();const b=$('q3box');
+  mc(b,3,'a',`In ${F('4H2O')}, what does the 4 tell you?`,['There are 4 hydrogen atoms','There are 4 oxygen atoms','There are 4 water molecules, so multiply every atom by 4','Add 4 to every atom'],2,'A big number in front (a coefficient) counts whole molecules. 4H₂O has 8 hydrogen and 4 oxygen atoms.');
+  mc(b,3,'b',`How many <b>oxygen</b> atoms are in ${F('Ca(OH)2')}?`,['1','2','3','4'],1,'O is inside the parentheses: 1 × 2 = 2 oxygen atoms.');
+  mc(b,3,'c',`A student says ${F('3H2O')} has 5 hydrogen atoms because 3 + 2 = 5. What should the student have done?`,['Added 3 + 2 + 1 = 6','Counted only the 3','Ignored the 3 because it is in front','Multiplied 3 × 2 = 6, because the 3 means three whole molecules'],3,'The 3 means 3 copies of H₂O. Each copy has 2 hydrogen: 3 × 2 = 6.');
+  numq(b,3,'d',`How many atoms <b>in total</b> are in ${F('Al2(SO4)3')}?`,17,'Al: 2. S: 1 × 3 = 3. O: 4 × 3 = 12. Total: 2 + 3 + 12 = 17.','Multiply each atom inside the ( ) by 3. Al is outside. Then add everything.');}
+
+/* ===== STATION 4: Spotlight ===== */
+const R4=[['C','C6H12O6'],['H','CH3COOH'],['O','NaHCO3'],['C','3C6H12O6'],['O','2Al2(SO4)3'],['H','2NH4OH']];
+const s4={i:0,spot:null,done:false};
+function work(f,e){const p=parse(f);const occ=p.tokens.filter(t=>t.t==='el'&&t.s===e).map(t=>t.mult>1?`${t.sub} × ${t.mult}`:`${t.sub}`);let s=occ.join(' + ');
+  if(p.coef>1)s=(occ.length>1?`(${s})`:s)+` × ${p.coef}`;return(s===String(p.counts[e])?`${s} (the small number after ${e})`:`${s} = ${p.counts[e]}`);}
+function show4(){const[e,f]=R4[s4.i];s4.spot=null;s4.done=false;$('n4').textContent=`CHALLENGE ${s4.i+1} OF ${R4.length}`;
+  $('qq4').innerHTML=`How many <b class="hl">${UP(e)}</b> atoms are in ${F(f)}?`;$('fx4').innerHTML=F(f,'big');
+  const p=parse(f);$('sp4').innerHTML=p.els.map(s=>`<button class="btn small ghost" data-s="${s}">🔦 ${s} · ${NAME(s)}</button>`).join('');
+  $('sp4').querySelectorAll('button').forEach(b=>b.onclick=()=>spot4(b.dataset.s));$('a4').value='';$('a4').disabled=true;$('go4').disabled=true;$('next4').classList.add('hidden');$('w4').classList.add('hidden');
+  $('m4').innerHTML='Step 1: Shine the spotlight on ONLY the element the question asks about.';}
+function spot4(s){if(s4.done)return;const[e,f]=R4[s4.i],p=parse(f);s4.spot=s;$('sp4').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));
+  const fm=$('fx4').querySelector('.fm');fm.classList.add('spot');fm.querySelectorAll('.el').forEach(x=>x.classList.toggle('lit',x.dataset.el===s));
+  // light up multipliers that affect s
+  fm.querySelectorAll('.co').forEach(x=>x.classList.add('mlit'));const inGroup=p.tokens.some(t=>t.t==='el'&&t.s===s&&t.mult>1);fm.querySelectorAll('.pm').forEach(x=>x.classList.toggle('mlit',inGroup));
+  if(s!==e){$('a4').disabled=true;$('go4').disabled=true;$('m4').innerHTML=`🔦 The question asks only about <b>${UP(e)}</b>. Spotlight ${NAME(e).toLowerCase()} instead.`;return;}
+  $('a4').disabled=false;$('go4').disabled=false;$('a4').focus();const n=p.tokens.filter(t=>t.t==='el'&&t.s===e).length;
+  $('m4').innerHTML=`Step 2: Count only the lit-up <b>${e}</b>.`+(n>1?` It shows up in <b>${n} places</b> → ➕ ADD them.`:'')+(p.coef>1||inGroup?' Orange numbers are copies → ✖ MULTIPLY.':'');}
+function check4(){const[e,f]=R4[s4.i],p=parse(f);if(s4.done)return;const v=$('a4').value;if(v===''){$('m4').textContent='⚠️ Type a number first.';return;}const a=+v,ok=a===p.counts[e];record(4,'r'+s4.i,ok);
+  if(ok){s4.done=true;got(4,'r'+s4.i);$('m4').innerHTML=`✅ Correct! <b>${p.counts[e]} ${NAME(e).toLowerCase()} atoms.</b>`;$('w4').innerHTML=`🧮 ${work(f,e)}`;$('w4').classList.remove('hidden');$('a4').disabled=true;$('go4').disabled=true;
+    if(s4.i<R4.length-1)$('next4').classList.remove('hidden');else{tick('k4a');unlockQ(4,['k4a']);}return;}
+  const subs=p.tokens.filter(t=>t.t==='el'&&t.s===e);let tip='Count only the lit-up atoms, then use the multipliers.';
+  if(a===p.total)tip=`That is the total of ALL the atoms. The question asks only about <b>${NAME(e).toLowerCase()}</b>. Ignore the other elements.`;
+  else if(a===subs.reduce((x,t)=>x+t.sub,0)&&a!==p.counts[e])tip='You counted the small numbers but forgot the copies. Orange numbers mean ✖ MULTIPLY.';
+  else if(p.coef>1&&a===subs.reduce((x,t)=>x+t.sub*t.mult,0)+p.coef)tip=`You ADDED the ${p.coef} in front. A number in front means ${p.coef} copies → ✖ MULTIPLY.`;
+  else if(subs.length>1&&a===subs[0].sub*subs[0].mult*p.coef)tip=`${e} shows up in more than one place. Find every lit-up ${e} and ➕ ADD them.`;
+  $('m4').innerHTML='❌ Not quite. '+tip;}
+function build4(){$('go4').onclick=check4;$('a4').addEventListener('keydown',ev=>{if(ev.key==='Enter')check4();});$('next4').onclick=()=>{s4.i++;show4();};show4();const b=$('q4box');
+  mc(b,4,'a',`A question asks, "How many carbon atoms are in ${F('C3H8')}?" A student answers 11. What mistake did the student make?`,['The student counted all the atoms instead of just carbon','The student forgot to multiply','The student should have added 3 + 8 + 1','The student used the wrong subscript for hydrogen'],0,'3 + 8 = 11 is the total of ALL atoms. Carbon alone is 3.');
+  mc(b,4,'b','Which formula has the MOST oxygen atoms?',[F('CO2'),F('H2SO4'),F('2H2O'),F('CaCO3')],1,'CO₂ has 2, H₂SO₄ has 4, 2H₂O has 2, and CaCO₃ has 3.');
+  numq(b,4,'c',`Vinegar contains ${F('CH3COOH')}. How many atoms <b>in total</b> are in one molecule?`,8,'C: 1 + 1 = 2. H: 3 + 1 = 4. O: 1 + 1 = 2. Total: 2 + 4 + 2 = 8.','Count every element (some show up twice), then add them all.');}
+
+/* ===== STATION 5 ===== */
+function build5(){const b=$('q5box');let n=0;const N=()=>`<span style="color:var(--pink-d)">${++n}.</span> `;
+  mc(b,5,'q0',N()+`Table sugar has the formula ${F('C12H22O11')}. Use the periodic table. Which elements make up table sugar?`,['Calcium, hydrogen and oxygen','Carbon, hydrogen and oxygen','Carbon, helium and oxygen','Chlorine, hydrogen and osmium'],1,'C is carbon, H is hydrogen and O is oxygen.');
+  numq(b,5,'q1',N()+`How many atoms <b>in total</b> are in one molecule of glucose, ${F('C6H12O6')}?`,24,'6 + 12 + 6 = 24.','Add the atoms of every element.');
+  mc(b,5,'q2',N()+'A molecule contains 2 nitrogen atoms and 4 oxygen atoms. Which formula represents this molecule?',[F('NO'),F('2NO4'),F('N4O2'),F('N2O4')],3,'The subscript goes right after each symbol: N₂ for 2 nitrogen, O₄ for 4 oxygen.');
+  mc(b,5,'q3',N()+`How many <b>oxygen</b> atoms are in ${F('2H2O2')} (two molecules of hydrogen peroxide)?`,['2','4','6','8'],1,'2 × 2 = 4 oxygen atoms.');
+  numq(b,5,'q4',N()+`Calcium phosphate is ${F('Ca3(PO4)2')}. How many <b>oxygen</b> atoms are in this formula?`,8,'O is inside the parentheses: 4 × 2 = 8.','Spotlight only O. It is inside ( ), so multiply.');
+  mc(b,5,'q5',N()+`Which formula has the same number of <b>hydrogen</b> atoms as ${F('2NH3')}?`,[F('CH4'),F('C2H6'),F('NH4Cl'),F('H2SO4')],1,'2NH₃ has 2 × 3 = 6 hydrogen atoms. C₂H₆ also has 6.');
+  mc(b,5,'q6',N()+`A student made this table for ${F('Mg(OH)2')}.<table class="data" style="max-width:340px;margin:8px 0 0"><tr><th>Mg</th><th>O</th><th>H</th></tr><tr><td>1</td><td>1</td><td>1</td></tr></table>Which shows the correct counts?`,['Mg 1, O 2, H 2','Mg 2, O 2, H 2','Mg 1, O 1, H 2','Mg 2, O 1, H 1'],0,'Only O and H are inside the parentheses, so only they are multiplied by 2. Mg stays 1.');
+  mc(b,5,'q7',N()+'Which shows 3 molecules of carbon dioxide?',[F('CO3'),F('C3O2'),F('3CO2'),F('C3O6')],2,'A coefficient in front counts whole molecules: 3CO₂.');
+  checkFinish(5);}
+function draw4(){}function draw5(){}
+
+function label(ctx,t,x,y,color,size,align){ctx.font=`800 ${size||15}px Nunito, sans-serif`;ctx.textAlign=align||'center';ctx.lineJoin='round';ctx.lineWidth=4;ctx.strokeStyle='rgba(3,8,15,.9)';ctx.strokeText(t,x,y);ctx.fillStyle=color||'#d7f9ec';ctx.fillText(t,x,y);}
+
+function showResults(){let tot=0,cor=0;const names={1:'Symbol Decoder',2:'Atom Builder',3:'Multiply or Add?',4:'Spotlight',5:'Certification'};let grid='';
+  for(let st=1;st<=5;st++){const v=Object.values(S.score[st]);const c=v.filter(Boolean).length;tot+=v.length;cor+=c;grid+=`<div class="sg"><small>${names[st]}</small><b>${c} / ${v.length}</b></div>`;}
+  const pct=tot?Math.round(cor/tot*100):0;const mins=Math.round((Date.now()-S.start)/60000);
+  $('certName').textContent=S.name;$('certPct').textContent=pct+'%';$('certRaw').textContent=`${cor} of ${tot} correct on the first try`;$('certGrid').innerHTML=grid;
+  $('certMeta').textContent=`Completed ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · Time: ${mins} min`;show('results');}
+
+</script>
+</body>
+</html>
