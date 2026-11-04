@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Earth Shaper Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1d2b45;--navy2:#2c4166;--lava:#ff6a3d;--lava-d:#c94a22;--lava-l:#ffe6dc;--sand:#f4c26b;--sand-l:#fff3d9;
+  --sea:#1f9bd1;--sea-l:#dff3fb;--teal:#0fb5a4;--teal-l:#d7f6f2;--bg:#eef2f7;--card:#fff;--ink:#1d2b45;--muted:#5b6b85;--line:#d6deea;
+  --good:#15803d;--good-l:#dcfce7;--bad:#b91c1c;--bad-l:#fee2e2;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Nunito,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45}
+h1,h2,h3{font-family:Fredoka,Nunito,sans-serif;margin:0 0 .35em;line-height:1.15}
+button{font-family:inherit}
+header.top{background:var(--navy);color:#fff;padding:10px 16px;display:none;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header.top.show{display:flex}
+header.top .brand{font-family:Fredoka;font-size:18px}
+header.top .meta{display:flex;gap:12px;font-weight:700;font-size:14px;align-items:center;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.14);padding:4px 10px;border-radius:999px}
+.screen{display:none;max-width:1000px;margin:0 auto;padding:16px 16px 48px}
+.screen.active{display:block}
+.card{background:var(--card);border-radius:18px;padding:18px;box-shadow:0 2px 0 var(--line),0 8px 24px rgba(29,43,69,.06);margin-bottom:16px}
+.btn{border:none;border-radius:12px;padding:11px 18px;font-weight:800;font-size:15px;cursor:pointer;background:var(--teal);color:#fff;box-shadow:0 4px 0 #0a8478;transition:transform .08s;touch-action:manipulation}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0a8478}
+.btn:disabled{background:#b8c3d3;box-shadow:0 4px 0 #9aa6b8;cursor:not-allowed}
+.btn.sand{background:var(--sand);color:var(--navy);box-shadow:0 4px 0 #c99a3c}
+.btn.lava{background:var(--lava);box-shadow:0 4px 0 var(--lava-d)}
+.btn.ghost{background:#fff;color:var(--navy);box-shadow:0 4px 0 var(--line);border:2px solid var(--line)}
+.btn.small{padding:7px 12px;font-size:14px}
+.btn.on{background:var(--navy);color:#fff;box-shadow:0 4px 0 #0d1526;border-color:var(--navy)}
+.hero{background:linear-gradient(140deg,#1d2b45 0%,#2c4166 55%,#c94a22 135%);color:#fff;border-radius:24px;padding:28px 24px;position:relative;overflow:hidden;margin-top:8px}
+.hero h1{font-size:clamp(32px,6vw,54px);margin-bottom:6px}
+.hero .tag{display:inline-block;background:var(--sand);color:var(--navy);font-weight:800;border-radius:999px;padding:4px 12px;font-size:13px;margin-bottom:12px}
+.hero p{max-width:560px;font-size:17px;opacity:.95;position:relative;z-index:2}
+.hero svg.globe{position:absolute;right:3%;bottom:-20px;width:min(32vw,210px);opacity:.95}
+.namebox{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;max-width:560px;position:relative;z-index:2}
+.namebox input{flex:1;min-width:200px;padding:13px 14px;border-radius:12px;border:none;font-size:16px;font-family:inherit}
+.overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:16px}
+.ov{background:var(--card);border-radius:16px;padding:14px;border-top:6px solid var(--lava)}
+.ov:nth-child(2){border-color:var(--sea)}.ov:nth-child(3){border-color:var(--sand)}.ov:nth-child(4){border-color:var(--teal)}.ov:nth-child(5){border-color:#8b5cf6}
+.ov b{font-family:Fredoka;font-size:17px;display:block}
+.ov small{color:var(--muted);font-weight:700}
+.hubgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.station{background:var(--card);border-radius:18px;padding:16px;border:3px solid transparent;cursor:pointer;position:relative;box-shadow:0 2px 0 var(--line)}
+.station:hover{border-color:var(--lava)}
+.station.locked{opacity:.55;cursor:not-allowed}
+.station.locked:hover{border-color:transparent}
+.station .num{font-family:Fredoka;background:var(--navy);color:#fff;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;margin-bottom:8px}
+.station .status{position:absolute;top:14px;right:14px;font-weight:800;font-size:13px;padding:3px 9px;border-radius:999px;background:var(--sand-l)}
+.station.done .status{background:var(--good-l);color:var(--good)}
+.station.locked .status{background:#e7ecf3;color:var(--muted)}
+.station .teks{font-size:12px;font-weight:800;color:var(--lava-d)}
+.progressbar{height:12px;background:#dbe3ee;border-radius:999px;overflow:hidden;margin:6px 0 2px}
+.progressbar div{height:100%;background:linear-gradient(90deg,var(--sea),var(--sand),var(--lava));width:0;transition:width .4s}
+.stHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.stHead .teks{background:var(--lava-l);color:var(--lava-d);font-weight:800;font-size:13px;border-radius:999px;padding:4px 10px}
+.brief{background:var(--sand-l);border-left:6px solid var(--sand);border-radius:12px;padding:12px 14px;margin:10px 0}
+.crust{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin:10px 0}
+.cr{display:flex;gap:10px;align-items:flex-start;border-radius:12px;padding:9px 11px;font-size:14px;background:#f4f7fb}
+.cr b{display:block;font-family:Fredoka;font-size:16px}
+.cr span{color:#3d4b63}
+.cr .sw{flex:0 0 30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;font-weight:900}
+.cr.oc .sw{background:#4b5563}.cr.co .sw{background:#c9a26b}.cr.sb{background:var(--lava-l)}.cr.sb .sw{background:var(--lava)}
+.howto{display:flex;align-items:center;gap:10px;background:var(--sea-l);border-radius:12px;padding:9px 12px;font-weight:800;color:#0f5f82;margin:10px 0;font-size:15px}
+.howto .hand{font-size:22px}
+canvas{width:100%;height:auto;display:block;border-radius:14px;background:#f7fafd;touch-action:none;cursor:grab}
+canvas.dragging{cursor:grabbing}
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;align-items:center}
+.group{background:#f4f7fb;border-radius:12px;padding:8px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.group b{font-size:13px;color:var(--muted);margin-right:4px}
+.ctrl{background:#f4f7fb;border-radius:12px;padding:10px 12px;flex:1;min-width:240px}
+.ctrl label{font-weight:800;font-size:14px;display:flex;justify-content:space-between}
+.ctrl label span{color:var(--lava-d);font-family:Fredoka;font-size:17px}
+input[type=range]{width:100%;accent-color:var(--lava)}
+.readouts{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.ro{background:var(--navy);color:#fff;border-radius:12px;padding:8px 12px;min-width:110px;flex:1}
+.ro small{display:block;font-size:11px;opacity:.75;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.ro b{font-family:Fredoka;font-size:17px}
+.msg{font-weight:700;padding:10px 12px;border-radius:10px;background:#f4f7fb;margin:8px 0;min-height:20px}
+.meter{height:16px;background:#e3e9f2;border-radius:999px;overflow:hidden;margin-top:4px}
+.meter div{height:100%;width:0;background:linear-gradient(90deg,var(--sand),var(--lava));transition:width .12s}
+table.data{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+table.data th{background:var(--navy);color:#fff;padding:7px;text-align:center;font-weight:800}
+table.data td{padding:6px;text-align:center;border-bottom:1px solid var(--line)}
+table.data tr:nth-child(even) td{background:#f7fafd}
+.scroll{overflow-x:auto}
+.tasks{list-style:none;padding:0;margin:8px 0}
+.tasks li{padding:9px 12px;border-radius:10px;background:#f4f7fb;margin-bottom:6px;font-weight:700;display:flex;gap:10px;align-items:flex-start}
+.tasks li .box{flex:0 0 22px;height:22px;border-radius:6px;border:2px solid var(--muted);display:grid;place-items:center;font-size:14px;margin-top:1px}
+.tasks li.ok{background:var(--good-l)}
+.tasks li.ok .box{background:var(--good);border-color:var(--good);color:#fff}
+.q{border:2px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;background:#fff}
+.q .qp{font-weight:800;margin:0 0 10px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;font-size:15px;cursor:pointer;display:flex;gap:10px;align-items:flex-start;color:var(--ink)}
+.opt:hover:not(:disabled){border-color:var(--lava);background:var(--lava-l)}
+.opt .letter{flex:0 0 26px;height:26px;border-radius:8px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.opt.right{border-color:var(--good);background:var(--good-l)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-l);opacity:.75}
+.fb{margin-top:8px;font-weight:700;font-size:15px}
+.fb.good{color:var(--good)}.fb.bad{color:var(--bad)}
+.hidden{display:none!important}
+.locknote{background:#f4f7fb;border:2px dashed var(--line);border-radius:14px;padding:14px;color:var(--muted);font-weight:700;text-align:center}
+.finishbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.match{display:grid;gap:8px;margin:10px 0}
+.mrow{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#f4f7fb;padding:10px 12px;border-radius:12px;flex-wrap:wrap}
+.mrow span{font-weight:700;flex:1;min-width:200px}
+.mrow select{padding:8px;border-radius:10px;border:2px solid var(--line);font-size:15px;font-family:inherit}
+.mrow.right{background:var(--good-l)}.mrow.wrong{background:var(--bad-l)}
+.cert{background:linear-gradient(135deg,#fff 0%,#fff6e8 100%);border:4px solid var(--sand);border-radius:24px;padding:26px;text-align:center}
+.cert h1{font-size:clamp(26px,5vw,38px)}
+.bigscore{font-family:Fredoka;font-size:64px;color:var(--lava);line-height:1}
+.scoregrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:18px 0;text-align:left}
+.sg{background:#fff;border-radius:12px;padding:10px 12px;border:2px solid var(--line)}
+.sg small{display:block;color:var(--muted);font-weight:800;font-size:12px}
+.sg b{font-family:Fredoka;font-size:22px}
+@media print{header.top,.noprint{display:none!important}body{background:#fff}.screen{padding:0}}
+@media (max-width:600px){.hero svg.globe{opacity:.3}.card{padding:14px}}
+</style>
+</head>
+<body>
+
+<header class="top" id="topbar">
+  <div class="brand">🌋 Earth Shaper Lab</div>
+  <div class="meta"><span class="pill" id="who"></span><span class="pill">⏱ <span id="clock">0:00</span></span><button class="btn small ghost" onclick="goHub()">🏠 Lab Map</button></div>
+</header>
+
+<!-- INTRO -->
+<section class="screen active" id="intro">
+  <div class="hero">
+    <span class="tag">TEKS 7.10B · STAAR Readiness</span>
+    <h1>Earth Shaper Lab</h1>
+    <p>Welcome, junior geologist! Earth's surface is broken into giant plates that are always moving. In this lab, <b>you</b> move them. Push plates together, pull them apart and slide them past each other to see how plate tectonics builds mountains, opens oceans, sets off earthquakes and fuels volcanoes.</p>
+    <div class="namebox">
+      <input id="nameIn" placeholder="Type your first and last name" maxlength="40" autocomplete="off">
+      <button class="btn sand" onclick="startGame()">Start Lab ➜</button>
+    </div>
+    <svg class="globe" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="88" fill="#1f9bd1"/>
+      <path d="M40 70c18-20 40-12 52-4s10 30-6 34-30 18-42 6-14-24-4-36z" fill="#7cc36b"/>
+      <path d="M118 40c20 0 40 14 44 34s-14 18-24 10-30-4-30-22 0-22 10-22z" fill="#7cc36b"/>
+      <path d="M112 120c14-6 34 0 38 14s-10 30-26 28-24-20-12-42z" fill="#7cc36b"/>
+      <path d="M12 100h176M100 12c-30 30-30 146 0 176" stroke="#ff6a3d" stroke-width="4" stroke-dasharray="8 6" fill="none"/>
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#fff" stroke-width="5"/>
+    </svg>
+  </div>
+  <div class="overview">
+    <div class="ov"><b>1 · Boundary Builder</b><small>Push, pull &amp; slide plates · ~13 min</small></div>
+    <div class="ov"><b>2 · Ocean Basin Factory</b><small>Split a continent · ~7 min</small></div>
+    <div class="ov"><b>3 · Earthquake Lab</b><small>Build stress on a fault · ~8 min</small></div>
+    <div class="ov"><b>4 · Hot Spots</b><small>Island chains &amp; supervolcanoes · ~9 min</small></div>
+    <div class="ov"><b>5 · Final Certification</b><small>STAAR-style check · ~8 min</small></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3>Field Guide: three kinds of plate boundaries</h3>
+    <p style="margin:.2em 0 .5em"><b style="color:var(--lava-d)">Convergent</b>: plates push <b>together</b>. Mountains, trenches, volcanoes and strong earthquakes.</p>
+    <p style="margin:.2em 0 .5em"><b style="color:var(--sea)">Divergent</b>: plates pull <b>apart</b>. Magma rises, new crust forms, oceans open.</p>
+    <p style="margin:.2em 0 0"><b style="color:#8a5d00">Transform</b>: plates <b>slide past</b> each other. Faults and earthquakes, but almost no volcanoes.</p>
+  </div>
+</section>
+
+<!-- HUB -->
+<section class="screen" id="hub">
+  <div class="card">
+    <h2>Lab Map</h2>
+    <p style="margin:0;color:var(--muted);font-weight:700">Complete each station in order. Your first answer on every question counts toward your score, so think before you click!</p>
+    <div class="progressbar"><div id="hubBar"></div></div>
+    <small id="hubTxt" style="font-weight:800;color:var(--muted)"></small>
+  </div>
+  <div class="hubgrid" id="hubGrid"></div>
+</section>
+
+<!-- STATION 1 -->
+<section class="screen" id="s1">
+  <div class="card">
+    <div class="stHead"><h2>Station 1 · Boundary Builder</h2><span class="teks">TEKS 7.10B</span></div>
+    <div class="brief"><b>Geologist's Briefing:</b> Every plate is topped with one of two types of crust. The type of crust decides what happens when plates collide, including whether one plate <b>subducts</b> (sinks under the other into the mantle). Choose the two plates, then <b>move them yourself</b> and watch what forms at the boundary.</div>
+    <div class="crust">
+      <div class="cr oc"><div class="sw"></div><div><b>Oceanic crust</b><span>Under the oceans · <b>thin</b> (about 5–10 km) · <b>more dense</b> · made of dark basalt</span></div></div>
+      <div class="cr co"><div class="sw"></div><div><b>Continental crust</b><span>Makes the land · <b>thick</b> (about 30–70 km) · <b>less dense</b> · made mostly of granite</span></div></div>
+      <div class="cr sb"><div class="sw">⤵</div><div><b>Subduction</b><span>When plates collide, the <b>denser</b> plate sinks under the other one into the mantle, where it melts.</span></div></div>
+    </div>
+    <div class="controls">
+      <div class="group"><b>LEFT PLATE</b><button class="btn small ghost" id="L-O">Oceanic</button><button class="btn small ghost" id="L-C">Continental</button></div>
+      <div class="group"><b>RIGHT PLATE</b><button class="btn small ghost" id="R-O">Oceanic</button><button class="btn small ghost" id="R-C">Continental</button></div>
+      <div class="group"><b>VIEW</b><button class="btn small ghost" id="m-side">Side view: push / pull</button><button class="btn small ghost" id="m-top">Top view: slide past</button></div>
+    </div>
+    <div class="howto"><span class="hand">👆</span><span id="how1">Drag the plates with your finger or mouse. Drag LEFT to push them together. Drag RIGHT to pull them apart.</span></div>
+    <canvas id="c1" width="900" height="380"></canvas>
+    <div class="readouts">
+      <div class="ro"><small>Boundary type</small><b id="r1b">—</b></div>
+      <div class="ro" style="flex:2"><small>What forms</small><b id="r1f">Move the plates…</b></div>
+      <div class="ro"><small>Earthquakes?</small><b id="r1e">—</b></div>
+      <div class="ro"><small>Volcanoes?</small><b id="r1v">—</b></div>
+    </div>
+    <div class="readouts"><div class="ro" style="flex:1;background:var(--lava-d)"><small>Subduction?</small><b id="r1s">—</b></div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sand" id="play1a">▶ Animate</button><button class="btn ghost" id="reset1">↺ Reset plates</button></div>
+    <div class="msg" id="m1">Pick two plates, then move them all the way to record a test in your Field Log.</div>
+  </div>
+  <div class="card">
+    <h3>📋 Field Log</h3>
+    <div class="scroll"><table class="data"><thead><tr><th>#</th><th>Plates</th><th>Motion</th><th>Boundary</th><th>Subduction?</th><th>What formed</th><th>Real example</th></tr></thead><tbody id="t1"><tr><td colspan="7" style="color:var(--muted)">No tests yet. Move the plates all the way to record one.</td></tr></tbody></table></div>
+    <h3 style="margin-top:14px">🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k1a"><span class="box"></span><span>Pull two <b>oceanic</b> plates apart.</span></li>
+      <li id="k1b"><span class="box"></span><span>Push an <b>oceanic</b> plate and a <b>continental</b> plate together and watch <b>subduction</b>.</span></li>
+      <li id="k1c"><span class="box"></span><span>Push two <b>continental</b> plates together.</span></li>
+      <li id="k1d"><span class="box"></span><span>Switch to <b>top view</b> and slide two plates past each other.</span></li>
+    </ul>
+  </div>
+  <div class="card"><h3>🧠 Analyze Your Tests</h3><div id="q1lock" class="locknote">🔒 Finish all four lab tasks to unlock the questions.</div><div id="q1box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f1txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sand" id="f1" disabled onclick="finishStation(1)">Complete Station ✔</button></div>
+</section>
+
+<!-- STATION 2 -->
+<section class="screen" id="s2">
+  <div class="card">
+    <div class="stHead"><h2>Station 2 · Ocean Basin Factory</h2><span class="teks">TEKS 7.10B</span></div>
+    <div class="brief"><b>Geologist's Briefing:</b> Oceans are not permanent. When a divergent boundary forms under a continent, the land slowly splits and a <b>new ocean basin</b> opens. Drag through <b>150 million years</b> of time and watch it happen.</div>
+    <div class="howto"><span class="hand">👆</span><span>Drag across the picture (or use the time slider) to move forward and backward in time.</span></div>
+    <canvas id="c2" width="900" height="360"></canvas>
+    <div class="readouts">
+      <div class="ro"><small>Time</small><b id="r2t">0 million years</b></div>
+      <div class="ro" style="flex:2"><small>Stage</small><b id="r2s">—</b></div>
+      <div class="ro" style="flex:1.4"><small>Real example today</small><b id="r2e">—</b></div>
+    </div>
+    <div class="ctrl"><label>Time <span id="v2t">0 million years</span></label><input type="range" id="i2t" min="0" max="150" step="1" value="0"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><button class="btn sand" id="play2">▶ Play 150 million years</button></div>
+  </div>
+  <div class="card">
+    <h3>🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k2a"><span class="box"></span><span>Find the <b>rift valley</b> stage.</span></li>
+      <li id="k2b"><span class="box"></span><span>Find the <b>narrow sea</b> stage.</span></li>
+      <li id="k2c"><span class="box"></span><span>Find the <b>ocean basin</b> stage and look at the colors of the ocean floor.</span></li>
+    </ul>
+  </div>
+  <div class="card"><h3>🧠 Analyze the Ocean Floor</h3><div id="q2lock" class="locknote">🔒 Find all three stages to unlock the questions.</div><div id="q2box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f2txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sand" id="f2" disabled onclick="finishStation(2)">Complete Station ✔</button></div>
+</section>
+
+<!-- STATION 3 -->
+<section class="screen" id="s3">
+  <div class="card">
+    <div class="stHead"><h2>Station 3 · Earthquake Lab</h2><span class="teks">TEKS 7.10B</span></div>
+    <div class="brief"><b>Geologist's Briefing:</b> This is a top view of the <b>San Andreas Fault</b> in California, a transform boundary. The Pacific Plate moves north past the North American Plate, but the rocks along the fault are rough and <b>get stuck</b>. A road crosses the fault. Watch it closely.</div>
+    <div class="howto"><span class="hand">👆</span><span>Drag the Pacific Plate (left side) UP to move it north. Keep going and watch the stress meter.</span></div>
+    <canvas id="c3" width="900" height="380"></canvas>
+    <div class="readouts">
+      <div class="ro" style="flex:2"><small>Stress stored in the rocks</small><div class="meter"><div id="r3m"></div></div></div>
+      <div class="ro"><small>Earthquakes</small><b id="r3q">0</b></div>
+      <div class="ro"><small>Road offset</small><b id="r3o">0 m</b></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sand" id="push3">▲ Move plate north (100 years)</button><button class="btn ghost" id="reset3">↺ Reset</button></div>
+    <div class="msg" id="m3">The plates are locked together at the fault. Start moving the Pacific Plate.</div>
+  </div>
+  <div class="card">
+    <h3>📋 Earthquake Log</h3>
+    <table class="data"><thead><tr><th>Earthquake</th><th>Years of stress</th><th>Road offset after (m)</th></tr></thead><tbody id="t3"><tr><td colspan="3" style="color:var(--muted)">No earthquakes yet</td></tr></tbody></table>
+    <h3 style="margin-top:14px">🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k3a"><span class="box"></span><span>Watch the road <b>bend</b> as stress builds, then cause an <b>earthquake</b>.</span></li>
+      <li id="k3b"><span class="box"></span><span>Cause <b>3 earthquakes</b> and look at how far the road has moved.</span></li>
+    </ul>
+  </div>
+  <div class="card"><h3>🧠 Analyze the Fault</h3><div id="q3lock" class="locknote">🔒 Finish both lab tasks to unlock the questions.</div><div id="q3box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f3txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sand" id="f3" disabled onclick="finishStation(3)">Complete Station ✔</button></div>
+</section>
+
+<!-- STATION 4 -->
+<section class="screen" id="s4">
+  <div class="card">
+    <div class="stHead"><h2>Station 4 · Hot Spots &amp; Supervolcanoes</h2><span class="teks">TEKS 7.10B</span></div>
+    <div class="brief"><b>Geologist's Briefing:</b> A <b>hot spot</b> is a plume of extremely hot mantle that rises from deep inside Earth and <b>stays in one place</b>. The plates keep moving over it. Hot spots make volcanoes in the middle of plates, far from any boundary.</div>
+    <div class="controls"><div class="group"><b>LOCATION</b><button class="btn small ghost" id="h-ocean">Hawaii (ocean plate)</button><button class="btn small ghost" id="h-yell">Yellowstone (continent)</button></div></div>
+    <div class="howto"><span class="hand">👆</span><span id="how4">Drag the Pacific Plate to the LEFT to move it over the hot spot.</span></div>
+    <canvas id="c4" width="900" height="380"></canvas>
+    <div class="readouts" id="ro4a">
+      <div class="ro"><small>Plate moved</small><b id="r4d">0 million years</b></div>
+      <div class="ro"><small>Volcanoes in chain</small><b id="r4n">1</b></div>
+      <div class="ro" style="flex:2"><small>Active volcano</small><b>The one over the hot spot</b></div>
+    </div>
+    <div class="readouts hidden" id="ro4b">
+      <div class="ro" style="flex:2"><small>Magma chamber</small><div class="meter"><div id="r4m"></div></div></div>
+      <div class="ro"><small>Supereruptions</small><b id="r4e">0</b></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap" id="b4a"><button class="btn sand" id="move4">◀ Move plate (1 million years)</button><button class="btn ghost" id="reset4">↺ Reset chain</button></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap" class="hidden" id="b4b"><button class="btn lava" id="pump4">🔥 Hold to pump magma</button></div>
+    <div class="msg" id="m4">The Pacific Plate is sitting over the Hawaiian hot spot. Move it!</div>
+  </div>
+  <div class="card">
+    <h3>🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k4a"><span class="box"></span><span>Build a hot spot chain of at least <b>5 volcanoes</b>. Look at their ages.</span></li>
+      <li id="k4b"><span class="box"></span><span>Switch to <b>Yellowstone</b> and fill the magma chamber until it <b>erupts</b>.</span></li>
+    </ul>
+  </div>
+  <div class="card"><h3>🧠 Analyze the Hot Spots</h3><div id="q4lock" class="locknote">🔒 Finish both lab tasks to unlock the questions.</div><div id="q4box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f4txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sand" id="f4" disabled onclick="finishStation(4)">Complete Station ✔</button></div>
+</section>
+
+<!-- STATION 5 -->
+<section class="screen" id="s5">
+  <div class="card">
+    <div class="stHead"><h2>Station 5 · Final Certification</h2><span class="teks">TEKS 7.10B</span></div>
+    <div class="brief"><b>Geologist's Briefing:</b> To earn your Earth Shaper certification, answer these STAAR-style questions. Read every answer choice before you click. Your <b>first try</b> counts!</div>
+    <div id="q5box"></div>
+  </div>
+  <div class="card finishbar"><span id="f5txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sand" id="f5" disabled onclick="finishStation(5)">Get My Certificate 🏆</button></div>
+</section>
+
+<!-- RESULTS -->
+<section class="screen" id="results">
+  <div class="cert">
+    <div style="font-size:46px">🌋</div>
+    <h1>Certified Earth Shaper Geologist</h1>
+    <p style="font-weight:700;color:var(--muted);margin:0">This certifies that</p>
+    <h2 id="certName" style="font-size:32px;color:var(--navy2);margin:6px 0 12px"></h2>
+    <p style="font-weight:700;color:var(--muted);margin:0 0 10px">has shown how plate tectonics shapes Earth's surface.</p>
+    <div class="bigscore" id="certPct"></div>
+    <div style="font-weight:800;color:var(--muted)" id="certRaw"></div>
+    <div class="scoregrid" id="certGrid"></div>
+    <p style="font-weight:700;color:var(--muted);margin:0" id="certMeta"></p>
+    <p style="font-weight:800;margin:14px 0 0">📸 Show this screen to your teacher or take a screenshot.</p>
+    <div class="noprint" style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn" onclick="window.print()">🖨 Print</button><button class="btn ghost" onclick="goHub()">Back to Lab Map</button></div>
+  </div>
+</section>
+
+<script>
+/* ===== Core ===== */
+const S={name:'',start:null,done:{},score:{1:{},2:{},3:{},4:{},5:{}},need:{1:[],2:[],3:[],4:[],5:[]},got:{1:new Set(),2:new Set(),3:new Set(),4:new Set(),5:new Set()},built:{}};
+const STATIONS=[
+ {n:1,title:'Boundary Builder',desc:'Push, pull and slide plates to see what forms.'},
+ {n:2,title:'Ocean Basin Factory',desc:'Split a continent and open a new ocean.'},
+ {n:3,title:'Earthquake Lab',desc:'Build stress on a fault until it slips.'},
+ {n:4,title:'Hot Spots & Supervolcanoes',desc:'Build Hawaii and erupt Yellowstone.'},
+ {n:5,title:'Final Certification',desc:'Prove what you learned and earn your certificate.'}
+];
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');window.scrollTo(0,0);}
+function startGame(){
+  const n=$('nameIn').value.trim();
+  if(!n){$('nameIn').focus();$('nameIn').placeholder='Please type your name first!';return;}
+  S.name=n;S.start=Date.now();$('who').textContent='🧑‍🔬 '+n;$('topbar').classList.add('show');
+  setInterval(()=>{const s=Math.floor((Date.now()-S.start)/1000);$('clock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');},1000);
+  goHub();
+}
+$('nameIn').addEventListener('keydown',e=>{if(e.key==='Enter')startGame();});
+function unlocked(n){return n===1||S.done[n-1];}
+function goHub(){
+  if(!S.name){show('intro');return;}
+  const g=$('hubGrid');g.innerHTML='';
+  STATIONS.forEach(st=>{
+    const d=document.createElement('div');const isDone=S.done[st.n],isOpen=unlocked(st.n);
+    d.className='station'+(isDone?' done':'')+(!isOpen?' locked':'');
+    d.innerHTML=`<div class="num">${st.n}</div><span class="status">${isDone?'✔ Complete':isOpen?'Ready':'🔒 Locked'}</span><div class="teks">TEKS 7.10B</div><h3>${st.title}</h3><div style="color:var(--muted);font-weight:600;font-size:14px">${st.desc}</div>`;
+    d.onclick=()=>{if(isOpen)openStation(st.n);};g.appendChild(d);
+  });
+  const c=Object.keys(S.done).length;$('hubBar').style.width=(c/5*100)+'%';$('hubTxt').textContent=`${c} of 5 stations complete`;show('hub');
+}
+function openStation(n){
+  if(!S.built[n]){({1:build1,2:build2,3:build3,4:build4,5:build5})[n]();S.built[n]=true;}
+  show('s'+n);({1:draw1,2:draw2,3:draw3,4:draw4,5:()=>{}})[n]();
+}
+function finishStation(n){S.done[n]=true;if(n===5)showResults();else goHub();}
+
+/* ===== Scoring + questions ===== */
+function record(st,qid,ok){if(!(qid in S.score[st]))S.score[st][qid]=ok;}
+function need(st,k){S.need[st].push(k);}
+function got(st,k){S.got[st].add(k);checkFinish(st);}
+function checkFinish(st){
+  const all=S.need[st].length>0&&S.need[st].every(k=>S.got[st].has(k));$('f'+st).disabled=!all;
+  $('f'+st+'txt').textContent=all?'✅ Station complete! Click the button to save your progress.':`Progress: ${S.need[st].filter(k=>S.got[st].has(k)).length} of ${S.need[st].length} questions correct.`;
+}
+function mc(box,st,qid,prompt,options,correct,explain){
+  need(st,qid);const d=document.createElement('div');d.className='q';d.innerHTML=`<p class="qp">${prompt}</p>`;
+  const o=document.createElement('div');o.className='opts';const fb=document.createElement('div');fb.className='fb';
+  options.forEach((t,i)=>{const b=document.createElement('button');b.className='opt';b.innerHTML=`<span class="letter">${'ABCD'[i]}</span><span>${t}</span>`;
+    b.onclick=()=>{if(d.dataset.solved)return;const ok=i===correct;record(st,qid,ok);
+      if(ok){b.classList.add('right');d.dataset.solved=1;o.querySelectorAll('.opt').forEach(x=>x.disabled=true);fb.className='fb good';fb.innerHTML='✅ Correct! '+explain;got(st,qid);}
+      else{b.classList.add('wrong');b.disabled=true;fb.className='fb bad';fb.textContent='❌ Not quite. Think about what you saw in the lab and try again.';}};
+    o.appendChild(b);});
+  d.appendChild(o);d.appendChild(fb);box.appendChild(d);
+}
+function selq(box,st,qid,prompt,rows,choices,explain){
+  need(st,qid);const d=document.createElement('div');d.className='q';d.innerHTML=`<p class="qp">${prompt}</p>`;
+  const m=document.createElement('div');m.className='match';
+  const sels=rows.map(r=>{const row=document.createElement('div');row.className='mrow';
+    row.innerHTML=`<span>${r[0]}</span><select><option value="">Choose…</option>${choices.map((c,i)=>`<option value="${i}">${c}</option>`).join('')}</select>`;
+    m.appendChild(row);return{row,sel:row.querySelector('select'),ans:String(r[1])};});
+  d.appendChild(m);const btn=document.createElement('button');btn.className='btn small';btn.textContent='Check';const fb=document.createElement('div');fb.className='fb';
+  btn.onclick=()=>{if(d.dataset.solved)return;if(sels.some(s=>!s.sel.value)){fb.className='fb bad';fb.textContent='Choose an answer for every row first.';return;}
+    let all=true;sels.forEach(s=>{const ok=s.sel.value===s.ans;s.row.classList.toggle('right',ok);s.row.classList.toggle('wrong',!ok);if(!ok)all=false;});
+    record(st,qid,all);
+    if(all){d.dataset.solved=1;btn.disabled=true;sels.forEach(s=>s.sel.disabled=true);fb.className='fb good';fb.innerHTML='✅ All correct! '+explain;got(st,qid);}
+    else{fb.className='fb bad';fb.textContent='❌ The red rows need another look. Fix them and check again.';}};
+  d.appendChild(btn);d.appendChild(fb);box.appendChild(d);
+}
+function tick(id){const e=$(id);if(e.classList.contains('ok'))return false;e.classList.add('ok');e.querySelector('.box').textContent='✓';return true;}
+
+/* ===== Drawing helpers ===== */
+function poly(ctx,pts,fill,stroke){ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}}
+function label(ctx,t,x,y,color,size,align){ctx.font=`800 ${size||15}px Nunito, sans-serif`;ctx.textAlign=align||'center';ctx.lineJoin='round';const light=/^#(fff|e5e7eb|e0f2fe)/i.test(color||'');ctx.lineWidth=light?3.5:4;ctx.strokeStyle=light?'rgba(20,30,50,.75)':'rgba(255,255,255,.85)';ctx.strokeText(t,x,y);ctx.fillStyle=color||'#1d2b45';ctx.fillText(t,x,y);}
+function harrow(ctx,x,y,dir,color,len){len=len||46;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=7;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x-dir*len/2,y);ctx.lineTo(x+dir*(len/2-12),y);ctx.stroke();ctx.beginPath();ctx.moveTo(x+dir*len/2,y);ctx.lineTo(x+dir*(len/2-16),y-11);ctx.lineTo(x+dir*(len/2-16),y+11);ctx.closePath();ctx.fill();}
+function varrow(ctx,x,y,dir,color,len){len=len||46;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=7;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x,y-dir*len/2);ctx.lineTo(x,y+dir*(len/2-12));ctx.stroke();ctx.beginPath();ctx.moveTo(x,y+dir*len/2);ctx.lineTo(x-11,y+dir*(len/2-16));ctx.lineTo(x+11,y+dir*(len/2-16));ctx.closePath();ctx.fill();}
+function quake(ctx,x,y,amt){if(amt<=0)return;amt=clamp(amt,0,1);ctx.strokeStyle=`rgba(201,74,34,${.35+amt*.5})`;ctx.lineWidth=2.5;for(let r=12;r<=12+amt*30;r+=10){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();}ctx.font='22px sans-serif';ctx.textAlign='center';ctx.fillText('💥',x,y+8);}
+function volcano(ctx,x,base,h,w,glow,col){if(h<2)return;poly(ctx,[[x-w/2,base],[x-6,base-h],[x+6,base-h],[x+w/2,base]],col||'#6b4f3a');if(glow){ctx.fillStyle='#ff6a3d';ctx.beginPath();ctx.moveTo(x-6,base-h);ctx.lineTo(x+6,base-h);ctx.lineTo(x+3,base-h+h*.35);ctx.lineTo(x-3,base-h+h*.3);ctx.closePath();ctx.fill();ctx.fillStyle='rgba(120,120,120,.45)';ctx.beginPath();ctx.arc(x+4,base-h-14,10,0,7);ctx.arc(x+14,base-h-26,13,0,7);ctx.fill();}}
+function canvasPos(c,e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};}
+function dragger(c,onStart,onMove,onEnd){let on=false;c.addEventListener('pointerdown',e=>{on=true;c.setPointerCapture(e.pointerId);c.classList.add('dragging');onStart(canvasPos(c,e));});
+  c.addEventListener('pointermove',e=>{if(on)onMove(canvasPos(c,e));});
+  const end=()=>{if(on){on=false;c.classList.remove('dragging');onEnd&&onEnd();}};c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end);}
+
+/* ===== STATION 1: Boundary Builder ===== */
+const SL=130,CTOP=105,CBOT=245,OTOP=178,OBOT=222,MTOP=222,CX=450;
+const s1={L:'O',R:'O',mode:'side',d:0,v:0,logged:new Set(),log:[],anim:null};
+const RES={
+ 'div-OO':['Divergent','Mid-ocean ridge + new ocean floor','Yes (shallow)','Yes (underwater)','Mid-Atlantic Ridge','No: plates move apart'],
+ 'div-CC':['Divergent','Rift valley (can become a new ocean)','Yes','Yes','East African Rift','No: plates move apart'],
+ 'div-CO':['Divergent','Rift with new crust forming','Yes','Yes','Rare in nature','No: plates move apart'],
+ 'con-CO':['Convergent','Ocean trench + volcanic mountains','Yes (strong)','Yes','Andes Mountains','Yes: denser oceanic plate sinks under the continental plate'],
+ 'con-OO':['Convergent','Ocean trench + volcanic island arc','Yes (strong)','Yes','Mariana Trench','Yes: the older, denser oceanic plate sinks under the other'],
+ 'con-CC':['Convergent','Tall folded mountains','Yes (strong)','Few or none','Himalayas','No: both are too light (low density) to sink, so they crumple up'],
+ 'tra':['Transform','Fault where plates slide past','Yes (strong)','No','San Andreas Fault','No: plates slide past each other']
+};
+const pair=()=>[s1.L,s1.R].sort().join('');
+function key1(){if(s1.mode==='top')return 'tra';return (s1.d>0?'con-':'div-')+pair();}
+function drawPlate(ctx,type,x0,x1,clip){
+  const top=type==='C'?CTOP:OTOP,bot=type==='C'?CBOT:OBOT;
+  if(type==='C'){poly(ctx,[[x0,top],[x1,top],[x1,bot],[x0,bot]],'#c9a26b');ctx.fillStyle='#7cc36b';ctx.fillRect(Math.min(x0,x1),top-6,Math.abs(x1-x0),8);
+    ctx.strokeStyle='rgba(120,85,40,.35)';ctx.lineWidth=2;for(let y=top+30;y<bot;y+=28){ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();}}
+  else{poly(ctx,[[x0,top],[x1,top],[x1,bot],[x0,bot]],'#4b5563');ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x0,top+22);ctx.lineTo(x1,top+22);ctx.stroke();}
+}
+function draw1(){
+  const c=$('c1'),ctx=c.getContext('2d');ctx.clearRect(0,0,900,380);
+  if(s1.mode==='top'){drawTop1(ctx);upd1();return;}
+  const sky=ctx.createLinearGradient(0,0,0,SL);sky.addColorStop(0,'#cfe8ff');sky.addColorStop(1,'#eef7ff');ctx.fillStyle=sky;ctx.fillRect(0,0,900,SL);
+  const m=ctx.createLinearGradient(0,MTOP,0,380);m.addColorStop(0,'#f59e0b');m.addColorStop(1,'#c2410c');ctx.fillStyle=m;ctx.fillRect(0,MTOP,900,380-MTOP);
+  ctx.fillStyle='#4fb3e0';ctx.fillRect(0,SL,900,MTOP-SL);
+  ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=3;[225,675].forEach(x=>{ctx.beginPath();ctx.ellipse(x,305,120,40,0,0,Math.PI*2);ctx.stroke();});
+  const d=s1.d,L=s1.L,R=s1.R;const post=[];
+  if(d<=0){
+    const g=-d*130;const lx=CX-g/2,rx=CX+g/2;
+    drawPlate(ctx,L,0,lx);drawPlate(ctx,R,rx,900);
+    if(g>1){
+      ctx.fillStyle='#ff6a3d';ctx.beginPath();ctx.moveTo(lx-18,MTOP+50);ctx.quadraticCurveTo(CX,MTOP-20-g*.25,rx+18,MTOP+50);ctx.closePath();ctx.fill();
+      if(L==='C'&&R==='C'){
+        const floor=CTOP+30+(-d)*60;poly(ctx,[[lx,CTOP],[lx+10,floor],[rx-10,floor],[rx,CTOP],[rx,CBOT],[lx,CBOT]],'#b08655');
+        ctx.fillStyle='#7cc36b';ctx.fillRect(lx+10,floor-5,Math.max(0,g-20),6);
+        if(-d>.7){ctx.fillStyle='#4fb3e0';ctx.fillRect(lx+12,floor-16*(-d),Math.max(0,g-24),16*(-d));}
+        ctx.fillStyle='#ff6a3d';ctx.fillRect(CX-3,floor,6,CBOT-floor);
+        post.push(()=>{volcano(ctx,CX,floor,22*(-d),26,-d>.5);label(ctx,-d>.7?'Rift valley → new sea forming':'Rift valley',CX,CTOP-22,'#7c2d12',15);});
+      }else{
+        const h=40*(-d);
+        const n=6;for(let k=n-1;k>=0;k--){const w=g/2*(k+1)/n;ctx.fillStyle=`hsl(${12+k*30},70%,${52-k*3}%)`;ctx.fillRect(CX-w,OTOP,w*2,OBOT-OTOP);}
+        poly(ctx,[[lx,OTOP],[CX-16,OTOP-h],[CX+16,OTOP-h],[rx,OTOP]],'#5b6676');
+        ctx.fillStyle='#ff6a3d';ctx.fillRect(CX-4,OTOP-h,8,OBOT-OTOP+h);
+        post.push(()=>{label(ctx,'Mid-ocean ridge',CX,OTOP-h-14,'#7c2d12',15);if(-d>.35)label(ctx,'new ocean crust forms here',CX,MTOP+64,'#fff',13);});
+      }
+    }
+    post.push(()=>{quake(ctx,CX,MTOP-4,-d>.4?(-d-.4)*1.4:0);});
+    if(d<0){harrow(ctx,150,58,-1,'#1f9bd1');harrow(ctx,750,58,1,'#1f9bd1');label(ctx,'PULL APART',150,88,'#1f6f99',13);label(ctx,'PULL APART',750,88,'#1f6f99',13);}
+  }else{
+    const pr=pair();
+    if(pr==='CC'){
+      const H=110*d,w=120+120*d;
+      drawPlate(ctx,'C',0,CX);drawPlate(ctx,'C',CX,900);
+      poly(ctx,[[CX-w,CTOP],[CX-w*.55,CTOP-H*.55],[CX-w*.3,CTOP-H*.75],[CX-8,CTOP-H],[CX+20,CTOP-H*.85],[CX+w*.4,CTOP-H*.6],[CX+w,CTOP],[CX+w*.8,CBOT+25*d],[CX-w*.8,CBOT+25*d]],'#a7835a');
+      ctx.strokeStyle='rgba(90,60,30,.45)';ctx.lineWidth=3;for(let k=0;k<4;k++){ctx.beginPath();const yy=CTOP+20+k*30;ctx.moveTo(CX-w*.8,yy);ctx.bezierCurveTo(CX-w*.3,yy-60*d,CX+w*.3,yy-60*d,CX+w*.8,yy);ctx.stroke();}
+      if(d>.5){poly(ctx,[[CX-30,CTOP-H*.92],[CX-8,CTOP-H],[CX+16,CTOP-H*.88],[CX-6,CTOP-H*.78]],'#fff');}
+      post.push(()=>{label(ctx,'Folded mountains',CX,Math.max(20,CTOP-H-14),'#7c2d12',15);if(d>.4)label(ctx,'No subduction: both plates are too light to sink',CX,MTOP+64,'#fff',13);quake(ctx,CX,CTOP+80,d>.4?(d-.4)*1.4:0);});
+    }else{
+      const subLeft=(L==='O'&&(R==='C'||pr==='OO'));const dir=subLeft?1:-1;const overType=subLeft?R:L;
+      const len=40+180*d,ang=0.5;const bx=CX;
+      const x2=bx+dir*len*Math.cos(ang),y2=OTOP+len*Math.sin(ang);
+      poly(ctx,[[bx-dir*10,OTOP],[x2,y2],[x2,y2+(OBOT-OTOP)],[bx-dir*10,OBOT]],'#4b5563');
+      ctx.strokeStyle='#ffd166';ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(bx-dir*10,OTOP);ctx.lineTo(x2,y2);ctx.stroke();ctx.setLineDash([]);
+      if(subLeft){drawPlate(ctx,'O',0,bx-10);drawPlate(ctx,overType,bx+8,900);}else{drawPlate(ctx,overType,0,bx-8);drawPlate(ctx,'O',bx+10,900);}
+      const vx=bx+dir*95,base=overType==='C'?CTOP:OTOP,vh=(overType==='C'?70:95)*d;
+      if(d>.3){ctx.fillStyle='rgba(255,106,61,.92)';ctx.beginPath();ctx.moveTo(x2-dir*24,y2-6);ctx.quadraticCurveTo(vx+dir*6,(y2+base)/2,vx-4,base);ctx.lineTo(vx+4,base);ctx.quadraticCurveTo(vx+dir*26,(y2+base)/2+8,x2-dir*4,y2+10);ctx.closePath();ctx.fill();}
+      poly(ctx,[[bx-dir*48,OTOP],[bx+dir*6,OTOP],[bx+dir*2,OTOP+30*d+8]],'#2b7fb0');
+      volcano(ctx,vx,base,vh,overType==='C'?110:90,d>.45,overType==='C'?'#7a5a3e':'#55606e');
+      if(overType==='O'&&base-vh<SL){ctx.fillStyle='#7cc36b';ctx.fillRect(vx-14,SL-3,28,4);}
+      post.push(()=>{
+        label(ctx,'Trench',bx-dir*34,OTOP-8,'#0b4f6c',14);
+        if(d>.25)label(ctx,overType==='C'?'Volcanic mountains':'Volcanic island arc',vx,Math.max(18,base-vh-36),'#7c2d12',15);
+        if(d>.15){const mx=bx+dir*len*.62*Math.cos(ang),my=OTOP+len*.62*Math.sin(ang)+(OBOT-OTOP)/2;ctx.save();ctx.translate(mx,my);ctx.rotate(dir*ang);label(ctx,'SUBDUCTING PLATE',0,5,'#fff',12);ctx.restore();}
+        if(d>.3)label(ctx,'plate melts → magma rises',x2+dir*6,Math.min(352,y2+60),'#fff',13);
+        label(ctx,'SUBDUCTION: the denser oceanic plate sinks into the mantle',450,372,'#fff',13);
+        quake(ctx,bx+dir*24,OTOP+30,d>.4?(d-.4)*1.4:0);
+      });
+    }
+    harrow(ctx,150,58,1,'#ff6a3d');harrow(ctx,750,58,-1,'#ff6a3d');label(ctx,'PUSH',150,88,'#c94a22',13);label(ctx,'PUSH',750,88,'#c94a22',13);
+  }
+  const plab=(t,x)=>{const y=t==='C'?CTOP+55:OTOP+28;label(ctx,t==='C'?'CONTINENTAL CRUST':'OCEANIC CRUST',x,y,'#fff',14);label(ctx,t==='C'?'thick · less dense':'thin · more dense',x,y+17,'#fff',12);};
+  plab(L,110);plab(R,790);
+  post.forEach(f=>f());
+  if(d===0)label(ctx,'Drag to move the plates',450,40,'#5b6b85',15);
+  if(!(d>0&&pair()!=='CC'))label(ctx,'MANTLE (hot, slowly flowing rock)',450,372,'#7c2d12',13);
+  label(ctx,'sea level',890,SL-5,'#1f6f99',11,'right');
+  upd1();
+}
+function drawTop1(ctx){
+  const v=s1.v;const off=v*70;
+  const colL=s1.L==='C'?'#d8bf8f':'#7f8ea3',colR=s1.R==='C'?'#d8bf8f':'#7f8ea3';
+  ctx.save();ctx.beginPath();ctx.rect(0,0,CX,380);ctx.clip();ctx.translate(0,-off);ctx.fillStyle=colL;ctx.fillRect(0,-200,CX,800);
+  for(let y=-200;y<600;y+=60){ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(0,y,CX,8);}
+  ctx.fillStyle='#3f3f46';ctx.fillRect(0,182,CX,34);ctx.fillStyle='#fde047';for(let x=10;x<CX;x+=50)ctx.fillRect(x,197,26,4);ctx.restore();
+  ctx.save();ctx.beginPath();ctx.rect(CX,0,450,380);ctx.clip();ctx.translate(0,off);ctx.fillStyle=colR;ctx.fillRect(CX,-200,450,800);
+  for(let y=-200;y<600;y+=60){ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(CX,y,450,8);}
+  ctx.fillStyle='#3f3f46';ctx.fillRect(CX,182,450,34);ctx.fillStyle='#fde047';for(let x=CX+10;x<900;x+=50)ctx.fillRect(x,197,26,4);ctx.restore();
+  ctx.setLineDash([12,8]);ctx.strokeStyle='#b91c1c';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(CX,0);ctx.lineTo(CX,380);ctx.stroke();ctx.setLineDash([]);
+  label(ctx,'FAULT',CX+8,24,'#b91c1c',15,'left');
+  varrow(ctx,200,300,-1,'#1d2b45');varrow(ctx,700,90,1,'#1d2b45');
+  label(ctx,'TOP VIEW (looking down from space)',20,365,'#1d2b45',13,'left');
+  label(ctx,(s1.L==='C'?'Continental':'Oceanic')+' plate',200,120,'#1d2b45',16);label(ctx,(s1.R==='C'?'Continental':'Oceanic')+' plate',700,300,'#1d2b45',16);
+  quake(ctx,CX,200,v>.25?v:0);
+  if(v>.3)label(ctx,`road offset: ${Math.round(v*140)} m`,CX,260,'#b91c1c',15);
+}
+function upd1(){
+  const k=key1(),amt=s1.mode==='top'?s1.v:Math.abs(s1.d);
+  if(amt<.3){['r1b','r1e','r1v','r1s'].forEach(i=>$(i).textContent='—');$('r1f').textContent='Keep moving the plates…';}
+  else{const r=RES[k];$('r1b').textContent=r[0];$('r1f').textContent=r[1];$('r1e').textContent=r[2];$('r1v').textContent=r[3];$('r1s').textContent=r[5];}
+  if(amt>=.95&&!s1.logged.has(k+'|'+s1.L+s1.R)) log1(k);
+}
+function log1(k){
+  s1.logged.add(k+'|'+s1.L+s1.R);const r=RES[k];const nm=t=>t==='C'?'Continental':'Oceanic';
+  s1.log.push([`${nm(s1.L)} + ${nm(s1.R)}`,k==='tra'?'Slide past':k.startsWith('con')?'Push together':'Pull apart',r[0],r[5].split(':')[0],r[1],r[4]]);
+  $('t1').innerHTML=s1.log.map((x,i)=>`<tr><td>${i+1}</td>${x.map(y=>`<td>${y}</td>`).join('')}</tr>`).join('');
+  $('m1').innerHTML=`✅ Test recorded: <b>${r[0]}</b> boundary → ${r[1]}. Real example: <b>${r[4]}</b>.`;
+  if(k==='div-OO')tick('k1a');if(k==='con-CO')tick('k1b');if(k==='con-CC')tick('k1c');if(k==='tra')tick('k1d');
+  if(['k1a','k1b','k1c','k1d'].every(id=>$(id).classList.contains('ok'))){$('q1lock').classList.add('hidden');$('q1box').classList.remove('hidden');}
+}
+function setUI1(){
+  ['L-O','L-C','R-O','R-C','m-side','m-top'].forEach(id=>$(id).classList.remove('on'));
+  $('L-'+s1.L).classList.add('on');$('R-'+s1.R).classList.add('on');$('m-'+s1.mode).classList.add('on');
+  $('how1').textContent=s1.mode==='top'?'Drag DOWN on the picture to slide the plates past each other along the fault.':'Drag the plates with your finger or mouse. Drag LEFT to push them together. Drag RIGHT to pull them apart.';
+  $('play1a').textContent=s1.mode==='top'?'▶ Animate: slide past':'▶ Animate: push together';
+}
+function reset1(){cancelAnimationFrame(s1.anim);s1.anim=null;s1.d=0;s1.v=0;draw1();}
+function build1(){
+  const set=(side,t)=>{s1[side]=t;setUI1();reset1();};
+  $('L-O').onclick=()=>set('L','O');$('L-C').onclick=()=>set('L','C');$('R-O').onclick=()=>set('R','O');$('R-C').onclick=()=>set('R','C');
+  $('m-side').onclick=()=>{s1.mode='side';setUI1();reset1();};$('m-top').onclick=()=>{s1.mode='top';setUI1();reset1();};
+  $('reset1').onclick=reset1;
+  let sx,sy,d0,v0;
+  dragger($('c1'),p=>{cancelAnimationFrame(s1.anim);s1.anim=null;sx=p.x;sy=p.y;d0=s1.d;v0=s1.v;},
+    p=>{if(s1.mode==='top'){s1.v=clamp(v0+(p.y-sy)/180,0,1);}else{s1.d=clamp(d0+(sx-p.x)/260,-1,1);}draw1();});
+  $('play1a').onclick=()=>{cancelAnimationFrame(s1.anim);const t0=performance.now();const from=s1.mode==='top'?s1.v:s1.d;
+    const step=now=>{const t=Math.min(1,(now-t0)/2200);if(s1.mode==='top')s1.v=from+(1-from)*t;else s1.d=from+(1-from)*t;draw1();if(t<1)s1.anim=requestAnimationFrame(step);else s1.anim=null;};s1.anim=requestAnimationFrame(step);};
+  setUI1();
+  const b=$('q1box');
+  mc(b,1,'z','How is oceanic crust different from continental crust?',['Oceanic crust is thicker and less dense','Oceanic crust is thinner and more dense','They are the same thickness and density','Oceanic crust is only found on land'],1,'Oceanic crust is thin, dense basalt. Continental crust is thick, less dense granite. That density difference is why oceanic plates subduct.');
+  mc(b,1,'a','When you pulled two oceanic plates apart, magma rose and new ocean floor formed. What kind of boundary is this?',['Convergent','Divergent','Transform','Hot spot'],1,'Plates moving apart form a divergent boundary. Magma rises to fill the gap and becomes new crust.');
+  mc(b,1,'b','When the oceanic plate and the continental plate collided, the oceanic plate sank under the continent. Why?',['Oceanic crust is thicker','Oceanic crust is denser','Continental crust is hotter','Oceanic crust moves faster'],1,'Oceanic crust is thinner but denser, so it sinks (subducts) beneath the lighter continental crust.');
+  mc(b,1,'c','Which feature formed when two continental plates collided?',['A deep ocean trench','A mid-ocean ridge','Tall folded mountains like the Himalayas','A chain of hot spot islands'],2,'Neither continental plate sinks easily, so the crust crumples and folds upward into huge mountains.');
+  mc(b,1,'d','At the transform boundary, the plates slid past each other. What did you observe?',['Volcanoes erupted along the fault','A trench formed','New crust formed in the gap','Earthquakes along the fault, with the road offset'],3,'Transform boundaries make earthquakes and offset features like roads, but almost no volcanoes.');
+  selq(b,1,'e','Match each boundary to the feature it creates.',[
+    ['Plates pull apart under the ocean','1'],['An oceanic plate subducts under a continental plate','0'],['Plates slide past each other','2']],
+    ['Trench + volcanic mountains','Mid-ocean ridge','Fault with earthquakes'],'Divergent → mid-ocean ridge. Convergent with subduction → trench and volcanoes. Transform → faults and earthquakes.');
+  checkFinish(1);
+}
+
+/* ===== STATION 2: Ocean Basin Factory ===== */
+const s2={T:0,seen:new Set(),anim:null};
+function stage2(T){if(T<15)return['Hot mantle pushes the continent up and it starts to crack','Under parts of East Africa'];if(T<55)return['Rift valley','East African Rift'];if(T<105)return['Narrow sea','Red Sea'];return['Ocean basin with a mid-ocean ridge','Atlantic Ocean'];}
+function draw2(){
+  const c=$('c2'),ctx=c.getContext('2d');ctx.clearRect(0,0,900,360);const T=s2.T;
+  const sl=120,ct=95,cb=230,mt=230;
+  const sky=ctx.createLinearGradient(0,0,0,sl);sky.addColorStop(0,'#cfe8ff');sky.addColorStop(1,'#eef7ff');ctx.fillStyle=sky;ctx.fillRect(0,0,900,sl+40);
+  const m=ctx.createLinearGradient(0,mt,0,360);m.addColorStop(0,'#f59e0b');m.addColorStop(1,'#c2410c');ctx.fillStyle=m;ctx.fillRect(0,mt-10,900,370-mt);
+  // gap width
+  let g=0;if(T>=15&&T<55)g=(T-15)/40*70;else if(T>=55&&T<105)g=70+(T-55)/50*170;else if(T>=105)g=240+(T-105)/45*520;
+  const lx=450-g/2,rx=450+g/2;
+  // plume
+  ctx.fillStyle='rgba(255,106,61,.9)';ctx.beginPath();ctx.moveTo(400,360);ctx.quadraticCurveTo(450,mt-20-Math.min(T,15)*2,500,360);ctx.fill();
+  if(T<15){const bulge=T*1.6;poly(ctx,[[0,ct],[300,ct],[450,ct-bulge],[600,ct],[900,ct],[900,cb],[0,cb]],'#c9a26b');ctx.fillStyle='#7cc36b';ctx.fillRect(0,ct-6,300,7);ctx.fillRect(600,ct-6,300,7);
+    ctx.strokeStyle='#5b3b1a';ctx.lineWidth=2;if(T>6){ctx.beginPath();ctx.moveTo(450,ct-bulge);ctx.lineTo(444,ct+20);ctx.lineTo(452,ct+40);ctx.stroke();}
+  }else{
+    const water=T>=55;const floor=T<55?ct+20+(T-15)*.9:200;
+    if(water){ctx.fillStyle='#4fb3e0';ctx.fillRect(lx-30,sl,g+60,200-sl);}
+    // ocean floor with age stripes
+    if(T>=55){const n=14;for(let i=0;i<n;i++){const f=i/n,w=g/2/n;const col=`hsl(${10+f*200},75%,${55-f*10}%)`;ctx.fillStyle=col;ctx.fillRect(450+f*g/2,200,w+1,30);ctx.fillRect(450-f*g/2-w,200,w+1,30);}
+      const rh=T>=105?26:14;poly(ctx,[[450-40,200],[450,200-rh],[450+40,200]],'#d9473a');label(ctx,'Mid-ocean ridge',450,200-rh-10,'#7c2d12',14);
+    }else{poly(ctx,[[lx,ct],[lx+8,floor],[rx-8,floor],[rx,ct],[rx,cb],[lx,cb]],'#b08655');ctx.fillStyle='#7cc36b';ctx.fillRect(lx+8,floor-5,Math.max(0,g-16),6);volcano(ctx,450,floor,16,24,true);label(ctx,'RIFT VALLEY',450,46,'#7c2d12',20);harrow(ctx,300,60,-1,'#1f9bd1');harrow(ctx,600,60,1,'#1f9bd1');}
+    // continents
+    const contL=[[lx-900,ct],[lx,ct],[lx+(T>=55?30:0),T>=55?200:ct+4],[lx+(T>=55?30:0),cb],[lx-900,cb]];
+    const contR=[[rx+900,ct],[rx,ct],[rx-(T>=55?30:0),T>=55?200:ct+4],[rx-(T>=55?30:0),cb],[rx+900,cb]];
+    poly(ctx,contL,'#c9a26b');poly(ctx,contR,'#c9a26b');ctx.fillStyle='#7cc36b';ctx.fillRect(lx-900,ct-6,900,7);ctx.fillRect(rx,ct-6,900,7);
+    if(T>=55){label(ctx,T>=105?'OCEAN BASIN':'NARROW SEA',450,46,'#0b4f6c',20);harrow(ctx,Math.max(60,lx-120),60,-1,'#1f9bd1');harrow(ctx,Math.min(840,rx+120),60,1,'#1f9bd1');}
+    if(T>=55){ctx.fillStyle='#fff';ctx.fillRect(20,300,250,46);ctx.strokeStyle='#d6deea';ctx.strokeRect(20,300,250,46);const gr=ctx.createLinearGradient(30,0,260,0);for(let i=0;i<=5;i++)gr.addColorStop(i/5,`hsl(${10+i*40},75%,${55-i*2}%)`);ctx.fillStyle=gr;ctx.fillRect(30,306,230,12);
+      label(ctx,'youngest rock',30,336,'#1d2b45',12,'left');label(ctx,'oldest rock',260,336,'#1d2b45',12,'right');}
+  }
+  label(ctx,'MANTLE',820,350,'#7c2d12',13);
+  const st=stage2(T);$('r2t').textContent=T+' million years';$('v2t').textContent=T+' million years';$('r2s').textContent=st[0];$('r2e').textContent=st[1];
+  if(T>=15&&T<55&&tick('k2a'))s2.seen.add('a');if(T>=55&&T<105&&tick('k2b'))s2.seen.add('b');if(T>=105&&tick('k2c'))s2.seen.add('c');
+  if(['k2a','k2b','k2c'].every(id=>$(id).classList.contains('ok'))){$('q2lock').classList.add('hidden');$('q2box').classList.remove('hidden');}
+}
+function build2(){
+  $('i2t').oninput=()=>{s2.T=+$('i2t').value;draw2();};
+  let sx,t0;dragger($('c2'),p=>{cancelAnimationFrame(s2.anim);sx=p.x;t0=s2.T;},p=>{s2.T=Math.round(clamp(t0+(p.x-sx)/4,0,150));$('i2t').value=s2.T;draw2();});
+  $('play2').onclick=()=>{cancelAnimationFrame(s2.anim);const st=performance.now();const from=s2.T>=150?0:s2.T;
+    const step=now=>{s2.T=Math.round(Math.min(150,from+(now-st)/40));$('i2t').value=s2.T;draw2();if(s2.T<150)s2.anim=requestAnimationFrame(step);};s2.anim=requestAnimationFrame(step);};
+  const b=$('q2box');
+  selq(b,2,'a','Put the stages of a new ocean basin in order.',[['Narrow sea',1],['Rift valley',0],['Wide ocean basin with a mid-ocean ridge',2]],['1st','2nd','3rd'],'A continent splits into a rift valley, water floods in to make a narrow sea, and the sea widens into an ocean basin.');
+  mc(b,2,'b','Look at the colors of the ocean floor. Where is the YOUNGEST rock?',['Right next to the mid-ocean ridge','Along the edges of the continents','Deep under the continents','It is all the same age'],0,'New crust forms at the ridge and is pushed outward, so rock gets older the farther it is from the ridge.');
+  mc(b,2,'c','The Atlantic Ocean gets a few centimeters wider every year. What is the best explanation?',['A transform fault is pulling it apart','Plates are pulling apart at the Mid-Atlantic Ridge and new ocean floor is forming','Hot spots are adding water to it','The continents are sinking into the mantle'],1,'The Mid-Atlantic Ridge is a divergent boundary. As plates separate, new ocean floor forms and the ocean widens.');
+  mc(b,2,'d','The East African Rift is a long valley where Africa is slowly splitting. What could it become in millions of years?',['A mountain range like the Himalayas','A deep ocean trench','A new ocean basin','A hot spot island chain'],2,'A rift valley is the first stage of ocean basin formation, just like in your simulation.');
+  checkFinish(2);
+}
+
+/* ===== STATION 3: Earthquake Lab ===== */
+const s3={stress:0,off:0,q:0,years:0,yearsSince:0,log:[],seis:[],shake:0,anim:null};
+function draw3(){
+  const c=$('c3'),ctx=c.getContext('2d');ctx.clearRect(0,0,900,380);
+  const sh=s3.shake>0?(Math.random()-.5)*s3.shake*10:0;ctx.save();ctx.translate(sh,0);
+  ctx.fillStyle='#cfe3b0';ctx.fillRect(0,0,450,300);ctx.fillStyle='#e7d9b0';ctx.fillRect(450,0,450,300);
+  for(let i=0;i<14;i++){ctx.fillStyle='rgba(60,90,40,.18)';ctx.beginPath();ctx.arc((i*97)%430+10,(i*53)%280+10,9,0,7);ctx.fill();ctx.fillStyle='rgba(120,90,40,.15)';ctx.beginPath();ctx.arc(460+(i*71)%430,(i*61)%280+10,9,0,7);ctx.fill();}
+  // road: elastic bending
+  const base=150,bend=s3.stress*45,offL=-s3.off/2,offR=s3.off/2;
+  const yL=x=>base+offL-bend*Math.min(1,(450-x)/260),yR=x=>base+offR+bend*Math.min(1,(x-450)/260);
+  const road=(f,x0,x1)=>{ctx.strokeStyle='#3f3f46';ctx.lineWidth=30;ctx.lineCap='butt';ctx.beginPath();for(let x=x0;x<=x1;x+=6){const y=f(x);x===x0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();
+    ctx.strokeStyle='#fde047';ctx.lineWidth=4;ctx.setLineDash([18,14]);ctx.beginPath();for(let x=x0;x<=x1;x+=6){const y=f(x);x===x0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();ctx.setLineDash([]);};
+  road(yL,0,450);road(yR,450,900);
+  ctx.setLineDash([12,8]);ctx.strokeStyle='#b91c1c';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(450,0);ctx.lineTo(450,300);ctx.stroke();ctx.setLineDash([]);
+  label(ctx,'San Andreas Fault',458,22,'#b91c1c',15,'left');
+  label(ctx,'PACIFIC PLATE',200,40,'#1d2b45',17);label(ctx,'NORTH AMERICAN PLATE',680,270,'#1d2b45',17);
+  varrow(ctx,90,230,-1,'#1d2b45',50);label(ctx,'moves north',90,282,'#1d2b45',13);
+  if(s3.stress>.6&&s3.shake<=0)label(ctx,'⚠ rocks are stuck, stress building',450,236,'#c94a22',15);
+  quake(ctx,450,150,s3.shake);
+  ctx.restore();
+  // seismograph
+  ctx.fillStyle='#fff';ctx.fillRect(0,300,900,80);ctx.strokeStyle='#d6deea';ctx.beginPath();ctx.moveTo(0,340);ctx.lineTo(900,340);ctx.stroke();
+  ctx.strokeStyle='#1d2b45';ctx.lineWidth=2;ctx.beginPath();s3.seis.forEach((v,i)=>{const x=900-(s3.seis.length-i)*4;const y=340+v;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+  label(ctx,'SEISMOGRAPH',12,318,'#5b6b85',12,'left');
+  $('r3m').style.width=(s3.stress*100)+'%';$('r3q').textContent=s3.q;$('r3o').textContent=(s3.q*5)+' m';
+}
+function seisTick(amp){s3.seis.push((Math.random()-.5)*(2+amp*70));if(s3.seis.length>230)s3.seis.shift();}
+function addStress(amt){
+  if(s3.shake>0)return;s3.stress=clamp(s3.stress+amt,0,1);s3.yearsSince+=Math.round(amt*1000);seisTick(0);
+  if(s3.stress>=0.999){earthquake3();return;}
+  $('m3').textContent=s3.stress>.6?'The road is bending! The rocks along the fault are stuck while the plates keep moving. Stress is building…':'The plate is moving, but the rocks at the fault are stuck. Watch the road.';
+  draw3();
+}
+function earthquake3(){
+  s3.q++;const yrs=s3.yearsSince;s3.yearsSince=0;s3.log.push([s3.q,yrs,s3.q*5]);
+  $('t3').innerHTML=s3.log.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+  const t0=performance.now();const startStress=s3.stress;
+  const step=now=>{const t=(now-t0)/1400;s3.shake=Math.max(0,1-t);s3.stress=startStress*Math.max(0,1-t*4);s3.off=(s3.q-1)*44+44*Math.min(1,t*4);seisTick(s3.shake);draw3();
+    if(t<1)s3.anim=requestAnimationFrame(step);else{s3.shake=0;s3.stress=0;s3.off=s3.q*44;draw3();}};
+  s3.anim=requestAnimationFrame(step);
+  $('m3').innerHTML=`💥 <b>EARTHQUAKE!</b> The stuck rocks suddenly slipped and released the stored energy. The road snapped and is now offset by <b>${s3.q*5} m</b> in total.`;
+  if(s3.q>=1)tick('k3a');if(s3.q>=3)tick('k3b');
+  if($('k3a').classList.contains('ok')&&$('k3b').classList.contains('ok')){$('q3lock').classList.add('hidden');$('q3box').classList.remove('hidden');}
+}
+function build3(){
+  let sy;dragger($('c3'),p=>{sy=p.y;},p=>{const dy=sy-p.y;if(dy>0){addStress(dy/260);}sy=p.y;});
+  $('push3').onclick=()=>addStress(0.1);
+  $('reset3').onclick=()=>{cancelAnimationFrame(s3.anim);Object.assign(s3,{stress:0,off:0,q:s3.q,shake:0,yearsSince:0});s3.off=s3.q*44;draw3();};
+  setInterval(()=>{if($('s3').classList.contains('active')&&s3.shake<=0){seisTick(0);draw3();}},120);
+  const b=$('q3box');
+  mc(b,3,'a','Before each earthquake, the road slowly bent. Why?',['The plates were stuck at the fault while the rest of each plate kept moving, so stress built up','The road was melting from heat in the mantle','A volcano was pushing the road up','The plates were moving apart'],0,'Friction locks the rocks at the fault. The plates keep moving, so the rocks bend and store energy.');
+  mc(b,3,'b','What happened at the moment of each earthquake?',['The plates stopped moving forever','Magma rose into the fault','The stuck rocks suddenly slipped and released the stored energy','The fault turned into a trench'],2,'An earthquake is the sudden slip that releases built-up stress. That is why the road snapped and was left offset.');
+  mc(b,3,'c','The San Andreas Fault is best described as:',['A divergent boundary where new crust forms','A transform boundary where two plates slide past each other','A convergent boundary where an oceanic plate subducts','A hot spot under a continent'],1,'The Pacific and North American plates slide past each other along the San Andreas, a transform boundary.');
+  mc(b,3,'d','Which types of plate boundaries can produce earthquakes?',['Only transform boundaries','Only convergent boundaries','Only divergent boundaries','Convergent, divergent and transform boundaries'],3,'All three boundary types make earthquakes because rocks break and slip wherever plates interact. Your Station 1 tests showed this too.');
+  checkFinish(3);
+}
+
+/* ===== STATION 4: Hot Spots ===== */
+const s4={mode:'ocean',off:0,volc:[{born:0}],mag:0,erupt:0,ecount:0,anim:null,pump:null,cald:0};
+const HX=660,STEP=80;
+function draw4(){
+  const c=$('c4'),ctx=c.getContext('2d');ctx.clearRect(0,0,900,380);
+  if(s4.mode==='ocean'){
+    const CY=118,TOPH=236;
+    const g=ctx.createLinearGradient(0,0,0,TOPH);g.addColorStop(0,'#5cc0ea');g.addColorStop(1,'#1f7fb8');ctx.fillStyle=g;ctx.fillRect(0,0,900,TOPH);
+    ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=2;for(let x=-80;x<1000;x+=80){const xx=((x-s4.off)%960+960)%960-40;ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx-40,TOPH);ctx.stroke();}
+    const hg=ctx.createRadialGradient(HX,CY,5,HX,CY,64);hg.addColorStop(0,'rgba(255,90,40,.9)');hg.addColorStop(1,'rgba(255,90,40,0)');ctx.fillStyle=hg;ctx.beginPath();ctx.arc(HX,CY,64,0,7);ctx.fill();
+    const vis=[];
+    s4.volc.forEach(v=>{const age=(s4.off-v.born)/STEP;const x=HX-(s4.off-v.born);if(x<-60)return;vis.push([x,age]);
+      const size=age<0.6?20+age*34:Math.max(9,40-age*6);const under=age>4.5;
+      ctx.fillStyle=under?'rgba(29,43,69,.35)':'#7a5a3e';ctx.beginPath();ctx.ellipse(x,CY,size*1.2,size*.8,0,0,7);ctx.fill();
+      if(!under){ctx.fillStyle='#7cc36b';ctx.beginPath();ctx.ellipse(x,CY,size*.95,size*.6,0,0,7);ctx.fill();}
+      if(age<0.6){ctx.fillStyle='#ff6a3d';ctx.beginPath();ctx.arc(x,CY,6,0,7);ctx.fill();ctx.fillStyle='rgba(110,110,110,.5)';ctx.beginPath();ctx.arc(x+8,CY-14,9,0,7);ctx.arc(x+18,CY-26,12,0,7);ctx.fill();}
+      label(ctx,`${Math.max(0,Math.round(age))} My`,x,CY-size-8,'#fff',14);
+      if(under)label(ctx,'seamount',x,CY+size+16,'#e0f2fe',11);
+    });
+    harrow(ctx,120,30,-1,'#fff',64);label(ctx,'PACIFIC PLATE moves this way',170,36,'#fff',14,'left');
+    label(ctx,'TOP VIEW · My = million years old',14,226,'#fff',12,'left');label(ctx,'HOT SPOT',HX,CY+62,'#7c2d12',14);
+    // side view
+    const S0=242,WL=280,PT=300,PB=322;
+    ctx.fillStyle='#eef7ff';ctx.fillRect(0,S0,900,WL-S0);ctx.fillStyle='#4fb3e0';ctx.fillRect(0,WL,900,PT-WL);
+    const m=ctx.createLinearGradient(0,PB,0,380);m.addColorStop(0,'#f59e0b');m.addColorStop(1,'#c2410c');ctx.fillStyle=m;ctx.fillRect(0,PB,900,380-PB);
+    ctx.fillStyle='#ff4d1f';ctx.beginPath();ctx.moveTo(HX-38,380);ctx.quadraticCurveTo(HX-10,PB+6,HX,PB);ctx.quadraticCurveTo(HX+10,PB+6,HX+38,380);ctx.fill();
+    label(ctx,'mantle plume',HX+40,370,'#fff',12,'left');
+    ctx.fillStyle='#4b5563';ctx.fillRect(0,PT,900,PB-PT);
+    vis.forEach(([x,age])=>{const h=age<0.6?28+age*40:Math.max(6,52-age*9);volcano(ctx,x,PT,h,h*1.6,age<0.6,'#6b4f3a');if(age<0.6){ctx.fillStyle='#ff6a3d';ctx.fillRect(x-3,PT,6,PB-PT);}});
+    harrow(ctx,120,PT+11,-1,'#fff',50);
+    label(ctx,'SIDE VIEW: the plate moves, the hot spot stays put',14,S0+16,'#1d2b45',12,'left');
+    $('r4d').textContent=Math.round(s4.off/STEP)+' million years';$('r4n').textContent=vis.length;
+  }else{
+    const sky=ctx.createLinearGradient(0,0,0,150);sky.addColorStop(0,'#cfe8ff');sky.addColorStop(1,'#eef7ff');ctx.fillStyle=sky;ctx.fillRect(0,0,900,150);
+    const top=140,cald=s4.cald;
+    poly(ctx,[[0,top],[300,top],[350,top+cald*28],[550,top+cald*28],[600,top],[900,top],[900,380],[0,380]],'#c9a26b');
+    ctx.fillStyle='#7cc36b';ctx.fillRect(0,top-6,300,7);ctx.fillRect(600,top-6,300,7);ctx.fillRect(350,top-6+cald*28,200,7);
+    const m=ctx.createLinearGradient(0,330,0,380);m.addColorStop(0,'#f59e0b');m.addColorStop(1,'#c2410c');ctx.fillStyle=m;ctx.fillRect(0,330,900,50);
+    ctx.fillStyle='rgba(255,106,61,.95)';ctx.beginPath();ctx.moveTo(400,380);ctx.quadraticCurveTo(450,250,500,380);ctx.fill();
+    ctx.fillStyle='rgba(255,106,61,.95)';ctx.fillRect(440,262,20,90);
+    if(s4.erupt>0){ctx.fillStyle='#ff6a3d';ctx.fillRect(443,top+cald*28,14,200-top);}
+    // chamber
+    ctx.fillStyle='#5b3b1a';ctx.beginPath();ctx.ellipse(450,230,170,45,0,0,7);ctx.fill();
+    ctx.save();ctx.beginPath();ctx.ellipse(450,230,166,41,0,0,7);ctx.clip();ctx.fillStyle='#ff6a3d';ctx.fillRect(280,272-82*s4.mag,340,90);ctx.restore();
+    label(ctx,'MAGMA CHAMBER',450,236,'#fff',15);
+    if(s4.mag>.75&&s4.erupt<=0){label(ctx,'⚠ ground is bulging, earthquakes increasing',450,110,'#c94a22',15);ctx.fillStyle='rgba(201,74,34,.25)';ctx.beginPath();ctx.ellipse(450,top,160,12*s4.mag,0,Math.PI,0);ctx.fill();}
+    if(s4.erupt>0){const e=s4.erupt;ctx.fillStyle=`rgba(90,90,90,${.8*e})`;for(let i=0;i<9;i++){ctx.beginPath();ctx.arc(450+(i-4)*40*(1.4-e),top-30-i%3*40-(1-e)*120,40+(1-e)*60,0,7);ctx.fill();}
+      const gtop=top+cald*28;ctx.fillStyle='#ff6a3d';ctx.beginPath();ctx.moveTo(425,gtop);ctx.lineTo(450,gtop-130*e);ctx.lineTo(475,gtop);ctx.fill();label(ctx,'SUPERERUPTION!',450,74,'#b91c1c',26);}
+    if(cald>.5&&s4.erupt<=0)label(ctx,'Caldera: the ground collapsed into the empty chamber',450,110,'#7c2d12',15);
+    label(ctx,'YELLOWSTONE (North American Plate, over a hot spot)',20,24,'#1d2b45',14,'left');label(ctx,'SIDE VIEW',880,24,'#1d2b45',13,'right');
+    $('r4m').style.width=(s4.mag*100)+'%';$('r4e').textContent=s4.ecount;
+  }
+}
+function newVolc(){const last=s4.volc[s4.volc.length-1];if(s4.off-last.born>=STEP){s4.volc.push({born:last.born+STEP});}}
+function check4(){const n=s4.volc.length;if(n>=5&&tick('k4a'))$('m4').innerHTML='✅ Chain built! The volcano over the hot spot is the youngest. The farther a volcano is from the hot spot, the older it is.';
+  if($('k4a').classList.contains('ok')&&$('k4b').classList.contains('ok')){$('q4lock').classList.add('hidden');$('q4box').classList.remove('hidden');}}
+function setMode4(m){s4.mode=m;$('h-ocean').classList.toggle('on',m==='ocean');$('h-yell').classList.toggle('on',m==='yell');
+  $('ro4a').classList.toggle('hidden',m!=='ocean');$('b4a').classList.toggle('hidden',m!=='ocean');$('ro4b').classList.toggle('hidden',m==='ocean');$('b4b').classList.toggle('hidden',m==='ocean');
+  $('how4').textContent=m==='ocean'?'Drag the Pacific Plate to the LEFT to move it over the hot spot.':'Press and HOLD the button (or hold down on the picture) to pump magma up from the hot spot.';
+  $('m4').textContent=m==='ocean'?'The Pacific Plate moves over the Hawaiian hot spot. Move it to build a chain.':'Yellowstone sits on a continent above a hot spot. Its magma chamber is filling up…';draw4();}
+function pump(on){clearInterval(s4.pump);if(!on)return;s4.pump=setInterval(()=>{if(s4.erupt>0)return;s4.mag=clamp(s4.mag+.025,0,1);if(s4.cald>0&&s4.mag>.2)s4.cald=Math.max(0,s4.cald-.02);draw4();if(s4.mag>=0.999)erupt4();},60);}
+function erupt4(){clearInterval(s4.pump);s4.ecount++;const t0=performance.now();
+  const step=now=>{const t=(now-t0)/2600;s4.erupt=Math.max(0,1-t);s4.mag=Math.max(0,1-t*1.4);s4.cald=Math.min(1,t*1.3);draw4();if(t<1)requestAnimationFrame(step);else{s4.erupt=0;draw4();}};requestAnimationFrame(step);
+  $('m4').innerHTML='🌋 <b>SUPERERUPTION!</b> So much magma erupted that the empty chamber collapsed and left a giant crater called a <b>caldera</b>. Yellowstone has had three supereruptions in the last 2.1 million years.';
+  tick('k4b');check4();}
+function build4(){
+  $('h-ocean').onclick=()=>setMode4('ocean');$('h-yell').onclick=()=>setMode4('yell');
+  let sx;dragger($('c4'),p=>{sx=p.x;if(s4.mode==='yell')pump(true);},p=>{if(s4.mode!=='ocean')return;const dx=sx-p.x;if(dx>0){s4.off+=dx;newVolc();draw4();check4();}sx=p.x;},()=>pump(false));
+  $('move4').onclick=()=>{cancelAnimationFrame(s4.anim);const t0=performance.now(),from=s4.off;const step=now=>{const t=Math.min(1,(now-t0)/700);s4.off=from+STEP*t;newVolc();draw4();if(t<1)s4.anim=requestAnimationFrame(step);else check4();};s4.anim=requestAnimationFrame(step);};
+  $('reset4').onclick=()=>{s4.off=0;s4.volc=[{born:0}];draw4();};
+  const pb=$('pump4');pb.addEventListener('pointerdown',e=>{e.preventDefault();pump(true);});['pointerup','pointerleave','pointercancel'].forEach(ev=>pb.addEventListener(ev,()=>pump(false)));
+  setMode4('ocean');
+  const b=$('q4box');
+  mc(b,4,'a','In the hot spot chain you built, which volcano was the OLDEST?',['The one right over the hot spot','The one farthest from the hot spot','The tallest one','They were all the same age'],1,'The plate carries each volcano away from the hot spot, so the farther away it is, the older it is.');
+  mc(b,4,'b','Why does a hot spot make a CHAIN of volcanoes instead of one big volcano?',['The hot spot stays in place while the plate moves over it','The hot spot moves across the ocean floor','Earthquakes break one volcano into pieces','Two plates are colliding'],0,'The plume stays put. As the plate slides over it, new volcanoes form and older ones are carried away.');
+  mc(b,4,'c','Hawaii is in the middle of the Pacific Plate, thousands of kilometers from a plate boundary. Why does it have active volcanoes?',['It sits on a mid-ocean ridge','It sits on a transform fault','It sits over a hot spot','It sits on a subduction zone'],2,'Hot spot volcanoes form in the middle of plates, far from any boundary.');
+  mc(b,4,'d','Which statement best describes the Yellowstone supervolcano?',['It formed where two continental plates collide','It is a mid-ocean ridge on land','It is a volcanic island arc','A continental plate sits over a hot spot, and its huge eruptions can leave a caldera'],3,'Yellowstone is a hot spot under the North American Plate. Its supereruptions emptied the magma chamber and the ground collapsed into calderas.');
+  checkFinish(4);
+}
+
+/* ===== STATION 5 ===== */
+function build5(){
+  const b=$('q5box');
+  const Q=[
+   ['The Andes Mountains in South America have many volcanoes. They formed where the oceanic Nazca Plate meets the continental South American Plate. What process caused them?',['The plates are sliding past each other','The Nazca Plate is subducting under the South American Plate','The plates are pulling apart','A hot spot is under the middle of the plate'],1,'At an oceanic-continental convergent boundary, the denser oceanic plate subducts and melting rock feeds volcanoes.'],
+   ['Iceland sits right on the Mid-Atlantic Ridge. What is most likely happening under Iceland?',['Two plates are colliding and folding into mountains','An oceanic plate is sinking into a trench','Two plates are pulling apart and magma is rising to make new crust','Two plates are sliding past each other with no magma'],2,'Iceland is on a divergent boundary, so magma rises as the plates separate.'],
+   ['The Himalayas are still getting taller every year. What is the best explanation?',['The Indian and Eurasian plates, both continental, are still colliding','A hot spot is pushing them up','They are on a mid-ocean ridge','They are on a transform fault'],0,'Continental-continental collision is still going on, so the crust keeps folding upward.'],
+   ['The Mariana Trench is the deepest place in the ocean. How did it form?',['Two plates pulled apart','One oceanic plate subducted under another oceanic plate','A supervolcano collapsed','Plates slid past each other'],1,'Trenches form where one plate subducts under another. Here both are oceanic, which also made a volcanic island arc.'],
+   ['Which type of plate boundary is LEAST likely to have volcanoes?',['Convergent with subduction','Divergent on the ocean floor','Transform','Divergent on a continent'],2,'At transform boundaries plates slide past each other, so no magma is produced. They make earthquakes, not volcanoes.'],
+   ['A chain of volcanic islands gets older the farther it is from one active volcano. The islands are not near a plate boundary. What formed them?',['A plate moving over a hot spot','A subduction zone','A transform fault','A rift valley'],0,'A stationary hot spot under a moving plate makes a chain with the youngest volcano over the hot spot.'],
+   ['Scientists say the Red Sea is a young ocean basin. Which sequence best describes how it formed?',['Ocean → trench → mountains','Mountains → hot spot → island chain','Rift valley → narrow sea → (in the future) a wide ocean','Fault → earthquake → volcano'],2,'Ocean basins form in stages: rift valley, narrow sea, then wide ocean basin.'],
+   ['Which list shows events that can be caused by plate tectonics?',['Ocean basins forming, earthquakes, mountain building and volcanic eruptions','Only earthquakes','Only volcanoes and hot springs','Tides, seasons and moon phases'],0,'Plate tectonics causes ocean basin formation, earthquakes, mountain building and volcanic eruptions, including supervolcanoes and hot spots.']
+  ];
+  Q.forEach((q,i)=>mc(b,5,'q'+i,`<span style="color:var(--lava-d)">${i+1}.</span> ${q[0]}`,q[1],q[2],q[3]));
+  checkFinish(5);
+}
+
+/* ===== RESULTS ===== */
+function showResults(){
+  let tot=0,cor=0;const names={1:'Boundary Builder',2:'Ocean Basins',3:'Earthquakes',4:'Hot Spots',5:'Certification'};let grid='';
+  for(let st=1;st<=5;st++){const v=Object.values(S.score[st]);const c=v.filter(Boolean).length;tot+=v.length;cor+=c;grid+=`<div class="sg"><small>${names[st]}</small><b>${c} / ${v.length}</b></div>`;}
+  const pct=tot?Math.round(cor/tot*100):0;const mins=Math.round((Date.now()-S.start)/60000);
+  $('certName').textContent=S.name;$('certPct').textContent=pct+'%';$('certRaw').textContent=`${cor} of ${tot} correct on the first try`;$('certGrid').innerHTML=grid;
+  $('certMeta').textContent=`Completed ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · Time: ${mins} min`;show('results');
+}
+</script>
+</body>
+</html>
