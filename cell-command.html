@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cell Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --deep:#2a2350;--deep2:#3d3373;--violet:#8b5cf6;--violet-l:#ede9fe;--teal:#14b8a6;--teal-d:#0f8a7c;--teal-l:#d5f5f0;--pink:#ec4899;--pink-d:#be2f77;--pink-l:#fde4f1;--lime:#84cc16;--sun:#fbbf24;--sun-l:#fff5d6;
+  --bg:#f1effa;--card:#fff;--ink:#2a2350;--muted:#625c80;--line:#ddd8ee;--good:#15803d;--good-l:#dcfce7;--bad:#b91c1c;--bad-l:#fee2e2;
+}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Nunito,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45}
+h1,h2,h3{font-family:Fredoka,Nunito,sans-serif;margin:0 0 .35em;line-height:1.15}
+button{font-family:inherit}
+header.top{background:var(--deep);color:#fff;padding:10px 16px;display:none;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header.top.show{display:flex}header.top .brand{font-family:Fredoka;font-size:18px}
+header.top .meta{display:flex;gap:12px;font-weight:700;font-size:14px;align-items:center;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.14);padding:4px 10px;border-radius:999px}
+.screen{display:none;max-width:1000px;margin:0 auto;padding:16px 16px 48px}.screen.active{display:block}
+.card{background:var(--card);border-radius:18px;padding:18px;box-shadow:0 2px 0 var(--line),0 8px 24px rgba(42,35,80,.06);margin-bottom:16px}
+.btn{border:none;border-radius:12px;padding:11px 18px;font-weight:800;font-size:15px;cursor:pointer;background:var(--violet);color:#fff;box-shadow:0 4px 0 #6d3fd1;touch-action:manipulation}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #6d3fd1}
+.btn:disabled{background:#c3bed6;box-shadow:0 4px 0 #a7a1bf;cursor:not-allowed}
+.btn.sun{background:var(--sun);color:var(--deep);box-shadow:0 4px 0 #c99a14}
+.btn.pink{background:var(--pink);box-shadow:0 4px 0 var(--pink-d)}
+.btn.teal{background:var(--teal);box-shadow:0 4px 0 var(--teal-d)}
+.btn.ghost{background:#fff;color:var(--deep);box-shadow:0 4px 0 var(--line);border:2px solid var(--line)}
+.btn.small{padding:7px 12px;font-size:14px}
+.btn.on{background:var(--deep);color:#fff;box-shadow:0 4px 0 #15102e;border-color:var(--deep)}
+.hero{background:linear-gradient(140deg,#2a2350 0%,#3d3373 55%,#ec4899 145%);color:#fff;border-radius:24px;padding:28px 24px;position:relative;overflow:hidden;margin-top:8px}
+.hero h1{font-size:clamp(32px,6vw,54px);margin-bottom:6px}
+.hero .tag{display:inline-block;background:var(--sun);color:var(--deep);font-weight:800;border-radius:999px;padding:4px 12px;font-size:13px;margin-bottom:12px}
+.hero p{max-width:560px;font-size:17px;opacity:.95;position:relative;z-index:2}
+.hero svg{position:absolute;right:3%;bottom:-16px;width:min(32vw,220px)}
+.namebox{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;max-width:560px;position:relative;z-index:2}
+.namebox input{flex:1;min-width:200px;padding:13px 14px;border-radius:12px;border:none;font-size:16px;font-family:inherit}
+.overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:16px}
+.ov{background:var(--card);border-radius:16px;padding:14px;border-top:6px solid var(--violet)}
+.ov:nth-child(2){border-color:var(--teal)}.ov:nth-child(3){border-color:var(--pink)}.ov:nth-child(4){border-color:var(--lime)}.ov:nth-child(5){border-color:var(--sun)}
+.ov b{font-family:Fredoka;font-size:17px;display:block}.ov small{color:var(--muted);font-weight:700}
+.hubgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.station{background:var(--card);border-radius:18px;padding:16px;border:3px solid transparent;cursor:pointer;position:relative;box-shadow:0 2px 0 var(--line)}
+.station:hover{border-color:var(--violet)}.station.locked{opacity:.55;cursor:not-allowed}.station.locked:hover{border-color:transparent}
+.station .num{font-family:Fredoka;background:var(--deep);color:#fff;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;margin-bottom:8px}
+.station .status{position:absolute;top:14px;right:14px;font-weight:800;font-size:13px;padding:3px 9px;border-radius:999px;background:var(--sun-l)}
+.station.done .status{background:var(--good-l);color:var(--good)}.station.locked .status{background:#ebe8f3;color:var(--muted)}
+.station .teks{font-size:12px;font-weight:800;color:var(--pink-d)}
+.progressbar{height:12px;background:#ddd9ea;border-radius:999px;overflow:hidden;margin:6px 0 2px}
+.progressbar div{height:100%;background:linear-gradient(90deg,var(--violet),var(--teal),var(--pink));width:0;transition:width .4s}
+.stHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.stHead .teks{background:var(--pink-l);color:var(--pink-d);font-weight:800;font-size:13px;border-radius:999px;padding:4px 10px}
+.brief{background:var(--sun-l);border-left:6px solid var(--sun);border-radius:12px;padding:12px 14px;margin:10px 0}
+.howto{display:flex;align-items:center;gap:10px;background:var(--teal-l);border-radius:12px;padding:9px 12px;font-weight:800;color:#0b6359;margin:10px 0;font-size:15px}
+.howto .hand{font-size:22px}
+canvas{width:100%;height:auto;display:block;border-radius:14px;background:#faf9fe;touch-action:none}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;align-items:center}
+.group{background:#f5f3fb;border-radius:12px;padding:8px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.group b{font-size:13px;color:var(--muted);margin-right:4px}
+.readouts{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.ro{background:var(--deep);color:#fff;border-radius:12px;padding:8px 12px;min-width:110px;flex:1}
+.ro small{display:block;font-size:11px;opacity:.75;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.ro b{font-family:Fredoka;font-size:17px}
+.msg{font-weight:700;padding:10px 12px;border-radius:10px;background:#f5f3fb;margin:8px 0;min-height:20px}
+table.data{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+table.data th{background:var(--deep);color:#fff;padding:7px;text-align:center;font-weight:800}
+table.data td{padding:6px;text-align:center;border-bottom:1px solid var(--line)}
+table.data tr:nth-child(even) td{background:#faf9fe}
+.tasks{list-style:none;padding:0;margin:8px 0}
+.tasks li{padding:9px 12px;border-radius:10px;background:#f5f3fb;margin-bottom:6px;font-weight:700;display:flex;gap:10px;align-items:flex-start}
+.tasks li .box{flex:0 0 22px;height:22px;border-radius:6px;border:2px solid var(--muted);display:grid;place-items:center;font-size:14px;margin-top:1px}
+.tasks li.ok{background:var(--good-l)}.tasks li.ok .box{background:var(--good);border-color:var(--good);color:#fff}
+.q{border:2px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;background:#fff}
+.q .qp{font-weight:800;margin:0 0 10px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;font-size:15px;cursor:pointer;display:flex;gap:10px;align-items:flex-start;color:var(--ink)}
+.opt:hover:not(:disabled){border-color:var(--violet);background:var(--violet-l)}
+.opt .letter{flex:0 0 26px;height:26px;border-radius:8px;background:var(--deep);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.opt.right{border-color:var(--good);background:var(--good-l)}.opt.wrong{border-color:var(--bad);background:var(--bad-l);opacity:.75}
+.fb{margin-top:8px;font-weight:700;font-size:15px}.fb.good{color:var(--good)}.fb.bad{color:var(--bad)}
+.hidden{display:none!important}
+.locknote{background:#f5f3fb;border:2px dashed var(--line);border-radius:14px;padding:14px;color:var(--muted);font-weight:700;text-align:center}
+.finishbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.job{display:flex;gap:12px;align-items:center;background:linear-gradient(90deg,var(--deep),var(--deep2));color:#fff;border-radius:14px;padding:12px 16px;margin:10px 0}
+.job .ic{font-size:34px}.job b{font-family:Fredoka;font-size:19px;display:block}.job small{opacity:.8;font-weight:700}
+.ko{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.ko button{border:3px solid var(--line);background:#fff;border-radius:12px;padding:8px 10px;font-weight:800;cursor:pointer;color:var(--ink);font-family:inherit;font-size:14px}
+.ko button.on{border-color:var(--pink);background:var(--pink-l)}.ko button.done::after{content:" ✓";color:var(--good)}
+.spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.spec .card{margin:0;border:2px solid var(--line)}
+.spec canvas{background:#111;border-radius:50%;aspect-ratio:1;max-width:260px;margin:0 auto}
+.spec .btns{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.spec .fb{text-align:center}
+.guide{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.gcard{border:2px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;background:#fff;transition:all .3s}
+.gcard canvas{flex:0 0 70px;width:70px;height:60px;border-radius:10px;background:#f5f3fb}
+.gcard b{font-family:Fredoka;font-size:17px;display:block}
+.gcard .l{font-size:11px;font-weight:900;letter-spacing:.06em;color:var(--violet);margin-top:4px}
+.gcard p{margin:0;font-size:13.5px;font-weight:600;line-height:1.3}
+.gcard.locked{opacity:.55;background:#f5f3fb}
+.gcard.new{border-color:var(--sun);box-shadow:0 0 0 4px var(--sun-l)}
+.cert{background:linear-gradient(135deg,#fff 0%,#f6f1ff 100%);border:4px solid var(--sun);border-radius:24px;padding:26px;text-align:center}
+.cert h1{font-size:clamp(26px,5vw,38px)}
+.bigscore{font-family:Fredoka;font-size:64px;color:var(--violet);line-height:1}
+.scoregrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:18px 0;text-align:left}
+.sg{background:#fff;border-radius:12px;padding:10px 12px;border:2px solid var(--line)}
+.sg small{display:block;color:var(--muted);font-weight:800;font-size:12px}.sg b{font-family:Fredoka;font-size:22px}
+@media print{header.top,.noprint{display:none!important}body{background:#fff}.screen{padding:0}}
+@media (max-width:600px){.hero svg{opacity:.3}.card{padding:14px}}
+</style>
+</head>
+<body>
+<header class="top" id="topbar">
+  <div class="brand">🔬 Cell Command Center</div>
+  <div class="meta"><span class="pill" id="who"></span><span class="pill">⏱ <span id="clock">0:00</span></span><button class="btn small ghost" onclick="goHub()">🏠 Command Map</button></div>
+</header>
+
+<section class="screen active" id="intro">
+  <div class="hero">
+    <span class="tag">TEKS 8.13A · STAAR Readiness</span>
+    <h1>Cell Command Center</h1>
+    <p>Welcome, cell commander! Every living thing is made of cells, and every cell is packed with tiny parts called <b>organelles</b>, each with its own job. Label them, put them to work, shut them down to see what breaks, and learn to tell plant cells from animal cells.</p>
+    <div class="namebox"><input id="nameIn" placeholder="Type your first and last name" maxlength="40" autocomplete="off"><button class="btn sun" onclick="startGame()">Start Mission ➜</button></div>
+    <svg viewBox="0 0 220 180" aria-hidden="true"><rect x="10" y="10" width="200" height="160" rx="18" fill="#4d7c0f"/><rect x="20" y="20" width="180" height="140" rx="12" fill="#f0fdf4" stroke="#f59e0b" stroke-width="3"/><rect x="95" y="38" width="90" height="105" rx="20" fill="#bae6fd"/><circle cx="60" cy="60" r="22" fill="#8b5cf6"/><circle cx="62" cy="58" r="8" fill="#5b21b6"/><ellipse cx="55" cy="125" rx="16" ry="9" fill="#22c55e"/><ellipse cx="80" cy="100" rx="13" ry="7" fill="#f97316"/></svg>
+  </div>
+  <div class="overview">
+    <div class="ov"><b>1 · Cell Explorer</b><small>Label plant &amp; animal cells · ~10 min</small></div>
+    <div class="ov"><b>2 · Job Board</b><small>Match jobs to organelles · ~8 min</small></div>
+    <div class="ov"><b>3 · Knockout Lab</b><small>Shut down an organelle · ~10 min</small></div>
+    <div class="ov"><b>4 · Plant vs. Animal</b><small>Sort &amp; use the microscope · ~9 min</small></div>
+    <div class="ov"><b>5 · Final Certification</b><small>STAAR-style check · ~8 min</small></div>
+  </div>
+</section>
+
+<section class="screen" id="hub">
+  <div class="card"><h2>Command Map</h2><p style="margin:0;color:var(--muted);font-weight:700">Complete each station in order. Your first answer on every question counts toward your score, so think before you click!</p>
+    <div class="progressbar"><div id="hubBar"></div></div><small id="hubTxt" style="font-weight:800;color:var(--muted)"></small></div>
+  <div class="hubgrid" id="hubGrid"></div>
+</section>
+
+<section class="screen" id="s1">
+  <div class="card">
+    <div class="stHead"><h2>Station 1 · Cell Explorer</h2><span class="teks">TEKS 8.13A</span></div>
+    <div class="brief"><b>Commander's Briefing:</b> This is a magnified <b>plant cell</b>. Drag each label from the tray onto the part of the cell it names. When you place a label correctly, you'll learn that organelle's job.</div>
+    <div class="controls"><div class="group"><b>CELL</b><button class="btn small ghost" id="m-plant">🌿 Plant cell</button><button class="btn small ghost" id="m-animal">🐾 Animal cell</button></div></div>
+    <div class="howto"><span class="hand">👆</span><span>Drag a label from the bottom tray and drop it on the matching part of the cell.</span></div>
+    <canvas id="c1" width="900" height="440"></canvas>
+    <div class="msg" id="m1">Start with any label.</div>
+  </div>
+  <div class="card">
+    <h3>📘 Organelle Field Guide</h3>
+    <p style="margin:0 0 10px;color:var(--muted);font-weight:700">Each card unlocks when you label that organelle. Use this guide for the rest of the lab.</p>
+    <div class="guide" id="guide1"></div>
+  </div>
+  <div class="card">
+    <h3>🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k1a"><span class="box"></span><span>Label all <b>8 parts</b> of the plant cell.</span></li>
+      <li id="k1b"><span class="box"></span><span>Switch to the <b>animal cell</b> and label every part you can find.</span></li>
+    </ul>
+  </div>
+  <div class="card"><h3>🧠 Compare the Cells</h3><div id="q1lock" class="locknote">🔒 Finish both lab tasks to unlock the questions.</div><div id="q1box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f1txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f1" disabled onclick="finishStation(1)">Complete Station ✔</button></div>
+</section>
+
+<section class="screen" id="s2">
+  <div class="card">
+    <div class="stHead"><h2>Station 2 · Job Board</h2><span class="teks">TEKS 8.13A</span></div>
+    <div class="brief"><b>Commander's Briefing:</b> Requests are coming in from all over the cell. For each job, <b>click the organelle</b> that does it. Your first click on each job counts toward your score.</div>
+    <div class="job" id="job2"><span class="ic" id="j2i">⚡</span><div><small id="j2n">JOB 1 OF 8</small><b id="j2t">…</b></div></div>
+    <canvas id="c2" width="900" height="400" style="cursor:pointer"></canvas>
+    <div class="msg" id="m2">Click the organelle that should handle this job.</div>
+    <div style="display:flex;gap:10px"><button class="btn sun hidden" id="next2">Next job ➜</button></div>
+  </div>
+  <div class="card"><h3>🧠 Wrap-Up</h3><div id="q2lock" class="locknote">🔒 Finish all 8 jobs to unlock the question.</div><div id="q2box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f2txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f2" disabled onclick="finishStation(2)">Complete Station ✔</button></div>
+</section>
+
+<section class="screen" id="s3">
+  <div class="card">
+    <div class="stHead"><h2>Station 3 · Knockout Lab</h2><span class="teks">TEKS 8.13A</span></div>
+    <div class="brief"><b>Commander's Briefing:</b> One way scientists learn what a part does is to see what happens when it stops working. Pick an organelle to <b>shut down</b> in this leaf cell, then watch the cell's systems.</div>
+    <div class="ko" id="ko3">
+      <button data-k="mito">⚡ Mitochondria</button><button data-k="chloro">🌞 Chloroplasts</button><button data-k="ribo">🔩 Ribosomes</button><button data-k="nucleus">🧬 Nucleus</button><button data-k="membrane">🚪 Cell membrane</button><button data-k="vacuole">💧 Vacuole</button><button data-k="wall">🧱 Cell wall</button>
+    </div>
+    <canvas id="c3" width="900" height="380"></canvas>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><button class="btn pink" id="run3">⛔ Shut it down</button><button class="btn ghost" id="reset3">↺ Restore the cell</button></div>
+    <div class="msg" id="m3">Choose an organelle to shut down.</div>
+  </div>
+  <div class="card">
+    <h3>📋 Knockout Log</h3>
+    <table class="data"><thead><tr><th>Organelle shut down</th><th>What failed</th><th>What that tells us about its job</th></tr></thead><tbody id="t3"><tr><td colspan="3" style="color:var(--muted)">No knockouts yet</td></tr></tbody></table>
+    <h3 style="margin-top:14px">🎯 Lab Tasks</h3>
+    <ul class="tasks">
+      <li id="k3a"><span class="box"></span><span>Shut down the <b>mitochondria</b>.</span></li>
+      <li id="k3b"><span class="box"></span><span>Shut down the <b>chloroplasts</b>.</span></li>
+      <li id="k3c"><span class="box"></span><span>Shut down the <b>vacuole</b> and watch the plant.</span></li>
+      <li id="k3d"><span class="box"></span><span>Shut down <b>two more</b> organelles of your choice.</span></li>
+    </ul>
+  </div>
+  <div class="card"><h3>🧠 Analyze the Knockouts</h3><div id="q3lock" class="locknote">🔒 Finish all four lab tasks to unlock the questions.</div><div id="q3box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f3txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f3" disabled onclick="finishStation(3)">Complete Station ✔</button></div>
+</section>
+
+<section class="screen" id="s4">
+  <div class="card">
+    <div class="stHead"><h2>Station 4 · Plant vs. Animal</h2><span class="teks">TEKS 8.13A</span></div>
+    <div class="brief"><b>Commander's Briefing:</b> Plant and animal cells share most organelles, but a few are found only in plant cells. First sort the organelles. Then use the microscope to identify three mystery cells.</div>
+    <div class="howto"><span class="hand">👆</span><span>Drag each organelle into the correct box.</span></div>
+    <canvas id="c4" width="900" height="360"></canvas>
+    <div class="msg" id="m4">Sort all 8 organelles.</div>
+  </div>
+  <div class="card" id="micro4">
+    <h3>🔬 Microscope: identify the mystery cells</h3>
+    <div id="mlock" class="locknote">🔒 Sort all 8 organelles first.</div>
+    <div class="spec hidden" id="specs"></div>
+  </div>
+  <div class="card"><h3>🧠 Analyze</h3><div id="q4lock" class="locknote">🔒 Identify all three mystery cells to unlock the questions.</div><div id="q4box" class="hidden"></div></div>
+  <div class="card finishbar"><span id="f4txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f4" disabled onclick="finishStation(4)">Complete Station ✔</button></div>
+</section>
+
+<section class="screen" id="s5">
+  <div class="card"><div class="stHead"><h2>Station 5 · Final Certification</h2><span class="teks">TEKS 8.13A</span></div>
+    <div class="brief"><b>Commander's Briefing:</b> To earn your Cell Commander certification, answer these STAAR-style questions. Read every answer choice before you click. Your <b>first try</b> counts!</div><div id="q5box"></div></div>
+  <div class="card finishbar"><span id="f5txt" style="font-weight:800;color:var(--muted)">Answer every question correctly to finish.</span><button class="btn sun" id="f5" disabled onclick="finishStation(5)">Get My Certificate 🏆</button></div>
+</section>
+
+<section class="screen" id="results">
+  <div class="cert"><div style="font-size:46px">🔬</div><h1>Certified Cell Commander</h1>
+    <p style="font-weight:700;color:var(--muted);margin:0">This certifies that</p><h2 id="certName" style="font-size:32px;color:var(--deep2);margin:6px 0 12px"></h2>
+    <p style="font-weight:700;color:var(--muted);margin:0 0 10px">can identify the function of every organelle in plant and animal cells.</p>
+    <div class="bigscore" id="certPct"></div><div style="font-weight:800;color:var(--muted)" id="certRaw"></div><div class="scoregrid" id="certGrid"></div>
+    <p style="font-weight:700;color:var(--muted);margin:0" id="certMeta"></p><p style="font-weight:800;margin:14px 0 0">📸 Show this screen to your teacher or take a screenshot.</p>
+    <div class="noprint" style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn" onclick="window.print()">🖨 Print</button><button class="btn ghost" onclick="goHub()">Back to Command Map</button></div></div>
+</section>
+
+<script>
+/* ===== Core ===== */
+const S={name:'',start:null,done:{},score:{1:{},2:{},3:{},4:{},5:{}},need:{1:[],2:[],3:[],4:[],5:[]},got:{1:new Set(),2:new Set(),3:new Set(),4:new Set(),5:new Set()},built:{}};
+const STATIONS=[{n:1,title:'Cell Explorer',desc:'Label the parts of plant and animal cells.'},{n:2,title:'Job Board',desc:'Send each job to the right organelle.'},{n:3,title:'Knockout Lab',desc:'Shut down organelles and see what fails.'},{n:4,title:'Plant vs. Animal',desc:'Sort organelles and identify mystery cells.'},{n:5,title:'Final Certification',desc:'Prove what you learned and earn your certificate.'}];
+const $=id=>document.getElementById(id);const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');window.scrollTo(0,0);}
+function startGame(){const n=$('nameIn').value.trim();if(!n){$('nameIn').focus();$('nameIn').placeholder='Please type your name first!';return;}S.name=n;S.start=Date.now();$('who').textContent='🧑‍🔬 '+n;$('topbar').classList.add('show');
+  setInterval(()=>{const s=Math.floor((Date.now()-S.start)/1000);$('clock').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');},1000);goHub();}
+$('nameIn').addEventListener('keydown',e=>{if(e.key==='Enter')startGame();});
+function unlocked(n){return n===1||S.done[n-1];}
+function goHub(){if(!S.name){show('intro');return;}const g=$('hubGrid');g.innerHTML='';STATIONS.forEach(st=>{const d=document.createElement('div');const isDone=S.done[st.n],isOpen=unlocked(st.n);
+  d.className='station'+(isDone?' done':'')+(!isOpen?' locked':'');d.innerHTML=`<div class="num">${st.n}</div><span class="status">${isDone?'✔ Complete':isOpen?'Ready':'🔒 Locked'}</span><div class="teks">TEKS 8.13A</div><h3>${st.title}</h3><div style="color:var(--muted);font-weight:600;font-size:14px">${st.desc}</div>`;
+  d.onclick=()=>{if(isOpen)openStation(st.n);};g.appendChild(d);});const c=Object.keys(S.done).length;$('hubBar').style.width=(c/5*100)+'%';$('hubTxt').textContent=`${c} of 5 stations complete`;show('hub');}
+function openStation(n){if(!S.built[n]){({1:build1,2:build2,3:build3,4:build4,5:build5})[n]();S.built[n]=true;}show('s'+n);({1:draw1,2:draw2,3:draw3,4:draw4,5:()=>{}})[n]();}
+function finishStation(n){S.done[n]=true;if(n===5)showResults();else goHub();}
+function record(st,qid,ok){if(!(qid in S.score[st]))S.score[st][qid]=ok;}
+function need(st,k){S.need[st].push(k);}function got(st,k){S.got[st].add(k);checkFinish(st);}
+function checkFinish(st){const all=S.need[st].length>0&&S.need[st].every(k=>S.got[st].has(k));$('f'+st).disabled=!all;
+  $('f'+st+'txt').textContent=all?'✅ Station complete! Click the button to save your progress.':`Progress: ${S.need[st].filter(k=>S.got[st].has(k)).length} of ${S.need[st].length} questions correct.`;}
+function mc(box,st,qid,prompt,options,correct,explain){need(st,qid);const d=document.createElement('div');d.className='q';d.innerHTML=`<p class="qp">${prompt}</p>`;
+  const o=document.createElement('div');o.className='opts';const fb=document.createElement('div');fb.className='fb';
+  options.forEach((t,i)=>{const b=document.createElement('button');b.className='opt';b.innerHTML=`<span class="letter">${'ABCD'[i]}</span><span>${t}</span>`;
+    b.onclick=()=>{if(d.dataset.solved)return;const ok=i===correct;record(st,qid,ok);
+      if(ok){b.classList.add('right');d.dataset.solved=1;o.querySelectorAll('.opt').forEach(x=>x.disabled=true);fb.className='fb good';fb.innerHTML='✅ Correct! '+explain;got(st,qid);}
+      else{b.classList.add('wrong');b.disabled=true;fb.className='fb bad';fb.textContent='❌ Not quite. Think about what you saw in the lab and try again.';}};o.appendChild(b);});
+  d.appendChild(o);d.appendChild(fb);box.appendChild(d);}
+function tick(id){const e=$(id);if(e.classList.contains('ok'))return false;e.classList.add('ok');e.querySelector('.box').textContent='✓';return true;}
+function unlockQ(n,ids){if(ids.every(id=>$(id).classList.contains('ok'))){$('q'+n+'lock').classList.add('hidden');$('q'+n+'box').classList.remove('hidden');}}
+function label(ctx,t,x,y,color,size,align){ctx.font=`800 ${size||15}px Nunito, sans-serif`;ctx.textAlign=align||'center';ctx.lineJoin='round';const light=/^#fff/i.test(color||'');ctx.lineWidth=light?3.5:4;ctx.strokeStyle=light?'rgba(30,20,60,.75)':'rgba(255,255,255,.9)';ctx.strokeText(t,x,y);ctx.fillStyle=color||'#2a2350';ctx.fillText(t,x,y);}
+function wrap(ctx,text,x,y,maxW,lh,color,size,weight){ctx.font=`${weight||700} ${size||14}px Nunito, sans-serif`;ctx.fillStyle=color||'#2a2350';ctx.textAlign='left';const words=text.split(' ');let line='';
+  for(const w of words){const t=line?line+' '+w:w;if(ctx.measureText(t).width>maxW&&line){ctx.fillText(line,x,y);y+=lh;line=w;}else line=t;}if(line)ctx.fillText(line,x,y);return y+lh;}
+function emoji(ctx,e,x,y,size){ctx.fillStyle='#000';ctx.globalAlpha=1;ctx.font=`${size}px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(e,x,y);ctx.textBaseline='alphabetic';}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function canvasPos(c,e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};}
+
+/* ===== Organelles ===== */
+const IS={wall:'A stiff outer layer around plant cells, made of cellulose.',membrane:'A thin, flexible layer around every cell.',nucleus:'A large, round organelle that holds the cell\'s DNA.',ribosomes:'Tiny dot-shaped structures found throughout the cell.',cytoplasm:'The gel-like fluid that fills the cell.',mito:'Bean-shaped organelles with folded insides.',chloro:'Green, oval organelles found in plant cells.',vacuole:'A fluid-filled sac. Plant cells have one large central vacuole.'};
+const DOES={wall:'Supports and protects the cell and gives it its shape.',membrane:'Controls what enters and leaves the cell.',nucleus:'Controls the cell\'s activities, like a control center.',ribosomes:'Make proteins.',cytoplasm:'Holds the organelles in place. Many chemical reactions happen here.',mito:'Release energy from sugar (cellular respiration).',chloro:'Capture sunlight to make sugar (photosynthesis).',vacuole:'Stores water, food and waste. Keeps plant cells firm.'};
+const ORG={
+ wall:{n:'Cell wall',f:'A stiff outer layer found in plant cells. It supports and protects the cell and gives it a box-like shape.',e:'🧱'},
+ membrane:{n:'Cell membrane',f:'A thin, flexible layer around the cell. It controls what enters and leaves the cell.',e:'🚪'},
+ nucleus:{n:'Nucleus',f:'Holds the cell\'s DNA and controls the cell\'s activities, like a control center.',e:'🧬'},
+ ribosomes:{n:'Ribosomes',f:'Tiny structures that make proteins the cell needs to grow and repair itself.',e:'🔩'},
+ cytoplasm:{n:'Cytoplasm',f:'The gel-like fluid that fills the cell. It holds the organelles, and many chemical reactions happen in it.',e:'🫧'},
+ mito:{n:'Mitochondria',f:'Release energy from food (sugar) through cellular respiration. They are the cell\'s powerhouses.',e:'⚡'},
+ chloro:{n:'Chloroplasts',f:'Found in plant cells. They capture sunlight and make food (sugar) through photosynthesis.',e:'🌞'},
+ vacuole:{n:'Vacuole',f:'Stores water, food and wastes. Plant cells have one large central vacuole that keeps the cell firm.',e:'💧'}
+};
+/* Plant cell geometry (drawn at offset ox,oy, size 560x290) */
+const PC={x:50,y:30,w:560,h:290};
+const P_NUC={x:170,y:120,r:44},P_VAC={x:280,y:66,w:250,h:220},P_CHL=[[120,250],[200,285],[575,95],[575,240],[110,170],[560,300]],P_MIT=[[240,215],[565,170],[160,295]],P_RIB=[[230,90],[250,140],[130,215],[215,250],[545,130],[540,205],[100,105],[235,300],[590,140]];
+function inEll(x,y,cx,cy,rx,ry){return ((x-cx)/rx)**2+((y-cy)/ry)**2<=1;}
+function hitPlant(x,y){
+  for(const [rx,ry] of P_RIB)if(Math.hypot(x-rx,y-ry)<9)return 'ribosomes';
+  for(const [mx,my] of P_MIT)if(inEll(x,y,mx,my,22,12))return 'mito';
+  for(const [cx,cy] of P_CHL)if(inEll(x,y,cx,cy,22,13))return 'chloro';
+  if(Math.hypot(x-P_NUC.x,y-P_NUC.y)<P_NUC.r)return 'nucleus';
+  if(x>=P_VAC.x&&x<=P_VAC.x+P_VAC.w&&y>=P_VAC.y&&y<=P_VAC.y+P_VAC.h)return 'vacuole';
+  const {x:X,y:Y,w:W,h:H}=PC;if(x<X||x>X+W||y<Y||y>Y+H)return null;
+  const d=Math.min(x-X,X+W-x,y-Y,Y+H-y);if(d<13)return 'wall';if(d<24)return 'membrane';return 'cytoplasm';
+}
+function gEll(ctx,cx,cy,rx,ry,rot,c1,c2,stroke){const g=ctx.createRadialGradient(cx-rx*.35,cy-ry*.45,1,cx,cy,Math.max(rx,ry));g.addColorStop(0,c1);g.addColorStop(1,c2);ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,rot||0,0,Math.PI*2);ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}}
+function drawNucleus(ctx,x,y,r,ko){gEll(ctx,x,y,r,r,0,ko?'#e5e5e5':'#ddd6fe',ko?'#a3a3a3':'#7c3aed',ko?'#8a8a8a':'#4c1d95');
+  ctx.strokeStyle=ko?'#9a9a9a':'#5b21b6';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,r-3,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.85)';for(let a=0;a<Math.PI*2;a+=Math.PI/7){ctx.beginPath();ctx.arc(x+Math.cos(a)*(r-3),y+Math.sin(a)*(r-3),1.8,0,Math.PI*2);ctx.fill();}
+  ctx.strokeStyle=ko?'rgba(120,120,120,.5)':'rgba(237,233,254,.7)';ctx.lineWidth=1.5;for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(x-r*.6,y-r*.4+i*r*.28);ctx.bezierCurveTo(x-r*.2,y-r*.7+i*r*.3,x+r*.2,y+i*r*.1,x+r*.6,y-r*.3+i*r*.28);ctx.stroke();}
+  gEll(ctx,x+r*.12,y-r*.08,r*.34,r*.34,0,ko?'#c4c4c4':'#a78bfa',ko?'#7a7a7a':'#3b0764');
+  ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.ellipse(x-r*.4,y-r*.5,r*.25,r*.12,-.5,0,Math.PI*2);ctx.fill();}
+function drawChloro(ctx,cx,cy,ko,sc){sc=sc||1;gEll(ctx,cx,cy,22*sc,13*sc,0,ko?'#e5e5e5':'#bbf7d0',ko?'#a3a3a3':'#16a34a',ko?'#8a8a8a':'#14532d');
+  for(let k=-1;k<=1;k++){for(let j=0;j<3;j++){ctx.fillStyle=ko?'#9a9a9a':'#166534';ctx.fillRect(cx+k*9*sc-3.5*sc,cy-6*sc+j*4*sc,7*sc,3*sc);}}
+  ctx.strokeStyle=ko?'#aaa':'#4ade80';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx-13*sc,cy+1);ctx.lineTo(cx+13*sc,cy+1);ctx.stroke();}
+function drawMito(ctx,mx,my,ko,sc){sc=sc||1;gEll(ctx,mx,my,23*sc,12.5*sc,0,ko?'#e5e5e5':'#fed7aa',ko?'#a3a3a3':'#ea580c',ko?'#8a8a8a':'#9a3412');
+  ctx.strokeStyle=ko?'#f5f5f5':'#fff7ed';ctx.lineWidth=2.4*sc;ctx.beginPath();ctx.moveTo(mx-17*sc,my);for(let k=0;k<7;k++)ctx.lineTo(mx-17*sc+k*5.3*sc+2.6*sc,my+(k%2?-6.5:6.5)*sc);ctx.stroke();}
+function drawRibo(ctx,x,y,ko,sc){sc=sc||1;gEll(ctx,x,y,4.8*sc,4.8*sc,0,ko?'#e5e5e5':'#fbcfe8',ko?'#9a9a9a':'#be185d');}
+function drawVac(ctx,x,y,w,h,ko){const g=ctx.createLinearGradient(x,y,x+w,y+h);g.addColorStop(0,ko?'#f5f5f5':'#e0f2fe');g.addColorStop(1,ko?'#d4d4d4':'#7dd3fc');ctx.fillStyle=g;rr(ctx,x,y,w,h,Math.min(26,w/3));ctx.fill();ctx.strokeStyle=ko?'#bdbdbd':'#0ea5e9';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.55)';ctx.beginPath();ctx.ellipse(x+w*.28,y+h*.18,w*.18,h*.06,-.3,0,Math.PI*2);ctx.fill();}
+function drawPlant(ctx,opt){opt=opt||{};const {x:X,y:Y,w:W,h:H}=PC;const hi=opt.hi,ko=opt.ko||{};
+  ctx.save();ctx.shadowColor='rgba(42,35,80,.25)';ctx.shadowBlur=14;ctx.shadowOffsetY=5;const wg=ctx.createLinearGradient(X,Y,X+W,Y+H);wg.addColorStop(0,ko.wall?'#d4d4d4':'#84cc16');wg.addColorStop(1,ko.wall?'#a3a3a3':'#3f6212');ctx.fillStyle=wg;rr(ctx,X,Y,W,H,18);ctx.fill();ctx.restore();
+  ctx.save();rr(ctx,X,Y,W,H,18);ctx.clip();ctx.strokeStyle=ko.wall?'rgba(255,255,255,.25)':'rgba(217,249,157,.45)';ctx.lineWidth=1.5;for(let i=-H;i<W;i+=9){ctx.beginPath();ctx.moveTo(X+i,Y);ctx.lineTo(X+i+H,Y+H);ctx.stroke();}ctx.restore();
+  const cg=ctx.createRadialGradient(X+W/2,Y+H/2,20,X+W/2,Y+H/2,W/1.6);cg.addColorStop(0,'#f7fee7');cg.addColorStop(1,'#d9f99d');ctx.fillStyle=cg;rr(ctx,X+13,Y+13,W-26,H-26,12);ctx.fill();
+  ctx.strokeStyle=ko.membrane?'#d4d4d4':'#f59e0b';ctx.lineWidth=5;if(ko.membrane)ctx.setLineDash([8,10]);rr(ctx,X+15,Y+15,W-30,H-30,11);ctx.stroke();ctx.strokeStyle=ko.membrane?'#eee':'#fde68a';ctx.lineWidth=1.5;rr(ctx,X+15,Y+15,W-30,H-30,11);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(101,163,13,.25)';for(let i=0;i<60;i++){ctx.beginPath();ctx.arc(X+30+(i*97)%(W-60),Y+30+(i*53)%(H-60),1.8,0,7);ctx.fill();}
+  const vs=opt.vacScale==null?1:opt.vacScale;const vw=P_VAC.w*vs,vh=P_VAC.h*(0.4+0.6*vs);drawVac(ctx,P_VAC.x+(P_VAC.w-vw)/2,P_VAC.y+(P_VAC.h-vh)/2,vw,vh,ko.vacuole);
+  drawNucleus(ctx,P_NUC.x,P_NUC.y,P_NUC.r,ko.nucleus);
+  P_CHL.forEach(([cx,cy])=>drawChloro(ctx,cx,cy,ko.chloro));P_MIT.forEach(([mx,my])=>drawMito(ctx,mx,my,ko.mito));P_RIB.forEach(([rx,ry])=>drawRibo(ctx,rx,ry,ko.ribo));
+  if(hi){ctx.save();ctx.strokeStyle='#fbbf24';ctx.lineWidth=5;ctx.shadowColor='#fbbf24';ctx.shadowBlur=14;outline(ctx,hi);ctx.restore();}
+}
+function outline(ctx,k){const {x:X,y:Y,w:W,h:H}=PC;
+  if(k==='wall'){rr(ctx,X,Y,W,H,18);ctx.stroke();}else if(k==='membrane'){rr(ctx,X+15,Y+15,W-30,H-30,11);ctx.stroke();}
+  else if(k==='nucleus'){ctx.beginPath();ctx.arc(P_NUC.x,P_NUC.y,P_NUC.r+3,0,Math.PI*2);ctx.stroke();}else if(k==='vacuole'){rr(ctx,P_VAC.x,P_VAC.y,P_VAC.w,P_VAC.h,26);ctx.stroke();}
+  else if(k==='chloro')P_CHL.forEach(([cx,cy])=>{ctx.beginPath();ctx.ellipse(cx,cy,25,16,0,0,Math.PI*2);ctx.stroke();});else if(k==='mito')P_MIT.forEach(([cx,cy])=>{ctx.beginPath();ctx.ellipse(cx,cy,25,15,0,0,Math.PI*2);ctx.stroke();});
+  else if(k==='ribosomes')P_RIB.forEach(([cx,cy])=>{ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.stroke();});else if(k==='cytoplasm'){rr(ctx,X+40,Y+40,W-80,H-80,30);ctx.stroke();}}
+/* Animal cell */
+const AC={cx:330,cy:178,rx:270,ry:142};
+const A_NUC={x:300,y:160,r:46},A_MIT=[[170,140],[440,250],[470,120],[230,250]],A_RIB=[[380,110],[400,190],[200,200],[260,95],[520,180],[150,180],[350,270]],A_VAC=[[460,180,16],[140,220,12]];
+function hitAnimal(x,y){
+  for(const [rx,ry] of A_RIB)if(Math.hypot(x-rx,y-ry)<9)return 'ribosomes';
+  for(const [mx,my] of A_MIT)if(inEll(x,y,mx,my,22,12))return 'mito';
+  for(const [vx,vy,r] of A_VAC)if(Math.hypot(x-vx,y-vy)<r+4)return 'vacuole';
+  if(Math.hypot(x-A_NUC.x,y-A_NUC.y)<A_NUC.r)return 'nucleus';
+  const d=((x-AC.cx)/AC.rx)**2+((y-AC.cy)/AC.ry)**2;if(d>1.12)return null;if(d>0.86)return 'membrane';return 'cytoplasm';
+}
+function drawAnimal(ctx){ctx.save();ctx.shadowColor='rgba(42,35,80,.25)';ctx.shadowBlur=14;ctx.shadowOffsetY=5;const g=ctx.createRadialGradient(AC.cx-60,AC.cy-40,20,AC.cx,AC.cy,AC.rx);g.addColorStop(0,'#fff1f8');g.addColorStop(1,'#fbcfe8');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(AC.cx,AC.cy,AC.rx,AC.ry,0,0,Math.PI*2);ctx.fill();ctx.restore();
+  ctx.strokeStyle='#f59e0b';ctx.lineWidth=7;ctx.beginPath();ctx.ellipse(AC.cx,AC.cy,AC.rx,AC.ry,0,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='#fde68a';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='rgba(236,72,153,.22)';for(let i=0;i<60;i++){ctx.beginPath();ctx.arc(AC.cx-200+(i*97)%400,AC.cy-100+(i*53)%200,1.8,0,7);ctx.fill();}
+  A_VAC.forEach(([x,y,r])=>{drawVac(ctx,x-r,y-r,2*r,2*r,false);});
+  drawNucleus(ctx,A_NUC.x,A_NUC.y,A_NUC.r,false);A_MIT.forEach(([mx,my])=>drawMito(ctx,mx,my,false));A_RIB.forEach(([rx,ry])=>drawRibo(ctx,rx,ry,false));}
+function drawMini(ctx,k,x,y){ctx.save();
+  if(k==='wall'){const g=ctx.createLinearGradient(x-26,y-26,x+26,y+26);g.addColorStop(0,'#84cc16');g.addColorStop(1,'#3f6212');ctx.fillStyle=g;rr(ctx,x-26,y-22,52,44,8);ctx.fill();ctx.fillStyle='#f7fee7';rr(ctx,x-18,y-14,36,28,5);ctx.fill();}
+  else if(k==='membrane'){ctx.fillStyle='#fdf2f8';ctx.beginPath();ctx.ellipse(x,y,26,20,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#f59e0b';ctx.lineWidth=6;ctx.stroke();ctx.strokeStyle='#fde68a';ctx.lineWidth=2;ctx.stroke();}
+  else if(k==='nucleus')drawNucleus(ctx,x,y,22,false);else if(k==='ribosomes'){[[-10,-6],[8,-10],[0,6],[12,8],[-12,10]].forEach(([dx,dy])=>drawRibo(ctx,x+dx,y+dy,false,1.4));}
+  else if(k==='cytoplasm'){const g=ctx.createRadialGradient(x,y,2,x,y,26);g.addColorStop(0,'#f7fee7');g.addColorStop(1,'#bef264');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,24,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(101,163,13,.5)';for(let i=0;i<10;i++){ctx.beginPath();ctx.arc(x-15+(i*13)%30,y-12+(i*7)%24,1.8,0,7);ctx.fill();}}
+  else if(k==='mito')drawMito(ctx,x,y,false,1.1);else if(k==='chloro')drawChloro(ctx,x,y,false,1.15);else if(k==='vacuole')drawVac(ctx,x-24,y-18,48,36,false);
+  ctx.restore();}
+/* ===== STATION 1 ===== */
+const PLANT_KEYS=['wall','membrane','nucleus','ribosomes','cytoplasm','mito','chloro','vacuole'],ANIMAL_KEYS=['membrane','nucleus','ribosomes','cytoplasm','mito','vacuole'];
+const s1={mode:'plant',placed:{plant:{},animal:{}},drag:null,last:null};
+function chips1(){const keys=s1.mode==='plant'?PLANT_KEYS:ANIMAL_KEYS;const n=keys.length;return keys.map((k,i)=>({k,x:20+(i%4)*152,y:i<4?352:398,w:144,h:36}));}
+function draw1(){const c=$('c1'),ctx=c.getContext('2d');ctx.clearRect(0,0,900,440);ctx.fillStyle='#faf9fe';ctx.fillRect(0,0,900,440);
+  if(s1.mode==='plant')drawPlant(ctx,{hi:s1.last});else drawAnimal(ctx);
+  const pl=s1.placed[s1.mode];
+  for(const k in pl){const [x,y]=pl[k];ctx.fillStyle='#2a2350';ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();label(ctx,ORG[k].n,x,y-10,'#2a2350',13);}
+  ctx.fillStyle='#ece9f6';rr(ctx,8,340,620,96,12);ctx.fill();
+  chips1().forEach(ch=>{const done=pl[ch.k];if(s1.drag&&s1.drag.k===ch.k)return;ctx.fillStyle=done?'#dcfce7':'#fff';rr(ctx,ch.x,ch.y,ch.w,ch.h,10);ctx.fill();ctx.strokeStyle=done?'#15803d':'#8b5cf6';ctx.lineWidth=2;ctx.stroke();
+    ctx.font='800 14px Nunito, sans-serif';ctx.textAlign='center';ctx.fillStyle=done?'#15803d':'#2a2350';ctx.fillText((done?'✓ ':'')+ORG[ch.k].n,ch.x+ch.w/2,ch.y+23);});
+  if(s1.drag){const d=s1.drag;ctx.fillStyle='#fbbf24';rr(ctx,d.x-72,d.y-18,144,36,10);ctx.fill();ctx.font='800 14px Nunito, sans-serif';ctx.textAlign='center';ctx.fillStyle='#2a2350';ctx.fillText(ORG[d.k].n,d.x,d.y+5);}
+  // info panel
+  ctx.fillStyle='#fff';rr(ctx,640,20,250,410,14);ctx.fill();ctx.strokeStyle='#ddd8ee';ctx.lineWidth=2;ctx.stroke();
+  label(ctx,s1.mode==='plant'?'PLANT CELL':'ANIMAL CELL',765,48,'#625c80',13);
+  const n=Object.keys(pl).length,tot=(s1.mode==='plant'?PLANT_KEYS:ANIMAL_KEYS).length;label(ctx,`${n} of ${tot} labeled`,765,70,'#8b5cf6',15);
+  if(s1.last){drawMini(ctx,s1.last,765,118);label(ctx,ORG[s1.last].n,765,172,'#2a2350',19);label(ctx,'WHAT IT IS',656,202,'#8b5cf6',12,'left');let yy=wrap(ctx,IS[s1.last],656,222,222,20,'#2a2350',14,700);label(ctx,'WHAT IT DOES',656,yy+8,'#be2f77',12,'left');wrap(ctx,DOES[s1.last],656,yy+28,222,20,'#2a2350',14,800);}
+  else wrap(ctx,'Drop a label on the cell to learn what that part does.',656,120,220,22,'#625c80',15,700);
+  if(s1.mode==='animal'&&n===tot)wrap(ctx,'Notice: no cell wall, no chloroplasts, and only small vacuoles!',656,360,220,20,'#be2f77',14,800);
+}
+function buildGuide(){const g=$('guide1');PLANT_KEYS.forEach(k=>{const d=document.createElement('div');d.className='gcard locked';d.id='g_'+k;d.innerHTML=`<canvas width="140" height="120"></canvas><div><b>?</b><p style="color:var(--muted)">Label this organelle to unlock its card.</p></div>`;g.appendChild(d);
+  const cv=d.querySelector('canvas'),cx=cv.getContext('2d');cx.scale(2,2);drawMini(cx,k,35,30);});}
+function unlockGuide(k){const d=$('g_'+k);if(!d||!d.classList.contains('locked'))return;d.classList.remove('locked');d.classList.add('new');setTimeout(()=>d.classList.remove('new'),1800);
+  d.querySelector('div').innerHTML=`<b>${ORG[k].n}</b><div class="l">WHAT IT IS</div><p>${IS[k]}</p><div class="l" style="color:var(--pink-d)">WHAT IT DOES</div><p>${DOES[k]}</p>`;}
+function build1(){
+  buildGuide();
+  const c=$('c1');
+  c.addEventListener('pointerdown',e=>{const p=canvasPos(c,e);const pl=s1.placed[s1.mode];const ch=chips1().find(ch=>p.x>=ch.x&&p.x<=ch.x+ch.w&&p.y>=ch.y&&p.y<=ch.y+ch.h&&!pl[ch.k]);if(ch){s1.drag={k:ch.k,x:p.x,y:p.y};c.setPointerCapture(e.pointerId);draw1();}});
+  c.addEventListener('pointermove',e=>{if(!s1.drag)return;const p=canvasPos(c,e);s1.drag.x=p.x;s1.drag.y=p.y;draw1();});
+  const drop=()=>{if(!s1.drag)return;const d=s1.drag;s1.drag=null;const hit=s1.mode==='plant'?hitPlant(d.x,d.y):hitAnimal(d.x,d.y);
+    if(hit===d.k){s1.placed[s1.mode][d.k]=[d.x,d.y];s1.last=d.k;unlockGuide(d.k);$('m1').innerHTML=`✅ <b>${ORG[d.k].n}</b>: ${ORG[d.k].f}`;
+      if(Object.keys(s1.placed.plant).length===8)tick('k1a');if(Object.keys(s1.placed.animal).length===6)tick('k1b');unlockQ(1,['k1a','k1b']);}
+    else if(hit){$('m1').innerHTML=`❌ That spot is the <b>${ORG[hit].n.toLowerCase()}</b>, not the ${ORG[d.k].n.toLowerCase()}. Try again.`;}
+    else $('m1').textContent='Drop the label right on the part of the cell.';draw1();};
+  c.addEventListener('pointerup',drop);c.addEventListener('pointercancel',drop);
+  const setM=m=>{s1.mode=m;s1.last=null;$('m-plant').classList.toggle('on',m==='plant');$('m-animal').classList.toggle('on',m==='animal');$('m1').textContent=m==='plant'?'Label the plant cell.':'Label the animal cell. Look closely: some plant parts are missing!';draw1();};
+  $('m-plant').onclick=()=>setM('plant');$('m-animal').onclick=()=>setM('animal');setM('plant');
+  const b=$('q1box');
+  mc(b,1,'a','Which parts were in the plant cell but NOT in the animal cell?',['Nucleus and ribosomes','Cell wall, chloroplasts and a large central vacuole','Mitochondria and cytoplasm','Cell membrane and nucleus'],1,'Only plant cells have a cell wall and chloroplasts, and they have one large central vacuole.');
+  mc(b,1,'b','In a plant cell, which structure is OUTSIDE the cell membrane?',['The cell wall','The nucleus','The cytoplasm','The mitochondria'],0,'The stiff cell wall surrounds the flexible cell membrane in plant cells.');
+  mc(b,1,'c','What is the gel-like fluid that fills the cell and holds the organelles?',['The vacuole','The nucleus','Cytoplasm','The cell wall'],2,'Cytoplasm fills the cell, and many chemical reactions happen in it.');
+  mc(b,1,'d','How are vacuoles different in plant and animal cells?',['Animal cells have one large vacuole; plant cells have none','They are exactly the same','Only animal cells have vacuoles','Plant cells have one large central vacuole; animal cells have small vacuoles or none'],3,'The large central vacuole stores water and keeps plant cells firm.');
+  checkFinish(1);
+}
+
+/* ===== STATION 2: Job board ===== */
+const JOBS=[['mito','⚡','The cell needs ENERGY to move and grow. Who releases it from sugar?'],['chloro','☀️','The sun is shining on this leaf. Who will make sugar?'],['ribosomes','🔧','The cell needs a new PROTEIN to repair itself. Who builds it?'],['nucleus','📋','Time to send out instructions from the DNA. Who is in charge?'],['membrane','🚪','Water and nutrients are at the door. Who decides what gets in?'],['vacuole','💧','It just rained. Who stores the extra water to keep the cell firm?'],['wall','🛡️','Wind is pushing on the plant. Who gives the cell a strong, stiff shape?'],['cytoplasm','🫧','Materials need to move between organelles. What do they travel through?']];
+const s2={i:0,solved:false,anim:0,raf:null};
+function draw2(){const c=$('c2'),ctx=c.getContext('2d');ctx.clearRect(0,0,900,400);ctx.fillStyle='#faf9fe';ctx.fillRect(0,0,900,400);
+  const j=JOBS[s2.i];drawPlant(ctx,{hi:s2.solved?j[0]:null});
+  if(s2.solved){const t=s2.anim;const k=j[0];
+    if(k==='mito')P_MIT.forEach(([x,y],i)=>{emoji(ctx,'⚡',x+Math.sin(t*6+i)*6,y-22-((t*40+i*10)%30),18);});
+    if(k==='chloro')P_CHL.forEach(([x,y],i)=>{emoji(ctx,'🍬',x+18,y-18-((t*30+i*8)%26),14);});
+    if(k==='ribosomes')P_RIB.forEach(([x,y],i)=>{ctx.strokeStyle='#be2f77';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,y);for(let s=0;s<6;s++)ctx.lineTo(x+s*5*(.5+.5*Math.sin(t*3)),y-8-s*3*Math.cos(s+t*4));ctx.stroke();});
+    if(k==='nucleus'){for(let r=0;r<3;r++){ctx.strokeStyle=`rgba(139,92,246,${.6-r*.18})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(P_NUC.x,P_NUC.y,P_NUC.r+10+((t*40+r*20)%60),0,Math.PI*2);ctx.stroke();}}
+    if(k==='membrane'){for(let i=0;i<5;i++){const y=60+i*55;emoji(ctx,'💧',72+((t*40+i*15)%40),y,14);}}
+    if(k==='vacuole'){emoji(ctx,'💧',P_VAC.x+P_VAC.w/2,P_VAC.y+P_VAC.h/2+Math.sin(t*4)*8,40);}
+    if(k==='wall'){emoji(ctx,'💨',20,180+Math.sin(t*3)*10,30);}
+    if(k==='cytoplasm'){ctx.strokeStyle='rgba(139,92,246,.4)';ctx.lineWidth=3;ctx.beginPath();for(let a=0;a<12;a+=.2){const x=330+Math.cos(a+t)*a*18,y=175+Math.sin(a+t)*a*9;a?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();}
+  }
+  ctx.fillStyle='#fff';rr(ctx,640,20,250,360,14);ctx.fill();ctx.strokeStyle='#ddd8ee';ctx.lineWidth=2;ctx.stroke();
+  if(s2.solved){drawMini(ctx,j[0],765,70);label(ctx,ORG[j[0]].n,765,124,'#2a2350',19);label(ctx,'WHAT IT DOES',656,156,'#be2f77',12,'left');wrap(ctx,DOES[j[0]],656,176,222,21,'#2a2350',15,800);label(ctx,'WHAT IT IS',656,250,'#8b5cf6',12,'left');wrap(ctx,IS[j[0]],656,270,222,20,'#2a2350',14,700);}
+  else{label(ctx,'Click the organelle',765,60,'#625c80',15);label(ctx,'for this job',765,82,'#625c80',15);
+    let y=130;['Cell wall','Cell membrane','Nucleus','Ribosomes (pink dots)','Cytoplasm','Mitochondria (orange)','Chloroplasts (green)','Vacuole (blue)'].forEach(t=>{ctx.font='700 14px Nunito';ctx.textAlign='left';ctx.fillStyle='#625c80';ctx.fillText('• '+t,662,y);y+=28;});}
+}
+function showJob2(){const j=JOBS[s2.i];$('j2i').textContent=j[1];$('j2n').textContent=`JOB ${s2.i+1} OF ${JOBS.length}`;$('j2t').textContent=j[2];s2.solved=false;$('next2').classList.add('hidden');$('m2').textContent='Click the organelle that should handle this job.';draw2();}
+function build2(){
+  JOBS.forEach((_,i)=>need(2,'j'+i));
+  $('c2').addEventListener('pointerdown',e=>{if(s2.solved)return;const p=canvasPos($('c2'),e);const hit=hitPlant(p.x,p.y);if(!hit)return;const j=JOBS[s2.i];const ok=hit===j[0];record(2,'j'+s2.i,ok);
+    if(ok){s2.solved=true;got(2,'j'+s2.i);$('m2').innerHTML=`✅ Correct! The <b>${ORG[hit].n.toLowerCase()}</b> handles this job.`;if(s2.i<JOBS.length-1)$('next2').classList.remove('hidden');else{$('m2').innerHTML+=' 🎉 All jobs done!';$('q2lock').classList.add('hidden');$('q2box').classList.remove('hidden');}}
+    else $('m2').innerHTML=`❌ The <b>${ORG[hit].n.toLowerCase()}</b> ${ORG[hit].f.charAt(0).toLowerCase()+ORG[hit].f.slice(1).split('.')[0]}. That's not this job. Try again.`;draw2();});
+  $('next2').onclick=()=>{s2.i++;showJob2();};
+  setInterval(()=>{if($('s2').classList.contains('active')&&s2.solved){s2.anim+=.06;draw2();}},60);
+  showJob2();
+  const b=$('q2box');
+  mc(b,2,'w','Which TWO organelles both deal with energy: one stores the Sun\'s energy in sugar, and the other releases energy from that sugar?',['Nucleus and ribosomes','Cell wall and cell membrane','Chloroplasts and mitochondria','Vacuole and cytoplasm'],2,'Chloroplasts make sugar using sunlight; mitochondria release the energy stored in sugar.');
+  checkFinish(2);
+}
+
+/* ===== STATION 3: Knockout ===== */
+const KO={
+ mito:{fail:{energy:5,protein:45},what:'Energy crashed, and protein building slowed down',job:'Mitochondria release energy from sugar',msg:'Without mitochondria, the cell cannot release energy from sugar. Everything that needs energy slows down.'},
+ chloro:{fail:{food:10,energy:35},what:'No sugar was made; later, energy dropped too',job:'Chloroplasts make food using sunlight',msg:'Without chloroplasts, the leaf cell cannot make sugar. With no sugar to break down, the mitochondria soon run low on fuel too.'},
+ ribo:{fail:{protein:5},what:'No new proteins were made',job:'Ribosomes make proteins',msg:'Without ribosomes, the cell cannot build proteins, so it cannot grow or repair itself.'},
+ nucleus:{fail:{control:0,protein:25},what:'The cell lost control and stopped getting instructions',job:'The nucleus holds DNA and controls the cell',msg:'Without the nucleus, the cell has no DNA instructions. It cannot control its activities or divide.'},
+ membrane:{fail:{control:30,food:35,water:30},what:'Materials leaked in and out with no control',job:'The cell membrane controls what enters and leaves',msg:'With a damaged membrane, the cell cannot control what enters and leaves. Nutrients leak out and harmful substances get in.'},
+ vacuole:{fail:{water:12},what:'The cell lost its water and the plant wilted',job:'The vacuole stores water and keeps the cell firm',msg:'Without water stored in the central vacuole, plant cells go limp and the whole plant wilts.'},
+ wall:{fail:{water:45},what:'The cell lost its support and stiff shape',job:'The cell wall supports and protects the plant cell',msg:'Without the cell wall, the plant cell loses its support and shape, and the plant cannot stand up straight.'}
+};
+const METERS=[['energy','⚡ Energy'],['food','🍬 Food (sugar)'],['protein','🔩 Proteins'],['water','💧 Water & firmness'],['control','🧬 Control']];
+const s3={k:null,t:0,raf:null,done:new Set(),log:[]};
+function val3(m){if(!s3.k)return 100;const f=KO[s3.k].fail[m];if(f==null)return 100;const lag=(s3.k==='chloro'&&m==='energy')?.45:0;const t=clamp((s3.t-lag)/(1-lag),0,1);return 100+(f-100)*t;}
+function draw3(){const c=$('c3'),ctx=c.getContext('2d');ctx.clearRect(0,0,900,380);ctx.fillStyle='#faf9fe';ctx.fillRect(0,0,900,380);
+  ctx.save();ctx.translate(-20,10);ctx.scale(.8,.8);const ko={};if(s3.k&&s3.t>0)ko[s3.k]=true;drawPlant(ctx,{ko,vacScale:s3.k==='vacuole'?1-.75*s3.t:1});if(s3.k&&s3.t>0){ctx.strokeStyle='#ec4899';ctx.lineWidth=5;outline(ctx,s3.k==='ribo'?'ribosomes':s3.k);}ctx.restore();
+  // plant
+  const firm=val3('water')/100,bend=1-firm;const px=590,py=300;
+  ctx.fillStyle='#b45309';ctx.beginPath();ctx.moveTo(px-34,py);ctx.lineTo(px+34,py);ctx.lineTo(px+26,py+42);ctx.lineTo(px-26,py+42);ctx.closePath();ctx.fill();ctx.fillStyle='#92400e';ctx.fillRect(px-38,py-6,76,10);ctx.fillStyle='#78350f';ctx.fillRect(px-32,py-2,64,5);
+  const tipx=px-bend*70,tipy=py-150+bend*95;ctx.strokeStyle='#15803d';ctx.lineWidth=7;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(px,py-4);ctx.quadraticCurveTo(px,py-110,tipx,tipy);ctx.stroke();
+  const leaf=(t,side)=>{const lx=px+(tipx-px)*t*t,ly=(py-4)+((tipy)-(py-4))*t;const ang=side*(0.6+bend*1.2)+(side<0?Math.PI:0);ctx.save();ctx.translate(lx,ly);ctx.rotate(side>0?(0.5+bend*1.1):-(0.5+bend*1.1)+Math.PI);
+    const g=ctx.createLinearGradient(0,-8,30,8);g.addColorStop(0,'#86efac');g.addColorStop(1,'#16a34a');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(18,0,20,8,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#14532d';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(34,0);ctx.stroke();ctx.restore();};
+  [[.35,1],[.5,-1],[.68,1],[.85,-1]].forEach(([t,sd])=>leaf(t,sd));
+  label(ctx,firm<.5?'Wilting!':'Leaf plant',px,py+62,firm<.5?'#be2f77':'#2a2350',14);
+  // meters
+  METERS.forEach(([k,n],i)=>{const y=40+i*62,v=val3(k);label(ctx,n,690,y,'#2a2350',14,'left');ctx.fillStyle='#ece9f6';rr(ctx,690,y+8,190,18,9);ctx.fill();
+    ctx.fillStyle=v>60?'#22c55e':v>30?'#fbbf24':'#ef4444';rr(ctx,690,y+8,Math.max(8,190*v/100),18,9);ctx.fill();label(ctx,Math.round(v)+'%',885,y,'#625c80',12,'right');});
+  if(s3.k)label(ctx,s3.t>0?`${KO[s3.k]?'Shut down: ':''}${ORG[s3.k==='ribo'?'ribosomes':s3.k].n}`:'Ready: press Shut it down',260,20,'#be2f77',16);
+}
+function build3(){
+  document.querySelectorAll('#ko3 button').forEach(b=>b.onclick=()=>{cancelAnimationFrame(s3.raf);s3.k=b.dataset.k;s3.t=0;document.querySelectorAll('#ko3 button').forEach(x=>x.classList.toggle('on',x===b));$('m3').innerHTML=`Selected: <b>${b.textContent}</b>. Press Shut it down.`;draw3();});
+  $('run3').onclick=()=>{if(!s3.k){$('m3').textContent='⚠️ Choose an organelle first.';return;}cancelAnimationFrame(s3.raf);const t0=performance.now();
+    const step=now=>{s3.t=Math.min(1,(now-t0)/2600);draw3();if(s3.t<1)s3.raf=requestAnimationFrame(step);else done3();};s3.raf=requestAnimationFrame(step);};
+  $('reset3').onclick=()=>{cancelAnimationFrame(s3.raf);s3.t=0;draw3();$('m3').textContent='The cell is healthy again. Choose another organelle.';};
+  const b=$('q3box');
+  mc(b,3,'a','When you shut down the mitochondria, what failed first?',['The cell wall','The cell\'s energy supply','The vacuole\'s water','The chloroplasts'],1,'Mitochondria release energy from sugar, so energy is the first thing to crash.');
+  mc(b,3,'b','When the chloroplasts were shut down, why did ENERGY eventually drop too?',['With no sugar being made, the mitochondria had no fuel to release energy from','Chloroplasts are the cell\'s only source of DNA','The cell wall broke','The vacuole filled with sugar'],0,'Chloroplasts make sugar; mitochondria release the energy in that sugar. The two depend on each other.');
+  mc(b,3,'c','A gardener forgets to water a plant and it droops. Which organelle is losing water?',['Mitochondria','Nucleus','The central vacuole','Ribosomes'],2,'The central vacuole stores water. When it empties, cells go limp and the plant wilts.');
+  mc(b,3,'d','A toxin damages a cell\'s membrane. What is the most likely result?',['The cell makes more proteins','The cell gets a stronger shape','Photosynthesis speeds up','The cell can no longer control what enters and leaves'],3,'The cell membrane is the gatekeeper of the cell.');
+  checkFinish(3);
+}
+function done3(){const k=s3.k,d=KO[k];$('m3').innerHTML=`⛔ ${d.msg}`;
+  if(!s3.done.has(k)){s3.done.add(k);document.querySelector(`#ko3 [data-k="${k}"]`).classList.add('done');s3.log.push([ORG[k==='ribo'?'ribosomes':k].n,d.what,d.job]);$('t3').innerHTML=s3.log.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');}
+  if(k==='mito')tick('k3a');if(k==='chloro')tick('k3b');if(k==='vacuole')tick('k3c');const extra=[...s3.done].filter(x=>!['mito','chloro','vacuole'].includes(x)).length;if(extra>=2)tick('k3d');unlockQ(3,['k3a','k3b','k3c','k3d']);}
+
+/* ===== STATION 4: Sort + microscope ===== */
+const SORT=[['wall','P'],['chloro','P'],['vacuole','P'],['nucleus','B'],['membrane','B'],['mito','B'],['ribosomes','B'],['cytoplasm','B']];
+const s4={pos:{},drag:null,doneSort:false,specDone:{}};
+function sortChips(){return SORT.map(([k],i)=>({k,x:20+(i%4)*218,y:i<4?20:66,w:200,h:36}));}
+const BINS={P:{x:30,y:130,w:400,h:215,n:'🌿 PLANT CELLS ONLY',col:'#dcfce7',bd:'#15803d'},B:{x:470,y:130,w:400,h:215,n:'🌿🐾 BOTH PLANT & ANIMAL CELLS',col:'#ede9fe',bd:'#8b5cf6'}};
+function draw4(){const c=$('c4'),ctx=c.getContext('2d');ctx.clearRect(0,0,900,360);ctx.fillStyle='#faf9fe';ctx.fillRect(0,0,900,360);
+  for(const b in BINS){const B=BINS[b];ctx.fillStyle=B.col;rr(ctx,B.x,B.y,B.w,B.h,16);ctx.fill();ctx.strokeStyle=B.bd;ctx.lineWidth=3;ctx.setLineDash([10,8]);ctx.stroke();ctx.setLineDash([]);label(ctx,B.n,B.x+B.w/2,B.y+28,B.bd,16);}
+  const placed={P:[],B:[]};for(const k in s4.pos)placed[s4.pos[k]].push(k);
+  for(const b in placed)placed[b].forEach((k,i)=>{const B=BINS[b];const x=B.x+20+(i%2)*190,y=B.y+50+Math.floor(i/2)*40;ctx.fillStyle='#fff';rr(ctx,x,y,170,32,10);ctx.fill();ctx.strokeStyle=B.bd;ctx.lineWidth=2;ctx.stroke();ctx.font='800 14px Nunito';ctx.textAlign='center';ctx.fillStyle='#2a2350';ctx.fillText(ORG[k].e+' '+ORG[k].n,x+85,y+21);});
+  sortChips().forEach(ch=>{if(s4.pos[ch.k]||(s4.drag&&s4.drag.k===ch.k))return;ctx.fillStyle='#fff';rr(ctx,ch.x,ch.y,ch.w,ch.h,10);ctx.fill();ctx.strokeStyle='#8b5cf6';ctx.lineWidth=2;ctx.stroke();ctx.font='800 14px Nunito';ctx.textAlign='center';ctx.fillStyle='#2a2350';ctx.fillText(ORG[ch.k].e+' '+ORG[ch.k].n,ch.x+ch.w/2,ch.y+23);});
+  if(s4.drag){const d=s4.drag;ctx.fillStyle='#fbbf24';rr(ctx,d.x-100,d.y-18,200,36,10);ctx.fill();ctx.font='800 14px Nunito';ctx.textAlign='center';ctx.fillStyle='#2a2350';ctx.fillText(ORG[d.k].e+' '+ORG[d.k].n,d.x,d.y+5);}
+}
+const SPECS=[{id:'A',name:'Mystery cell A',ans:'P',why:'Box-shaped cells with cell walls and green chloroplasts: a LEAF cell (plant).'},{id:'B',name:'Mystery cell B',ans:'A',why:'Round, flexible cells with no cell wall and no chloroplasts: CHEEK cells (animal).'},{id:'C',name:'Mystery cell C',ans:'P',why:'Box-shaped cells with cell walls but NO chloroplasts: ONION skin cells (plant). Onion bulbs grow underground with no sunlight.'}];
+function drawSpec(c,id){const ctx=c.getContext('2d');const W=c.width;ctx.clearRect(0,0,W,W);ctx.save();ctx.beginPath();ctx.arc(W/2,W/2,W/2-4,0,Math.PI*2);ctx.clip();
+  ctx.fillStyle=id==='B'?'#fce7f3':id==='A'?'#ecfccb':'#fef9c3';ctx.fillRect(0,0,W,W);
+  if(id==='A'||id==='C'){for(let r=0;r<5;r++)for(let q=0;q<4;q++){const x=10+q*68+(r%2)*20,y=10+r*52;ctx.strokeStyle=id==='A'?'#3f6212':'#a16207';ctx.lineWidth=4;ctx.strokeRect(x,y,64,48);
+    ctx.fillStyle='#a78bfa';ctx.beginPath();ctx.arc(x+16,y+18,6,0,Math.PI*2);ctx.fill();if(id==='A'){ctx.fillStyle='#16a34a';for(let k=0;k<5;k++){ctx.beginPath();ctx.ellipse(x+12+k*11,y+38-(k%2)*6,5,3,0,0,Math.PI*2);ctx.fill();}}}}
+  else{for(let i=0;i<7;i++){const x=40+(i*83)%220,y=40+(i*61)%200;ctx.fillStyle='rgba(244,114,182,.35)';ctx.strokeStyle='#db2777';ctx.lineWidth=2;ctx.beginPath();for(let a=0;a<Math.PI*2;a+=.5){const rr2=34+Math.sin(a*3+i)*6;a?ctx.lineTo(x+Math.cos(a)*rr2,y+Math.sin(a)*rr2):ctx.moveTo(x+Math.cos(a)*rr2,y+Math.sin(a)*rr2);}ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#7c3aed';ctx.beginPath();ctx.arc(x+4,y,7,0,Math.PI*2);ctx.fill();}}
+  ctx.restore();ctx.strokeStyle='#2a2350';ctx.lineWidth=8;ctx.beginPath();ctx.arc(W/2,W/2,W/2-4,0,Math.PI*2);ctx.stroke();}
+function build4(){
+  const c=$('c4');
+  c.addEventListener('pointerdown',e=>{const p=canvasPos(c,e);const ch=sortChips().find(ch=>!s4.pos[ch.k]&&p.x>=ch.x&&p.x<=ch.x+ch.w&&p.y>=ch.y&&p.y<=ch.y+ch.h);if(ch){s4.drag={k:ch.k,x:p.x,y:p.y};c.setPointerCapture(e.pointerId);draw4();}});
+  c.addEventListener('pointermove',e=>{if(!s4.drag)return;const p=canvasPos(c,e);s4.drag.x=p.x;s4.drag.y=p.y;draw4();});
+  const drop=()=>{if(!s4.drag)return;const d=s4.drag;s4.drag=null;let bin=null;for(const b in BINS){const B=BINS[b];if(d.x>=B.x&&d.x<=B.x+B.w&&d.y>=B.y&&d.y<=B.y+B.h)bin=b;}
+    if(bin){const ans=SORT.find(s=>s[0]===d.k)[1];const qid='sort_'+d.k;record(4,qid,bin===ans);
+      if(bin===ans){s4.pos[d.k]=bin;$('m4').innerHTML=`✅ <b>${ORG[d.k].n}</b>: ${bin==='P'?'only in plant cells.':'found in both plant and animal cells.'}`;}
+      else $('m4').innerHTML=`❌ Not quite. Think about whether an animal cell has a ${ORG[d.k].n.toLowerCase()}.`;}
+    draw4();if(Object.keys(s4.pos).length===8&&!s4.doneSort){s4.doneSort=true;$('m4').innerHTML='🎉 All sorted! Plant cells have three extras: a cell wall, chloroplasts and a large central vacuole. Now use the microscope.';$('mlock').classList.add('hidden');$('specs').classList.remove('hidden');}};
+  c.addEventListener('pointerup',drop);c.addEventListener('pointercancel',drop);
+  SORT.forEach(([k])=>need(4,'sort_'+k));
+  const sp=$('specs');SPECS.forEach(s=>{need(4,'spec_'+s.id);const d=document.createElement('div');d.className='card';d.innerHTML=`<h3 style="text-align:center">${s.name}</h3><canvas width="260" height="260"></canvas><div class="btns"><button class="btn small teal" data-a="P">🌿 Plant</button><button class="btn small pink" data-a="A">🐾 Animal</button></div><div class="fb"></div>`;
+    sp.appendChild(d);drawSpec(d.querySelector('canvas'),s.id);const fb=d.querySelector('.fb');
+    d.querySelectorAll('[data-a]').forEach(btn=>btn.onclick=()=>{if(s4.specDone[s.id])return;const ok=btn.dataset.a===s.ans;record(4,'spec_'+s.id,ok);
+      if(ok){s4.specDone[s.id]=true;fb.className='fb good';fb.textContent='✅ '+s.why;got(4,'spec_'+s.id);d.querySelectorAll('[data-a]').forEach(x=>x.disabled=true);
+        if(Object.keys(s4.specDone).length===3){$('q4lock').classList.add('hidden');$('q4box').classList.remove('hidden');}}
+      else{fb.className='fb bad';fb.textContent='❌ Look for a cell wall (straight box edges) and green chloroplasts. Try again.';}});});
+  // mark sorts as got when placed
+  const orig=drop;
+  const b=$('q4box');
+  mc(b,4,'a','Mystery cell C (onion skin) is a plant cell, but it has no chloroplasts. Why?',['Onion cells are animal cells','Onion bulbs grow underground where there is no sunlight to capture','Chloroplasts are too small to see in any plant','The cell wall blocks chloroplasts'],1,'Chloroplasts are found in plant parts that get sunlight, like leaves.');
+  mc(b,4,'b','Under a microscope, what is the BEST evidence that a cell is a plant cell?',['A cell wall and/or chloroplasts','A nucleus','Mitochondria','Cytoplasm'],0,'Only plant cells have cell walls and chloroplasts. Nuclei, mitochondria and cytoplasm are in both.');
+  checkFinish(4);
+}
+/* award sort points when correct placement happens */
+const _origCheck=checkFinish;
+setInterval(()=>{for(const k in s4.pos){const q='sort_'+k;if(!S.got[4].has(q)){S.got[4].add(q);checkFinish(4);}}},300);
+
+/* ===== STATION 5 ===== */
+function build5(){const b=$('q5box');const Q=[
+ ['A scientist finds a cell with a cell wall and chloroplasts. Where did the cell most likely come from?',['A human muscle','A leaf','A frog\'s skin','A bacterium in the soil'],1,'Cell walls and chloroplasts mean a plant cell, and leaves are where chloroplasts are found.'],
+ ['Muscle cells use a lot of energy. Which organelle would you expect muscle cells to have MANY of?',['Vacuoles','Cell walls','Mitochondria','Chloroplasts'],2,'Mitochondria release energy from sugar, so active cells need many of them.'],
+ ['Which organelle contains DNA and controls the cell\'s activities?',['Nucleus','Ribosome','Vacuole','Cell membrane'],0,'The nucleus is the control center and holds the DNA.'],
+ ['A student looks at cells with no cell wall and no chloroplasts. What kind of cells are they most likely?',['Leaf cells','Onion skin cells','Moss cells','Animal cells'],3,'Animal cells have no cell wall and no chloroplasts.'],
+ ['A potted plant that has not been watered starts to droop. Which statement best explains why?',['Its mitochondria stopped working','Its central vacuoles lost water, so the cells are no longer firm','Its ribosomes stopped making proteins','Its nucleus lost its DNA'],1,'The central vacuole stores water and keeps plant cells firm.'],
+ ['What is the main job of ribosomes?',['Making proteins','Storing water','Capturing sunlight','Protecting the cell'],0,'Ribosomes build proteins.'],
+ ['Which pair of organelles is responsible for energy changes in a plant cell?',['Nucleus and cell wall','Vacuole and ribosomes','Chloroplasts and mitochondria','Cell membrane and cytoplasm'],2,'Chloroplasts store sunlight\'s energy in sugar; mitochondria release that energy.'],
+ ['A cell needs to take in oxygen and get rid of carbon dioxide. Which structure controls this?',['The cell wall','The nucleus','The vacuole','The cell membrane'],3,'The cell membrane controls what enters and leaves the cell.']];
+ Q.forEach((q,i)=>mc(b,5,'q'+i,`<span style="color:var(--pink-d)">${i+1}.</span> ${q[0]}`,q[1],q[2],q[3]));checkFinish(5);}
+
+function showResults(){let tot=0,cor=0;const names={1:'Cell Explorer',2:'Job Board',3:'Knockout Lab',4:'Plant vs. Animal',5:'Certification'};let grid='';
+  for(let st=1;st<=5;st++){const v=Object.values(S.score[st]);const c=v.filter(Boolean).length;tot+=v.length;cor+=c;grid+=`<div class="sg"><small>${names[st]}</small><b>${c} / ${v.length}</b></div>`;}
+  const pct=tot?Math.round(cor/tot*100):0;const mins=Math.round((Date.now()-S.start)/60000);
+  $('certName').textContent=S.name;$('certPct').textContent=pct+'%';$('certRaw').textContent=`${cor} of ${tot} correct on the first try`;$('certGrid').innerHTML=grid;
+  $('certMeta').textContent=`Completed ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · Time: ${mins} min`;show('results');}
+</script>
+</body>
+</html>
