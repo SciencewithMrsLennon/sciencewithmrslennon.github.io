@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Reindeer Run | Newton's Laws Escape Room</title>
+<link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0f1b33;--navy2:#1a2b4d;--red:#c8303c;--green:#2e8b57;--gold:#e9b949;--cream:#fff8ec;--ink:#1b2a4a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:radial-gradient(ellipse at top,#22386a 0%,var(--navy) 60%);color:var(--cream);min-height:100vh;overflow-x:hidden}
+#snow{position:fixed;inset:0;pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:16px}
+h1,h2{font-family:'Mountains of Christmas',cursive;color:var(--gold);text-shadow:0 3px 0 rgba(0,0,0,.35)}
+h1{font-size:clamp(2.4rem,7vw,4rem);text-align:center;line-height:1.05}
+h2{font-size:clamp(1.8rem,5vw,2.6rem)}
+.sub{text-align:center;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#fff;opacity:.85;margin:6px 0 18px;font-size:.85rem}
+.card{background:var(--cream);color:var(--ink);border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.4);border:4px solid var(--gold);position:relative}
+.card.candy{border-image:repeating-linear-gradient(45deg,var(--red) 0 14px,#fff 14px 28px) 12}
+.btn{display:inline-block;background:var(--red);color:#fff;border:none;border-radius:999px;padding:13px 28px;font:800 1.05rem 'Nunito';cursor:pointer;box-shadow:0 4px 0 #8e1f28;transition:transform .1s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #8e1f28}
+.btn.green{background:var(--green);box-shadow:0 4px 0 #1c5e39}
+.center{text-align:center}
+input[type=text]{font:800 1.4rem 'Nunito';padding:10px 14px;border-radius:12px;border:3px solid var(--navy2);text-align:center;letter-spacing:.3em;width:220px;max-width:100%;text-transform:uppercase}
+#team{letter-spacing:normal;font-size:1.1rem;width:280px}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.timer{background:var(--navy2);border:3px solid var(--gold);border-radius:12px;padding:6px 14px;font-weight:800;font-size:1.3rem}
+.timer.low{border-color:var(--red);color:#ffb3b8}
+.lights{display:flex;gap:8px}
+.bulb{width:22px;height:30px;border-radius:50% 50% 45% 45%;background:#3a4560;position:relative}
+.bulb::before{content:'';position:absolute;top:-6px;left:7px;width:8px;height:7px;background:#666;border-radius:2px}
+.bulb.on:nth-child(5n+1){background:#ff4b5c;box-shadow:0 0 14px #ff4b5c}.bulb.on:nth-child(5n+2){background:#4cd97b;box-shadow:0 0 14px #4cd97b}.bulb.on:nth-child(5n+3){background:#ffd34d;box-shadow:0 0 14px #ffd34d}.bulb.on:nth-child(5n+4){background:#5cb8ff;box-shadow:0 0 14px #5cb8ff}.bulb.on:nth-child(5n){background:#ff8adf;box-shadow:0 0 14px #ff8adf}
+.story{background:#fdecc8;border-left:6px solid var(--red);padding:12px 14px;border-radius:10px;margin:10px 0 16px;font-size:1.02rem}
+.q{margin:16px 0;padding:14px;border-radius:12px;background:#fff;border:2px solid #e6dcc6}
+.q p{font-weight:800;margin-bottom:10px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:600px){.opts{grid-template-columns:1fr}}
+.opt{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:2px solid #d9cfb8;background:#fffdf7;cursor:pointer;font:600 .97rem 'Nunito';color:var(--ink);text-align:left}
+.opt:hover{border-color:var(--green)}
+.opt.sel{border-color:var(--green);background:#e5f6ec}
+.tag{flex:none;width:34px;height:34px;border-radius:8px;background:var(--red);color:#fff;font-weight:800;display:grid;place-items:center;font-size:1.05rem}
+.lock{margin-top:20px;padding:18px;border-radius:14px;background:var(--navy2);color:#fff;text-align:center}
+.lock .msg{min-height:1.5em;margin-top:10px;font-weight:700}
+.shake{animation:shake .45s}
+@keyframes shake{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+.icon{font-size:2.6rem;position:absolute;top:-26px;right:18px}
+.hidden{display:none!important}
+.rules li{margin:6px 0 6px 20px}
+.cert{background:#fff;color:var(--ink);border:10px double var(--gold);border-radius:14px;padding:30px;text-align:center}
+.cert h2{color:var(--red)}
+@media print{body{background:#fff}#snow,.noprint{display:none!important}.cert{border-color:#c9a227}}
+</style>
+</head>
+<body>
+<canvas id="snow"></canvas>
+<div class="wrap">
+
+<!-- START -->
+<section id="start">
+  <h1>🦌 The Reindeer Run 🎅</h1>
+  <div class="sub">A Newton's Laws Digital Escape Room • TEKS 8.7A / 8.7B</div>
+  <div class="card candy">
+    <div class="story"><b>🚨 URGENT from the North Pole!</b> A blizzard knocked out the Flight Control computer, and Santa's sleigh is LOCKED DOWN on Christmas Eve! To restart it, you must unlock 5 systems using your knowledge of <b>forces and Newton's Laws</b>. Can your team get the sleigh in the air before time runs out?</div>
+    <ul class="rules">
+      <li>Read each question carefully and click the answer you choose.</li>
+      <li>Each answer has a <b>code symbol</b>. Write down the symbol for every answer you pick, in order.</li>
+      <li>Type the code into the lock. If it won't open, at least one answer is wrong. Check your work!</li>
+      <li>You have <b>45 minutes</b>. Show your work on your recording sheet.</li>
+    </ul>
+    <div class="center" style="margin-top:18px">
+      <input type="text" id="team" placeholder="Team or student name" maxlength="40"><br><br>
+      <button class="btn green" onclick="begin()">🛷 Start the Mission</button>
+    </div>
+  </div>
+</section>
+
+<!-- GAME -->
+<section id="game" class="hidden">
+  <div class="hud">
+    <div class="lights" id="lights"></div>
+    <div class="timer" id="timer">45:00</div>
+  </div>
+  <div class="card" id="room"></div>
+</section>
+
+<!-- WIN -->
+<section id="win" class="hidden">
+  <h1>🎄 Christmas is Saved! 🎄</h1>
+  <div class="sub">The sleigh is cleared for takeoff</div>
+  <div class="cert" id="cert"></div>
+  <div class="center noprint" style="margin-top:18px">
+    <button class="btn" onclick="window.print()">🖨️ Print Certificate</button>
+  </div>
+</section>
+
+<!-- TIME UP -->
+<section id="lose" class="hidden">
+  <h1>⏰ Time's Up!</h1>
+  <div class="card center">
+    <p style="font-size:1.15rem;margin-bottom:14px">The blizzard got worse, but Santa isn't giving up, and neither should you! Ask your teacher if you can keep working.</p>
+    <button class="btn green" onclick="keepGoing()">❄️ Keep Working (no timer)</button>
+  </div>
+</section>
+
+</div>
+
+<script>
+/* ===== ROOM DATA =====
+   Each option: [text, code symbol, correct?]  Codes are built from the correct symbols. */
+const ROOMS=[
+{icon:"🛠️",title:"System 1: The Toy Workshop",topic:"Newton's First Law & Inertia",
+story:"The sleigh's <b>Motion Sensor</b> is frozen. To reboot it, prove you understand Newton's First Law of Motion.",
+qs:[
+{q:"Santa's sleigh is parked on the roof of the workshop. Which statement BEST describes the sleigh?",o:[["It will start moving on its own after a while","7"],["It stays at rest unless an unbalanced force acts on it","3",1],["It is at rest because there are no forces acting on it","5"],["It needs a constant force to stay at rest","9"]]},
+{q:"The sleigh is flying, then stops suddenly. The presents in the back slide FORWARD. Why?",o:[["The presents have inertia and keep moving forward","8",1],["The sleigh pushes the presents forward","2"],["Gravity pulls the presents forward","6"],["The presents gain mass when the sleigh stops","4"]]},
+{q:"Which object has the MOST inertia?",o:[["An empty sleigh with a mass of 200 kg","1"],["A reindeer with a mass of 150 kg","5"],["A fully loaded sleigh with a mass of 900 kg","6",1],["A bag of toys with a mass of 40 kg","3"]]},
+{q:"A sleigh is moving at 20 m/s. If ALL forces acting on it were suddenly removed, the sleigh would…",o:[["slowly come to a stop","4"],["speed up","7"],["stop immediately","2"],["keep moving at 20 m/s in a straight line","1",1]]}
+]},
+{icon:"🦌",title:"System 2: The Reindeer Stable",topic:"Balanced & Unbalanced Forces",
+story:"The reindeer harness computer needs a <b>Net Force Check</b> before takeoff. Calculate the net force for each team of reindeer.",
+qs:[
+{q:"Rudolph pulls the sleigh east with 300 N. Dasher also pulls east with 200 N. What is the net force?",o:[["100 N east","3"],["500 N east","9",1],["500 N west","4"],["0 N","6"]]},
+{q:"The reindeer pull the sleigh north with 400 N. Friction from the snow acts south with 150 N. What is the net force?",o:[["250 N north","5",1],["550 N north","1"],["250 N south","8"],["150 N south","2"]]},
+{q:"Two elves push a giant present from opposite sides, each with 50 N. What happens to the present?",o:[["It moves toward the stronger elf","7"],["It speeds up","3"],["The forces are balanced, so its motion does not change","2",1],["It moves upward","9"]]},
+{q:"Which situation will make the moving sleigh SPEED UP?",o:[["Balanced forces act on the sleigh","6"],["An unbalanced force acts opposite to its motion","1"],["All forces are removed","5"],["An unbalanced force acts in the direction of its motion","7",1]]}
+]},
+{icon:"🚀",title:"System 3: The Launch Runway",topic:"Newton's Second Law (F = m × a)",
+story:"The <b>Launch Thrusters</b> need exact numbers! Use <b>F = m × a</b> (or a = F ÷ m) to program the runway.",
+qs:[
+{q:"A net force of 1,000 N acts on a 500 kg sleigh. What is the sleigh's acceleration?",o:[["5 m/s²","8"],["0.5 m/s²","1"],["2 m/s²","4",1],["500 m/s²","6"]]},
+{q:"The reindeer pull with the SAME force, but the elves load MORE presents onto the sleigh. What happens to the acceleration?",o:[["It decreases","0",1],["It increases","3"],["It stays the same","7"],["It becomes zero","9"]]},
+{q:"An elf needs to give a 10 kg present an acceleration of 3 m/s². How much net force is needed?",o:[["13 N","2"],["30 N","6",1],["3.3 N","5"],["7 N","8"]]},
+{q:"Sleigh A has a mass of 400 kg. Sleigh B has a mass of 800 kg. The same net force acts on both. Which is true?",o:[["Sleigh B accelerates twice as much","4"],["They accelerate the same amount","2"],["Neither sleigh accelerates","9"],["Sleigh A accelerates twice as much","5",1]]}
+]},
+{icon:"🏠",title:"System 4: The Rooftop Landing Pad",topic:"Newton's Third Law",
+story:"The <b>Landing Gear</b> runs on action-reaction pairs. Identify the force pairs to unlock it.",
+qs:[
+{q:"When a reindeer runs, its hooves push BACKWARD on the snow. What is the reaction force?",o:[["The snow pushes the reindeer forward","7",1],["Gravity pulls the reindeer down","2"],["The reindeer pushes the sleigh","4"],["The air pushes the reindeer backward","9"]]},
+{q:"An elf on ice skates throws a heavy present forward. What happens to the elf?",o:[["The elf moves forward with the present","5"],["The elf moves backward","3",1],["Nothing happens to the elf","8"],["The elf moves upward","1"]]},
+{q:"Action-reaction force pairs are always…",o:[["unequal in size and act on the same object","6"],["equal in size and act in the same direction","4"],["equal in size, opposite in direction, and act on different objects","1",1],["only found in moving objects","0"]]},
+{q:"Santa's emergency rocket booster pushes hot gases DOWN. Which force lifts the sleigh UP?",o:[["Gravity","3"],["Friction","5"],["Inertia","7"],["The gases pushing up on the booster","8",1]]}
+]},
+{icon:"⭐",title:"System 5: Final Flight Check",topic:"Newton's Laws Review",word:true,
+story:"LAST ONE! The <b>Flight Control password</b> is a 5-letter word. Each correct answer gives you one letter. Spell it out to launch the sleigh!",
+qs:[
+{q:"Which law says an object at rest stays at rest unless acted on by an unbalanced force?",o:[["Newton's Third Law","T"],["Newton's First Law","F",1],["Newton's Second Law","S"],["Law of Gravity","G"]]},
+{q:"The mass of the sleigh doubles, but the net force stays the same. The acceleration is…",o:[["doubled","D"],["unchanged","U"],["cut in half","O",1],["zero","Z"]]},
+{q:"A rocket pushes gases down and the rocket moves up. Which law explains this?",o:[["Newton's First Law","A"],["Newton's Second Law","N"],["Newton's Third Law","R",1],["Law of Inertia","I"]]},
+{q:"Reindeer pull a 100 kg sleigh forward with 600 N. Friction pushes back with 200 N. What is the acceleration?",o:[["8 m/s²","B"],["6 m/s²","H"],["2 m/s²","P"],["4 m/s²","C",1]]},
+{q:"Santa wears a seatbelt so he doesn't fly forward when the sleigh stops suddenly. This protects him because of…",o:[["inertia","E",1],["action-reaction","L"],["gravity","W"],["acceleration","M"]]}
+]}
+];
+
+let cur=0,left=45*60,tick=null,timed=true,team="",start=0,tries=0;
+const $=id=>document.getElementById(id);
+const code=r=>r.qs.map(q=>q.o.find(o=>o[2])[1]).join("");
+
+function lights(){$("lights").innerHTML=ROOMS.map((_,i)=>`<div class="bulb ${i<cur?'on':''}"></div>`).join("")}
+function begin(){team=$("team").value.trim()||"Team Rudolph";$("start").classList.add("hidden");$("game").classList.remove("hidden");start=Date.now();tick=setInterval(step,1000);show()}
+function step(){if(!timed)return;left--;fmt();if(left<=0){clearInterval(tick);$("game").classList.add("hidden");$("lose").classList.remove("hidden")}}
+function fmt(){const t=$("timer");if(!timed){t.textContent="⏱ No timer";t.classList.remove("low");return}
+ t.textContent=`${String(Math.floor(left/60)).padStart(2,"0")}:${String(left%60).padStart(2,"0")}`;t.classList.toggle("low",left<300)}
+function keepGoing(){timed=false;fmt();$("lose").classList.add("hidden");$("game").classList.remove("hidden")}
+function show(){
+ const r=ROOMS[cur];lights();tries=0;
+ $("room").innerHTML=`<div class="icon">${r.icon}</div><h2>${r.title}</h2><div style="font-weight:800;color:var(--green)">${r.topic}</div>
+ <div class="story">${r.story}</div>
+ ${r.qs.map((q,i)=>`<div class="q"><p>${i+1}. ${q.q}</p><div class="opts">${q.o.map(o=>`<button class="opt" onclick="pick(this)"><span class="tag">${o[1]}</span>${o[0]}</button>`).join("")}</div></div>`).join("")}
+ <div class="lock" id="lockbox"><div style="font-size:2rem">🔒</div><b>Enter the ${r.word?'5-letter password':r.qs.length+'-digit code'}</b><br><br>
+ <input type="text" id="code" maxlength="${r.qs.length}" autocomplete="off" onkeydown="if(event.key==='Enter')check()"> <button class="btn green" onclick="check()">Unlock</button>
+ <div class="msg" id="msg"></div></div>`;
+ window.scrollTo({top:0,behavior:"smooth"})
+}
+function pick(b){b.parentNode.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));b.classList.add("sel")}
+function check(){
+ const v=$("code").value.trim().toUpperCase(),r=ROOMS[cur],m=$("msg");
+ if(v===code(r)){m.style.color="#7dffaa";m.textContent="🔓 UNLOCKED! System back online!";$("lockbox").querySelector("div").textContent="🔓";
+  setTimeout(()=>{cur++;cur<ROOMS.length?show():win()},1200)}
+ else{tries++;m.style.color="#ffb3b8";
+  m.textContent=tries>=3?"❄️ Still locked. Go back through each question and double-check your work. Re-read the question, and check your math!":"❄️ The lock won't budge. At least one answer is off. Check your work!";
+  const l=$("lockbox");l.classList.remove("shake");void l.offsetWidth;l.classList.add("shake")}
+}
+function win(){
+ clearInterval(tick);const used=Math.round((Date.now()-start)/60000);
+ $("game").classList.add("hidden");$("win").classList.remove("hidden");lights();
+ $("cert").innerHTML=`<div style="font-size:3rem">🛷🦌🦌🦌</div><h2>Official Flight Engineer</h2>
+ <p style="margin:10px 0;font-size:1.1rem">This certifies that</p><div style="font:800 1.8rem 'Nunito';color:var(--green)">${team.replace(/[<>&]/g,"")}</div>
+ <p style="margin:12px 0;font-size:1.05rem">used Newton's Laws of Motion to unlock all 5 sleigh systems and<br><b>save Christmas!</b></p>
+ <p style="font-weight:700">Mission time: ${used} minute${used===1?"":"s"} • ${new Date().toLocaleDateString()}</p>
+ <p style="margin-top:14px;font-size:.85rem;opacity:.7">Science with Mrs. Lennon</p>`;
+ confetti()
+}
+/* snow */
+const cv=$("snow"),cx=cv.getContext("2d");let fl=[];
+function rs(){cv.width=innerWidth;cv.height=innerHeight}addEventListener("resize",rs);rs();
+for(let i=0;i<120;i++)fl.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*3+1,s:Math.random()*1+.4,c:"#fff"});
+function confetti(){const cs=["#c8303c","#2e8b57","#e9b949","#5cb8ff"];for(let i=0;i<150;i++)fl.push({x:Math.random()*innerWidth,y:-Math.random()*400,r:Math.random()*4+2,s:Math.random()*2+1.5,c:cs[i%4],tmp:1})}
+(function snow(){cx.clearRect(0,0,cv.width,cv.height);fl.forEach(f=>{f.y+=f.s;f.x+=Math.sin(f.y/40)*.5;if(f.y>cv.height){if(f.tmp){f.dead=1}else{f.y=-5;f.x=Math.random()*cv.width}}cx.fillStyle=f.c;cx.globalAlpha=f.tmp?1:.8;cx.beginPath();cx.arc(f.x,f.y,f.r,0,7);cx.fill()});fl=fl.filter(f=>!f.dead);requestAnimationFrame(snow)})();
+</script>
+</body>
+</html>
