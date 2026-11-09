@@ -1,0 +1,456 @@
+<title>STAAR Review Line</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800;900&family=Overpass+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: transit map. Each topic is a numbered line, each TEKS is a station; one centered 760px column. */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --ink:#15202b; --muted:#566473; --rule:#d3dae2;
+  --sign:#15202b; --sign-ink:#f5f7fa; --sky:#0c1222; --sky-ink:#dfe6f0; --on-line:#ffffff;
+  --matter:#d23f2e; --motion:#1d6bd0; --heat:#d27608; --force:#16905a; --space:#7646c0;
+  --good:#16905a; --warn:#b07506; --bad:#c7362a;
+  --f-display:"Overpass",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Overpass",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Overpass Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e151d; --surface:#16212c; --ink:#e6ecf2; --muted:#9aa8b6; --rule:#2a3846;
+  --sign:#05090d; --sign-ink:#f5f7fa; --sky:#070b16; --sky-ink:#dfe6f0; --on-line:#0c1222;
+  --matter:#ff6b58; --motion:#5ea4ff; --heat:#ffae45; --force:#3fd18a; --space:#b08cf4;
+  --good:#3fd18a; --warn:#f2bb45; --bad:#ff6b58; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0e151d; --surface:#16212c; --ink:#e6ecf2; --muted:#9aa8b6; --rule:#2a3846;
+  --sign:#05090d; --sign-ink:#f5f7fa; --sky:#070b16; --sky-ink:#dfe6f0; --on-line:#0c1222;
+  --matter:#ff6b58; --motion:#5ea4ff; --heat:#ffae45; --force:#3fd18a; --space:#b08cf4;
+  --good:#3fd18a; --warn:#f2bb45; --bad:#ff6b58; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--motion);outline-offset:2px}
+.mono{font-family:var(--f-mono)}
+
+.sign{background:var(--sign);color:var(--sign-ink);border-radius:12px;padding:22px 22px 20px;display:grid;gap:10px}
+.sign .eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+.sign h1{font-size:clamp(34px,8vw,54px);font-weight:900;letter-spacing:-.01em}
+.sign .bullets{display:flex;gap:6px;flex-wrap:wrap}
+.sign .bullets span{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;color:var(--on-line)}
+.sign p{margin:0;opacity:.88;max-width:60ch}
+
+.controls{display:grid;gap:14px}
+.field{display:grid;gap:6px}
+.field label{font-weight:600;font-size:14px}
+input[type=text]{font:inherit;padding:10px 12px;border:1.5px solid var(--rule);border-radius:8px;background:var(--surface);color:var(--ink);width:100%;max-width:360px}
+.progress{display:grid;gap:6px}
+.progress .bar{height:10px;background:var(--rule);border-radius:5px;overflow:hidden}
+.progress .bar i{display:block;height:100%;background:var(--ink);border-radius:5px;transition:width .4s}
+.progress small{color:var(--muted);font-variant-numeric:tabular-nums}
+.btnrow{display:flex;flex-wrap:wrap;gap:10px}
+.btn{background:var(--ink);color:var(--bg);border:0;border-radius:8px;padding:11px 18px;font-weight:800;cursor:pointer}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--rule)}
+.btn.danger{background:transparent;color:var(--bad);border:1.5px solid var(--bad)}
+
+.map{display:grid}
+.line{display:grid;gap:12px;padding:18px 0 14px;border-top:1px solid var(--rule)}
+.line-head{display:flex;align-items:center;gap:10px}
+.bullet{width:32px;height:32px;flex:none;border-radius:50%;background:var(--lc);color:var(--on-line);font-weight:900;display:grid;place-items:center;font-size:16px}
+.line-head h2{font-size:19px;font-weight:800}
+.line-head small{color:var(--muted);margin-left:auto;font-family:var(--f-mono);font-size:12px}
+.track{position:relative;display:flex;justify-content:space-between}
+.track::before{content:"";position:absolute;left:calc(100%/6);right:calc(100%/6);top:15px;height:9px;background:var(--lc);border-radius:5px}
+.stop{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;width:33.33%;background:none;border:0;cursor:pointer;padding:0 4px}
+.dot{width:40px;height:40px;border-radius:50%;background:var(--surface);border:7px solid var(--lc);display:grid;place-items:center;font-family:var(--f-mono);font-weight:700;font-size:11px;transition:transform .15s}
+.stop:hover .dot{transform:scale(1.08)}
+.stop.done .dot{background:var(--lc);color:var(--on-line)}
+.stop .code{font-family:var(--f-mono);font-weight:700;font-size:14px}
+.stop .name{font-size:13px;color:var(--muted);text-align:center;line-height:1.25;text-wrap:balance}
+
+.station{display:grid;gap:14px}
+.st-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.back{background:none;border:1.5px solid var(--rule);border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:600}
+.st-id{display:flex;align-items:center;gap:10px;min-width:0}
+.st-code{font-family:var(--f-mono);font-size:13px;color:var(--lc);font-weight:700}
+.st-title{font-family:var(--f-display);font-weight:800;font-size:20px;line-height:1.15}
+.pdots{display:flex;gap:6px;margin-left:auto}
+.pd{width:12px;height:12px;border-radius:50%;border:2.5px solid var(--lc)}
+.pd.on{background:var(--lc)}
+.pd.cur{outline:2px solid var(--ink);outline-offset:2px}
+.panel{background:var(--surface);border:1px solid var(--rule);border-top:6px solid var(--lc);border-radius:10px;padding:20px;display:grid;gap:14px}
+.qnum{font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.prompt{font-size:18px;font-weight:600;margin:0;max-width:62ch}
+.formula{font-family:var(--f-mono);font-size:clamp(20px,5vw,28px);font-weight:700;text-align:center;padding:14px 10px;background:var(--bg);border-radius:8px;overflow-x:auto;white-space:nowrap}
+.choices{display:grid;gap:8px}
+.choice{display:flex;gap:12px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--rule);border-radius:8px;padding:11px 14px;cursor:pointer}
+.choice .lt{font-family:var(--f-mono);font-weight:700;color:var(--muted);flex:none}
+.choice:hover:not(:disabled){border-color:var(--lc)}
+.choice.sel{border-color:var(--lc);background:color-mix(in srgb,var(--lc) 10%,var(--surface))}
+.choice:disabled{cursor:default}
+.right{border-color:var(--good)!important;background:color-mix(in srgb,var(--good) 14%,var(--surface))!important}
+.wrong{border-color:var(--bad)!important;background:color-mix(in srgb,var(--bad) 12%,var(--surface))!important}
+.numrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.numrow label{min-width:150px;font-weight:600}
+.numrow input{max-width:140px;font-family:var(--f-mono);font-weight:700}
+.numrow input:disabled{opacity:1;color:var(--ink)}
+.unit{font-family:var(--f-mono);color:var(--muted)}
+.multi{display:grid;gap:10px}
+.srows{display:grid}
+.srow{display:grid;gap:8px;padding:10px 0;border-bottom:1px solid var(--rule)}
+.srow:last-child{border-bottom:0}
+.srow .txt{min-width:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1.5px solid var(--rule);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:14px;font-weight:600;cursor:pointer}
+.seg button[aria-pressed=true]{border-color:var(--lc);background:var(--lc);color:var(--on-line)}
+.seg button:disabled{cursor:default}
+.seg button.right,.seg button.wrong{color:var(--ink)}
+.fix{font-size:13px;font-weight:700;color:var(--good)}
+@media (min-width:600px){.srow{grid-template-columns:minmax(0,1fr) auto;align-items:center}}
+.tiles{display:grid;gap:8px}
+.tile{display:flex;align-items:center;gap:12px;text-align:left;background:var(--surface);border:1.5px dashed var(--rule);border-radius:8px;padding:10px 14px;cursor:pointer}
+.tile .n{width:28px;height:28px;flex:none;border-radius:50%;border:2px solid var(--rule);display:grid;place-items:center;font-family:var(--f-mono);font-weight:700;font-size:13px}
+.tile.picked{border-style:solid;border-color:var(--lc)}
+.tile.picked .n{background:var(--lc);border-color:var(--lc);color:var(--on-line)}
+.ordcols{display:grid;gap:14px}
+@media (min-width:600px){.ordcols{grid-template-columns:1fr 1fr}}
+.ordcols ol{margin:6px 0 0;padding-left:22px;display:grid;gap:4px}
+.ordcols h4{margin:0;font-size:13px;font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.ok{color:var(--good);font-weight:800}.no{color:var(--bad);font-weight:800}
+.hint{font-size:14px;color:var(--muted);margin:0}
+.fb{border-radius:8px;padding:12px 14px;display:grid;gap:4px}
+.fb.g{background:color-mix(in srgb,var(--good) 13%,var(--surface))}
+.fb.p{background:color-mix(in srgb,var(--warn) 15%,var(--surface))}
+.fb.b{background:color-mix(in srgb,var(--bad) 11%,var(--surface))}
+.fb strong{font-family:var(--f-display);font-size:17px}
+.fb p{margin:0}
+.actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+table.data{border-collapse:collapse;font-variant-numeric:tabular-nums;margin:0 auto}
+table.data th,table.data td{border:1px solid var(--rule);padding:6px 14px;text-align:center}
+table.data th{background:var(--bg);font-size:13px}
+
+.vis{display:grid;justify-items:center;gap:8px}
+.vis svg{width:100%;max-width:460px;height:auto}
+.vis canvas{width:100%;max-width:520px;height:auto;border-radius:8px;display:block}
+.grid{stroke:var(--rule);stroke-width:1}
+.axis{stroke:var(--ink);stroke-width:2}
+.tick{fill:var(--muted);font:500 11px var(--f-mono)}
+.atitle{fill:var(--ink);font:700 12px var(--f-body)}
+.plot{fill:none;stroke:var(--motion);stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
+.ptdot{fill:var(--motion)}
+.seglbl{fill:var(--ink);font:800 16px var(--f-display)}
+.slider{display:grid;gap:4px;width:100%;max-width:520px}
+.slider input{width:100%;accent-color:var(--heat)}
+.slider output{font-family:var(--f-mono);font-weight:700}
+
+.summary{display:grid;gap:10px}
+.big{font-family:var(--f-display);font-weight:900;font-size:56px;line-height:1;font-variant-numeric:tabular-nums}
+.qlist{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.qlist li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--rule);padding:6px 0;font-variant-numeric:tabular-nums}
+
+.report{display:grid;gap:16px}
+.rhead{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px 28px}
+.rhead .meta{color:var(--muted)}
+.rgroup{display:grid;gap:2px}
+.rgroup h3{font-size:14px;font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:8px;padding:8px 0 4px}
+.rgroup h3 span{width:14px;height:14px;border-radius:50%;background:var(--lc)}
+.rrow{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--rule)}
+.rrow .c{font-family:var(--f-mono);font-weight:700}
+.rrow .meter{grid-column:2/4;height:7px;background:var(--rule);border-radius:4px;overflow:hidden}
+.rrow .meter i{display:block;height:100%}
+.chip{font-size:12px;font-weight:800;padding:2px 10px;border-radius:999px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.chip.g{background:color-mix(in srgb,var(--good) 18%,var(--surface));color:var(--good)}
+.chip.p{background:color-mix(in srgb,var(--warn) 20%,var(--surface));color:var(--warn)}
+.chip.b{background:color-mix(in srgb,var(--bad) 15%,var(--surface));color:var(--bad)}
+.chip.n{background:var(--bg);color:var(--muted)}
+textarea{width:100%;font:13px var(--f-mono);padding:10px;border:1px solid var(--rule);border-radius:8px;background:var(--surface);color:var(--ink);min-height:180px}
+.note{color:var(--muted);font-size:14px;margin:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+const LINES=[
+ {n:1,name:"Matter Line",c:"matter",st:["7.6B","7.6C","8.6E"]},
+ {n:2,name:"Motion Line",c:"motion",st:["7.7A","7.7B","7.7C"]},
+ {n:3,name:"Heat Line",c:"heat",st:["7.8A","7.8C"]},
+ {n:4,name:"Force & Energy Line",c:"force",st:["8.7A","8.7B","8.8A"]},
+ {n:5,name:"Space Line",c:"space",st:["7.9B","8.9A","8.9B"]}];
+const TK={
+ "7.6B":"Atoms in Formulas","7.6C":"Physical vs. Chemical","8.6E":"Conservation of Mass",
+ "7.7A":"Average Speed","7.7B":"Speed vs. Velocity","7.7C":"Distance-Time Graphs",
+ "7.8A":"Heat Transfer","7.8C":"Temperature & Particles",
+ "8.7A":"Newton's 2nd Law","8.7B":"Newton's 3 Laws","8.8A":"Energy Conservation",
+ "7.9B":"Gravity & Orbits","8.9A":"Stars & the H-R Diagram","8.9B":"Galaxies"};
+
+const Q=[
+// 7.6B
+{id:"b1",t:"7.6B",type:"num",vis:{f:"C₆H₁₂O₆"},p:"Glucose has the formula shown. How many total atoms are in one molecule of glucose?",a:24,unit:"atoms",x:"Add the subscripts: 6 carbon + 12 hydrogen + 6 oxygen = 24 atoms."},
+{id:"b2",t:"7.6B",type:"mc",vis:{f:"Ca(OH)₂"},p:"Calcium hydroxide has the formula Ca(OH)₂. Which list of atoms is correct?",c:["1 calcium, 1 oxygen, 2 hydrogen","2 calcium, 2 oxygen, 2 hydrogen","1 calcium, 2 oxygen, 2 hydrogen","1 calcium, 2 oxygen, 1 hydrogen"],a:2,x:"The subscript 2 outside the parentheses multiplies everything inside: (OH)₂ = 2 oxygen and 2 hydrogen. There is 1 calcium."},
+{id:"b3",t:"7.6B",type:"multi",vis:{f:"Al₂(SO₄)₃"},p:"Aluminum sulfate is Al₂(SO₄)₃. Count each kind of atom.",fields:[["Al (aluminum)",2],["S (sulfur)",3],["O (oxygen)",12]],x:"Al₂ gives 2 aluminum. The 3 outside the parentheses multiplies SO₄: 1 × 3 = 3 sulfur and 4 × 3 = 12 oxygen."},
+// 7.6C
+{id:"c1",t:"7.6C",type:"sort",p:"Sort each change as physical or chemical.",bins:["Physical","Chemical"],items:[["Ice cube melting",0],["Iron nail rusting",1],["Baking a cake",1],["Cutting paper into strips",0],["Sugar dissolving in tea",0],["Wood burning in a campfire",1],["Milk going sour",1],["Crushing an aluminum can",0]],x:"Chemical changes make a new substance (rust, ash, sour milk, cake). Physical changes only change size, shape, or state, and the substance stays the same."},
+{id:"c2",t:"7.6C",type:"mc",p:"Which observation is the best evidence that a chemical change happened?",c:["Water bubbles as it boils on the stove","A glass jar shatters on the floor","Bubbles of gas form when vinegar is poured on baking soda","Butter melts in a warm pan"],a:2,x:"Vinegar and baking soda produce a new gas (carbon dioxide). Boiling water bubbles too, but those bubbles are still water in a different state."},
+{id:"c3",t:"7.6C",type:"mc",p:"A student mixes two clear liquids and a yellow solid forms. She then pours the mixture through a filter to separate the solid. How should these two steps be classified?",c:["Both are physical changes","Forming the solid is chemical; filtering is physical","Forming the solid is physical; filtering is chemical","Both are chemical changes"],a:1,x:"A solid forming when two liquids mix (a precipitate) is evidence of a new substance. Filtering only separates parts of a mixture, so it is physical."},
+// 8.6E
+{id:"m1",t:"8.6E",type:"num",p:"A student seals 12.0 g of baking soda and 50.0 g of vinegar in a zip bag and lets them react. What is the total mass of the bag's contents after the reaction?",a:62,tol:.05,unit:"g",x:"In a closed system no atoms enter or leave, so mass is conserved: 12.0 g + 50.0 g = 62.0 g."},
+{id:"m2",t:"8.6E",type:"mc",p:"The student repeats the reaction in an open cup. Afterward the mass is 59.5 g instead of 62.0 g. What is the best explanation?",c:["Some mass was destroyed by the reaction","Carbon dioxide gas escaped into the air","The atoms changed into energy","The scale only works with closed bags"],a:1,x:"The atoms still exist. The missing 2.5 g left the open cup as carbon dioxide gas."},
+{id:"m3",t:"8.6E",type:"multi",vis:{f:"6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂"},p:"This is the equation for photosynthesis. Count the oxygen atoms on each side.",fields:[["O atoms in reactants",18],["O atoms in products",18]],x:"Reactants: 6CO₂ has 12 O and 6H₂O has 6 O, for 18. Products: C₆H₁₂O₆ has 6 O and 6O₂ has 12 O, for 18. Atoms are rearranged, never created or destroyed, so mass is conserved."},
+// 7.7A
+{id:"a1",t:"7.7A",type:"num",p:"A cyclist rides 24 km in 2 hours. What is her average speed?",a:12,unit:"km/h",x:"Average speed = total distance ÷ total time = 24 km ÷ 2 h = 12 km/h."},
+{id:"a2",t:"7.7A",type:"num",p:"During a track investigation, a runner covers 400 m in 80 s. What is the runner's average speed?",a:5,unit:"m/s",x:"400 m ÷ 80 s = 5 m/s."},
+{id:"a3",t:"7.7A",type:"mc",vis:{table:[["Toy car","Distance","Time"],["Car A","150 cm","6 s"],["Car B","200 cm","10 s"]]},p:"Two toy cars were timed in an investigation. Which car had the greater average speed?",c:["Car B, because it traveled farther","Car A, at 25 cm/s","Car B, at 20 cm/s","They had the same average speed"],a:1,x:"Car A: 150 ÷ 6 = 25 cm/s. Car B: 200 ÷ 10 = 20 cm/s. Traveling farther does not mean faster; you have to divide by time."},
+// 7.7B
+{id:"v1",t:"7.7B",type:"mc",p:"Which measurement is a velocity?",c:["30 m/s","30 m/s north","30 m north","30 s north"],a:1,x:"Velocity is speed with a direction. 30 m north is a displacement, not a velocity, because it has no time in it."},
+{id:"v2",t:"7.7B",type:"sort",p:"Sort each measurement as speed or velocity.",bins:["Speed","Velocity"],items:[["55 mph",0],["55 mph east",1],["3 m/s toward the door",1],["120 km/h",0],["9.8 m/s downward",1],["15 m/s",0]],x:"If a direction is given (east, toward the door, downward), it is a velocity. A number and unit alone is a speed."},
+{id:"v3",t:"7.7B",type:"mc",p:"A student walks 40 m east to the cafeteria, then 40 m west back to the classroom. What are her distance traveled and her displacement?",c:["Distance 40 m; displacement 40 m east","Distance 80 m; displacement 80 m east","Distance 80 m; displacement 0 m","Distance 0 m; displacement 80 m"],a:2,x:"Distance counts every meter walked: 40 + 40 = 80 m. Displacement is the change in position from start to finish. She ended where she started, so displacement is 0 m."},
+// 7.7C
+{id:"g1",t:"7.7C",type:"mc",vis:{dt:1},p:"The graph shows a remote-control car's motion. During which section was the car stopped?",c:["Section A","Section B","Section C","The car never stopped"],a:1,x:"A flat line means the distance is not changing as time passes, so the car was stopped from 4 s to 8 s."},
+{id:"g2",t:"7.7C",type:"mc",vis:{dt:1},p:"During which section was the car moving fastest?",c:["Section A","Section B","Section C","Same speed the whole time"],a:2,x:"The steepest slope is the fastest speed. Section C rises 20 m in 2 s (10 m/s). Section A rises 20 m in 4 s (5 m/s)."},
+{id:"g3",t:"7.7C",type:"num",vis:{dt:1},p:"Use the graph. What was the car's average speed for the whole trip, from 0 s to 10 s?",a:4,unit:"m/s",x:"Total distance 40 m ÷ total time 10 s = 4 m/s. The time the car was stopped still counts in the total time."},
+// 7.8A
+{id:"h1",t:"7.8A",type:"sort",p:"Sort each example by how thermal energy is transferred.",bins:["Conduction","Convection","Radiation"],items:[["A metal spoon gets hot sitting in soup",0],["Warm air from a heater rises and circulates around a room",1],["Feeling the Sun's warmth on your skin",2],["Touching a hot stovetop",0],["Hot water rising and cool water sinking in a pot",1],["Feeling a campfire's heat on your face from across the circle",2]],x:"Conduction = direct contact. Convection = warmer fluid (liquid or gas) rises and cooler fluid sinks in a current. Radiation = energy traveling as electromagnetic waves, no contact needed."},
+{id:"h2",t:"7.8A",type:"mc",p:"Which method of thermal energy transfer can move through the empty space between the Sun and Earth?",c:["Conduction","Convection","Radiation","None of these"],a:2,x:"Conduction and convection need particles. Radiation travels as electromagnetic waves, which can cross empty space."},
+{id:"h3",t:"7.8A",type:"mc",p:"You hold an ice cube in your hand and it starts to melt. Which statement describes the energy transfer?",c:["Cold moves from the ice into your hand","Thermal energy moves from your hand into the ice by conduction","Thermal energy moves from the ice into your hand by radiation","No energy moves until the ice has fully melted"],a:1,x:"Thermal energy always flows from warmer to cooler. Your warm hand transfers energy to the ice through direct contact (conduction). Cold is not something that moves."},
+// 7.8C
+{id:"t1",t:"7.8C",type:"mc",vis:{particles:1},p:"Drag the slider to heat and cool the water sample and watch the particles. What happens as the temperature increases?",c:["Particles move faster and have more kinetic energy","Particles get bigger","Particles move slower and have less kinetic energy","The number of particles increases"],a:0,x:"Temperature is a measure of the average kinetic energy of particles. Higher temperature means faster-moving particles. The particles do not grow or multiply."},
+{id:"t2",t:"7.8C",type:"mc",p:"Beaker A holds water at 20 °C. Beaker B holds the same amount of water at 80 °C. Which statement is true?",c:["Beaker A's particles have more kinetic energy because they are packed tighter","Both have the same average kinetic energy because they hold the same amount of water","Beaker B's particles have greater average kinetic energy","Beaker A's particles are moving faster"],a:2,x:"Higher temperature means greater average kinetic energy, so Beaker B's particles are moving faster on average."},
+{id:"t3",t:"7.8C",type:"order",p:"Tap the samples in order from LOWEST to HIGHEST average kinetic energy of particles.",items:["Ice at −10 °C","Water at 25 °C","Water at 60 °C","Steam at 110 °C"],x:"The colder the substance, the slower its particles move. Temperature and average kinetic energy rise together."},
+// 8.7A
+{id:"f1",t:"8.7A",type:"num",p:"What net force is needed to accelerate a 50 kg cart at 2 m/s²?",a:100,unit:"N",x:"F = m × a = 50 kg × 2 m/s² = 100 N."},
+{id:"f2",t:"8.7A",type:"num",p:"A net force of 10 N acts on a 2 kg ball. What is the ball's acceleration?",a:5,unit:"m/s²",x:"a = F ÷ m = 10 N ÷ 2 kg = 5 m/s²."},
+{id:"f3",t:"8.7A",type:"mc",p:"Two students push a 4 kg box. One pushes 30 N to the right and the other pushes 10 N to the left. What is the box's acceleration?",c:["10 m/s² to the right","5 m/s² to the right","5 m/s² to the left","2.5 m/s² to the right"],a:1,x:"Forces in opposite directions subtract: 30 N − 10 N = 20 N to the right. a = 20 N ÷ 4 kg = 5 m/s² to the right."},
+// 8.7B
+{id:"n1",t:"8.7B",type:"sort",p:"Match each example to the law of motion it best shows.",bins:["1st Law","2nd Law","3rd Law"],items:[["A seatbelt stops a passenger from flying forward when the car brakes",0],["Hot gases push down out of a rocket, and the rocket is pushed up",2],["An empty cart speeds up more than a full cart with the same push",1],["A swimmer pushes on the pool wall and the wall pushes the swimmer forward",2],["A soccer ball sits still until someone kicks it",0],["A harder kick makes the ball accelerate more",1]],x:"1st Law: objects keep doing what they are doing (inertia). 2nd Law: acceleration depends on force and mass (F = ma). 3rd Law: every action force has an equal and opposite reaction force."},
+{id:"n2",t:"8.7B",type:"mc",p:"During a launch, a rocket's engines keep the same thrust while the rocket burns fuel and loses mass. What happens to the rocket's acceleration?",c:["It increases","It decreases","It stays the same","It drops to zero"],a:0,x:"2nd Law: same force, less mass, so acceleration increases (a = F ÷ m). At the same time the 3rd Law produces the thrust and the 1st Law keeps the rocket moving. All three laws act at once."},
+{id:"n3",t:"8.7B",type:"mc",p:"On a sharp turn, roller coaster riders feel pressed against the outside wall of the car. Which law best explains this?",c:["1st Law: their bodies tend to keep moving in a straight line","2nd Law: their mass increases on the turn","3rd Law: the wall pulls them outward","None; gravity alone causes it"],a:0,x:"Inertia (1st Law): the riders' bodies keep moving straight while the car turns. The wall pushes them inward to change their direction."},
+// 8.8A
+{id:"e1",t:"8.8A",type:"order",p:"A flashlight is switched on. Tap the energy forms in the order the energy is transformed.",items:["Chemical energy stored in the batteries","Electrical energy in the circuit","Light and thermal energy from the bulb"],x:"The battery's chemical energy becomes electrical energy, which the bulb transforms into light and some thermal energy. The total amount of energy stays the same."},
+{id:"e2",t:"8.8A",type:"mc",p:"A roller coaster car has 50,000 J of potential energy at the top of the first hill. At the bottom it has 42,000 J of kinetic energy. What happened to the other 8,000 J?",c:["It was destroyed by gravity","Friction transformed it into thermal energy and sound","It turned back into potential energy at the bottom","It was stored in the track as mass"],a:1,x:"Energy is never created or destroyed. Friction with the track and air transforms some energy into thermal energy and sound: 42,000 J + 8,000 J = 50,000 J."},
+{id:"e3",t:"8.8A",type:"mc",p:"In photosynthesis, a plant absorbs light energy. What happens to that energy?",c:["It is destroyed once the plant uses it","It is transformed into chemical energy stored in glucose","It is turned directly into water","It leaves the plant inside the oxygen gas"],a:1,x:"Plants transform light energy into chemical energy stored in glucose. When animals eat plants, that chemical energy is transferred through the food web."},
+// 7.9B
+{id:"s1",t:"7.9B",type:"mc",p:"What keeps the planets orbiting the Sun instead of flying off into space?",c:["Magnetic forces from the Sun's surface","The Sun's gravity pulling on planets that are also moving forward","Solar wind pushing the planets in circles","Friction with space"],a:1,x:"The Sun's huge mass gives it a strong gravitational pull toward its center. That pull, combined with each planet's forward motion, curves the planet's path into an orbit."},
+{id:"s2",t:"7.9B",type:"mc",p:"If the Sun's gravity suddenly disappeared, what would Earth do?",c:["Fall into the Sun","Stop moving","Move in a straight line off into space","Keep orbiting the same way"],a:2,x:"With no gravity pulling it inward, nothing would curve Earth's path. By inertia it would travel in a straight line."},
+{id:"s3",t:"7.9B",type:"mc",p:"Which two factors determine how strong the gravitational force is between two objects?",c:["Mass and distance","Speed and color","Temperature and size","Distance and speed"],a:0,x:"More mass means more gravity; more distance means less gravity. The Sun's enormous mass is why it governs the motion of everything in the solar system."},
+// 8.9A
+{id:"r1",t:"8.9A",type:"order",p:"Tap the stages in order for the life cycle of an average, Sun-like star.",items:["Nebula","Main-sequence star","Red giant","White dwarf"],x:"An average star forms in a nebula, spends most of its life on the main sequence, swells into a red giant, and ends as a white dwarf. Massive stars instead become red supergiants, explode as supernovas, and leave a neutron star or black hole."},
+{id:"r2",t:"8.9A",type:"mc",vis:{hr:1},p:"On this H-R diagram, which labeled star is a white dwarf?",c:["Star W","Star X","Star Y","Star Z"],a:1,x:"White dwarfs are very hot but dim, so they sit in the lower left of the H-R diagram."},
+{id:"r3",t:"8.9A",type:"mc",vis:{hr:1},p:"Star W is cool but extremely bright. How is it classified?",c:["White dwarf","Main-sequence star like the Sun","Red supergiant","Nebula"],a:2,x:"The upper right of the H-R diagram holds stars that are cool (red) but very luminous because they are enormous: red giants and supergiants."},
+// 8.9B
+{id:"x1",t:"8.9B",type:"sort",p:"Classify each description or galaxy.",bins:["Spiral","Elliptical","Irregular"],items:[["Arms that swirl out from a bright central bulge",0],["Smooth oval or round shape made of mostly old stars",1],["No definite shape",2],["The Milky Way",0],["The Large Magellanic Cloud",2],["Very little dust or gas, so few new stars form",1]],x:"Spiral: arms around a central bulge (the Milky Way). Elliptical: smooth ovals of older stars with little gas. Irregular: no definite shape (the Large Magellanic Cloud)."},
+{id:"x2",t:"8.9B",type:"mc",p:"Where is our solar system located in the Milky Way galaxy?",c:["At the very center, next to the black hole","In a spiral arm, about halfway from the center to the edge","Inside the central bulge","Outside the galaxy, looking in"],a:1,x:"Our solar system sits in the Orion Arm, a smaller spiral arm, roughly 26,000 light-years from the galactic center."},
+{id:"x3",t:"8.9B",type:"mc",vis:{gal:1},p:"Which numbered galaxy is elliptical?",c:["Galaxy 1","Galaxy 2","Galaxy 3"],a:2,x:"Galaxy 3 is a smooth oval with no arms: elliptical. Galaxy 2 has arms (spiral). Galaxy 1 has no definite shape (irregular)."}
+];
+
+const ROUTE=LINES.flatMap(l=>l.st);
+const lineOf=t=>LINES.find(l=>l.st.includes(t));
+const qsFor=t=>Q.filter(q=>q.t===t);
+const KEY="staarReviewLine.v1";
+let S={name:"",ans:{}};
+try{const j=localStorage.getItem(KEY);if(j){const o=JSON.parse(j);if(o&&o.ans)S=o}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const num=v=>parseFloat(String(v??"").replace(/,/g,"").replace(/−/g,"-").trim());
+const pct=x=>Math.round(x*100);
+function hash(s){let h=2166136261;for(const ch of s){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function perm(n,seed){const r=rng(seed),a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}if(a.every((v,i)=>v===i))a.reverse();return a}
+
+function tekStat(t){const qs=qsFor(t),done=qs.filter(q=>S.ans[q.id]);const sum=done.reduce((s,q)=>s+S.ans[q.id].s,0);return{n:qs.length,done:done.length,score:done.length?sum/qs.length:null,avg:done.length?sum/done.length:null}}
+function level(s){return s>=.8?["g","Mastered"]:s>=.5?["p","Approaching"]:["b","Review"]}
+
+const app=document.getElementById("app");
+let view={v:"map"},resp=null,anim=0;
+function go(v){view=v;render();window.scrollTo({top:0})}
+function render(){cancelAnimationFrame(anim);({map:renderMap,q:renderQ,done:renderDone,report:renderReport})[view.v]()}
+
+function openStation(t){const qs=qsFor(t),i=qs.findIndex(q=>!S.ans[q.id]);go(i<0?{v:"done",t}:{v:"q",t,i})}
+function nextStation(after){const start=after?ROUTE.indexOf(after)+1:0;for(let k=0;k<ROUTE.length;k++){const t=ROUTE[(start+k)%ROUTE.length];if(qsFor(t).some(q=>!S.ans[q.id]))return t}return null}
+
+function renderMap(){
+ const done=Q.filter(q=>S.ans[q.id]).length,nxt=nextStation();
+ const bullets=LINES.map(l=>`<span style="background:var(--${l.c})">${l.n}</span>`).join("");
+ const lines=LINES.map(l=>`<section class="line" style="--lc:var(--${l.c})">
+  <div class="line-head"><span class="bullet">${l.n}</span><h2>${l.name}</h2><small>${l.st.length} stations</small></div>
+  <div class="track">${l.st.map(t=>{const s=tekStat(t),full=s.done===s.n;return`<button class="stop ${full?"done":""}" data-t="${t}" aria-label="TEKS ${t} ${TK[t]}"><span class="dot">${full?pct(s.score):s.done?s.done+"/"+s.n:""}</span><span class="code">${t}</span><span class="name">${TK[t]}</span></button>`}).join("")}</div></section>`).join("");
+ app.innerHTML=`<header class="sign"><div class="eyebrow">Science with Mrs. Lennon · Cumulative Review</div><h1>STAAR Review Line</h1><div class="bullets">${bullets}</div>
+  <p>Ride all five lines. Each station is one TEKS with 3 questions, about 45 minutes total. You get one try per question, then the explanation. Your report card shows which TEKS you've mastered.</p></header>
+  <div class="controls"><div class="field"><label for="student-name">Your name (for your report card)</label><input type="text" id="student-name" autocomplete="name" placeholder="First and last name" value="${esc(S.name)}"></div>
+  <div class="progress"><div class="bar"><i style="width:${done/Q.length*100}%"></i></div><small>${done} of ${Q.length} questions answered</small></div>
+  <div class="btnrow">${nxt?`<button class="btn" id="go">${done?"Continue at "+nxt+" →":"Start the route →"}</button>`:""}<button class="btn ${nxt?"ghost":""}" id="rep">Report card</button></div></div>
+  <div class="map">${lines}</div>`;
+ document.getElementById("student-name").oninput=e=>{S.name=e.target.value;save()};
+ const g=document.getElementById("go");if(g)g.onclick=()=>openStation(nxt);
+ document.getElementById("rep").onclick=()=>go({v:"report"});
+ app.querySelectorAll(".stop").forEach(b=>b.onclick=()=>openStation(b.dataset.t));
+}
+
+function visHTML(v){
+ if(v.f)return`<div class="formula">${v.f}</div>`;
+ if(v.table)return`<div class="vis"><table class="data"><tr>${v.table[0].map(h=>`<th>${h}</th>`).join("")}</tr>${v.table.slice(1).map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</table></div>`;
+ if(v.dt)return`<div class="vis">${dtSVG()}</div>`;
+ if(v.hr)return`<div class="vis">${hrSVG()}</div>`;
+ if(v.particles)return`<div class="vis" id="pbox"><canvas width="600" height="240" aria-label="Particle model of water"></canvas><div class="slider"><label for="temp">Temperature: <output>25 °C</output></label><input type="range" id="temp" min="-20" max="120" value="25"></div><p class="hint">Model only: particle speeds are exaggerated so you can see the difference.</p></div>`;
+ if(v.gal)return`<div class="vis"><canvas id="gal" width="600" height="220" aria-label="Three galaxies numbered 1, 2 and 3"></canvas></div>`;
+ return"";
+}
+function dtSVG(){
+ const X=s=>40+s*26,Y=m=>190-m*4.25;let g="";
+ for(let s=0;s<=10;s+=2)g+=`<line x1="${X(s)}" y1="${Y(0)}" x2="${X(s)}" y2="${Y(40)}" class="grid"/><text x="${X(s)}" y="${Y(0)+16}" class="tick" text-anchor="middle">${s}</text>`;
+ for(let m=0;m<=40;m+=10)g+=`<line x1="${X(0)}" y1="${Y(m)}" x2="${X(10)}" y2="${Y(m)}" class="grid"/><text x="${X(0)-6}" y="${Y(m)+4}" class="tick" text-anchor="end">${m}</text>`;
+ const P=[[0,0],[4,20],[8,20],[10,40]];
+ return`<svg viewBox="0 0 320 240" role="img" aria-label="Distance-time graph: section A rises from 0 to 20 meters over 0 to 4 seconds, section B stays flat at 20 meters from 4 to 8 seconds, section C rises to 40 meters at 10 seconds">${g}
+ <line x1="${X(0)}" y1="${Y(0)}" x2="${X(10)}" y2="${Y(0)}" class="axis"/><line x1="${X(0)}" y1="${Y(0)}" x2="${X(0)}" y2="${Y(40)}" class="axis"/>
+ <polyline points="${P.map(([s,m])=>X(s)+","+Y(m)).join(" ")}" class="plot"/>${P.map(([s,m])=>`<circle cx="${X(s)}" cy="${Y(m)}" r="4.5" class="ptdot"/>`).join("")}
+ <text x="${X(2)-14}" y="${Y(10)-6}" class="seglbl">A</text><text x="${X(6)}" y="${Y(20)-10}" class="seglbl" text-anchor="middle">B</text><text x="${X(9)-16}" y="${Y(30)}" class="seglbl">C</text>
+ <text x="170" y="233" class="atitle" text-anchor="middle">Time (s)</text><text x="12" y="105" class="atitle" text-anchor="middle" transform="rotate(-90 12 105)">Distance (m)</text></svg>`;
+}
+function hrSVG(){
+ const ink="#dfe6f0";
+ const star=(x,y,r,fill,l,lx,ly)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="#ffffff" stroke-opacity=".5"/><text x="${lx}" y="${ly}" fill="${ink}" style="font:800 15px var(--f-display)">${l}</text>`;
+ return`<svg viewBox="0 0 340 250" role="img" aria-label="H-R diagram with four stars: W upper right, X lower left, Y in the middle of the main sequence, Z upper left"><rect width="340" height="250" rx="10" fill="var(--sky)"/>
+ <path d="M62 40 Q170 105 310 205" fill="none" stroke="${ink}" stroke-opacity=".18" stroke-width="22" stroke-linecap="round"/>
+ <text x="225" y="150" fill="${ink}" fill-opacity=".55" style="font:600 11px var(--f-mono)" transform="rotate(33 225 150)">main sequence</text>
+ <line x1="48" y1="20" x2="48" y2="214" stroke="${ink}" stroke-width="2"/><line x1="48" y1="214" x2="326" y2="214" stroke="${ink}" stroke-width="2"/>
+ ${star(78,46,10,"#7fb2ff","Z",92,42)}${star(184,117,8,"#f4c84a","Y",196,112)}${star(276,52,15,"#ef5f45","W",296,48)}${star(92,194,4.5,"#ffffff","X",103,198)}
+ <text x="187" y="232" fill="${ink}" text-anchor="middle" style="font:700 12px var(--f-body)">Temperature</text>
+ <text x="52" y="244" fill="${ink}" fill-opacity=".7" style="font:500 10px var(--f-mono)">← hotter</text><text x="324" y="244" fill="${ink}" fill-opacity=".7" text-anchor="end" style="font:500 10px var(--f-mono)">cooler →</text>
+ <text x="20" y="117" fill="${ink}" text-anchor="middle" transform="rotate(-90 20 117)" style="font:700 12px var(--f-body)">Luminosity (brightness)</text>
+ <text x="36" y="30" fill="${ink}" fill-opacity=".7" text-anchor="middle" transform="rotate(-90 36 30)" style="font:500 9px var(--f-mono)">bright</text><text x="36" y="206" fill="${ink}" fill-opacity=".7" text-anchor="middle" transform="rotate(-90 36 206)" style="font:500 9px var(--f-mono)">dim</text></svg>`;
+}
+
+function controls(q,ans){
+ const dis=ans?"disabled":"";
+ if(q.type==="mc")return`<div class="choices">${q.c.map((c,k)=>{let cls="";if(ans)cls=k===q.a?"right":k===ans.r?"wrong":"";return`<button class="choice ${cls}" data-k="${k}" ${dis}><span class="lt">${"ABCD"[k]}</span><span>${c}</span></button>`}).join("")}</div>`;
+ if(q.type==="num")return`<div class="numrow"><label for="in-${q.id}">Your answer</label><input type="text" inputmode="decimal" id="in-${q.id}" autocomplete="off" value="${ans?esc(ans.r):""}" class="${ans?(ans.s?"right":"wrong"):""}" ${dis}><span class="unit">${q.unit}</span></div>`;
+ if(q.type==="multi")return`<div class="multi">${q.fields.map((f,k)=>`<div class="numrow"><label for="in-${q.id}-${k}">${f[0]}</label><input type="text" inputmode="numeric" id="in-${q.id}-${k}" data-k="${k}" autocomplete="off" value="${ans?esc(ans.r[k]):""}" class="${ans?(num(ans.r[k])===f[1]?"right":"wrong"):""}" ${dis}></div>`).join("")}</div>`;
+ if(q.type==="sort"){const order=perm(q.items.length,hash(q.id));return`<div class="srows">${order.map(k=>{const [txt,bin]=q.items[k];const pick=ans?ans.r[k]:null;return`<div class="srow"><div class="txt">${txt}${ans&&pick!==bin?` <span class="fix">→ ${q.bins[bin]}</span>`:""}</div><div class="seg" role="group" aria-label="${esc(txt)}">${q.bins.map((b,j)=>{let cls="";if(ans&&pick===j)cls=j===bin?"right":"wrong";return`<button data-row="${k}" data-bin="${j}" aria-pressed="${pick===j}" class="${cls}" ${dis}>${b}</button>`}).join("")}</div></div>`}).join("")}</div>`}
+ if(q.type==="order"){
+  if(ans)return`<div class="ordcols"><div><h4>Your order</h4><ol>${ans.r.map((k,pos)=>`<li>${q.items[k]} <span class="${k===pos?"ok":"no"}">${k===pos?"✓":"✗"}</span></li>`).join("")}</ol></div><div><h4>Correct order</h4><ol>${q.items.map(x=>`<li>${x}</li>`).join("")}</ol></div></div>`;
+  return`<div class="tiles">${perm(q.items.length,hash(q.id)).map(k=>`<button class="tile" data-k="${k}"><span class="n"></span><span>${q.items[k]}</span></button>`).join("")}</div><div><button class="btn ghost" id="clear-order" type="button">Clear order</button></div>`;
+ }
+}
+function valid(q){
+ if(q.type==="mc")return resp!=null;
+ if(q.type==="num")return isFinite(num(resp));
+ if(q.type==="multi")return resp.every(v=>isFinite(num(v)));
+ if(q.type==="sort")return resp.every(v=>v!=null);
+ if(q.type==="order")return resp.length===q.items.length;
+}
+function grade(q,r){
+ if(q.type==="mc")return r===q.a?1:0;
+ if(q.type==="num")return Math.abs(num(r)-q.a)<=(q.tol??.01)?1:0;
+ if(q.type==="multi")return q.fields.filter((f,k)=>num(r[k])===f[1]).length/q.fields.length;
+ if(q.type==="sort")return q.items.filter((it,k)=>r[k]===it[1]).length/q.items.length;
+ if(q.type==="order")return r.filter((k,pos)=>k===pos).length/q.items.length;
+}
+function feedback(q,ans){
+ const s=ans.s,cls=s===1?"g":s>0?"p":"b",head=s===1?"Correct!":s>0?`Partly correct: ${pct(s)}%`:"Not quite.";
+ let key="";
+ if(q.type==="mc"&&s<1)key=`Answer: ${q.c[q.a]}. `;
+ if(q.type==="num"&&s<1)key=`Answer: ${q.a} ${q.unit}. `;
+ if(q.type==="multi"&&s<1)key=`Answer: ${q.fields.map(f=>f[0].split(" ")[0]+" = "+f[1]).join(", ")}. `;
+ return`<div class="fb ${cls}" role="status"><strong>${head}</strong><p>${key}${q.x}</p></div>`;
+}
+
+function renderQ(){
+ const {t,i}=view,qs=qsFor(t),q=qs[i],ln=lineOf(t),ans=S.ans[q.id];
+ const dots=qs.map((x,k)=>`<span class="pd ${S.ans[x.id]?"on":""} ${k===i?"cur":""}"></span>`).join("");
+ app.innerHTML=`<div class="station" style="--lc:var(--${ln.c})">
+  <div class="st-head"><button class="back" id="to-map">← Map</button><div class="st-id"><span class="bullet">${ln.n}</span><div><div class="st-code">${ln.name} · TEKS ${t}</div><div class="st-title">${TK[t]}</div></div></div><div class="pdots" aria-label="Question ${i+1} of ${qs.length}">${dots}</div></div>
+  <div class="panel"><div class="qnum">Question ${i+1} of ${qs.length}</div><p class="prompt">${q.p}</p>${q.vis?visHTML(q.vis):""}${controls(q,ans)}
+  <div id="fb">${ans?feedback(q,ans):""}</div>
+  <div class="actions">${ans?`<button class="btn" id="next">${i<qs.length-1?"Next question →":"Finish station →"}</button>`:`<button class="btn" id="check" disabled>Check answer</button>`}</div></div></div>`;
+ document.getElementById("to-map").onclick=()=>go({v:"map"});
+ if(q.vis&&q.vis.particles)startParticles();
+ if(q.vis&&q.vis.gal)drawGalaxies();
+ if(ans){document.getElementById("next").onclick=()=>i<qs.length-1?go({v:"q",t,i:i+1}):go({v:"done",t});return}
+ const chk=document.getElementById("check"),ready=()=>chk.disabled=!valid(q);
+ if(q.type==="mc"){resp=null;app.querySelectorAll(".choice").forEach(b=>b.onclick=()=>{resp=+b.dataset.k;app.querySelectorAll(".choice").forEach(c=>c.classList.toggle("sel",c===b));ready()})}
+ if(q.type==="num"){resp="";const inp=document.getElementById("in-"+q.id);inp.oninput=()=>{resp=inp.value;ready()};inp.onkeydown=e=>{if(e.key==="Enter"&&!chk.disabled)chk.click()}}
+ if(q.type==="multi"){resp=q.fields.map(()=>"");app.querySelectorAll(".multi input").forEach(inp=>{inp.oninput=()=>{resp[+inp.dataset.k]=inp.value;ready()};inp.onkeydown=e=>{if(e.key==="Enter"&&!chk.disabled)chk.click()}})}
+ if(q.type==="sort"){resp=q.items.map(()=>null);app.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{const row=+b.dataset.row;resp[row]=+b.dataset.bin;b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));ready()})}
+ if(q.type==="order"){resp=[];const paint=()=>{app.querySelectorAll(".tile").forEach(tl=>{const pos=resp.indexOf(+tl.dataset.k);tl.classList.toggle("picked",pos>=0);tl.querySelector(".n").textContent=pos>=0?pos+1:""});ready()};
+  app.querySelectorAll(".tile").forEach(tl=>tl.onclick=()=>{const k=+tl.dataset.k,pos=resp.indexOf(k);if(pos>=0)resp.splice(pos,1);else resp.push(k);paint()});
+  document.getElementById("clear-order").onclick=()=>{resp=[];paint()}}
+ chk.onclick=()=>{if(!valid(q))return;const r=Array.isArray(resp)?[...resp]:resp;S.ans[q.id]={s:grade(q,r),r};save();render()};
+}
+
+function renderDone(){
+ const t=view.t,ln=lineOf(t),qs=qsFor(t),st=tekStat(t),nxt=nextStation(t);
+ const complete=st.done===st.n,[lc,lt]=complete?level(st.score):["n","In progress"];
+ app.innerHTML=`<div class="station" style="--lc:var(--${ln.c})">
+  <div class="st-head"><button class="back" id="to-map">← Map</button><div class="st-id"><span class="bullet">${ln.n}</span><div><div class="st-code">${ln.name} · TEKS ${t}</div><div class="st-title">${TK[t]}</div></div></div></div>
+  <div class="panel summary"><div class="qnum">Station complete</div><div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap"><div class="big">${complete?pct(st.score)+"%":st.done+"/"+st.n}</div><span class="chip ${lc}">${lt}</span></div>
+  <ul class="qlist">${qs.map((q,k)=>{const a=S.ans[q.id];return`<li><span>Question ${k+1}</span><span class="${a?(a.s===1?"ok":a.s>0?"":"no"):""}">${a?pct(a.s)+"%":"not answered"}</span></li>`}).join("")}</ul>
+  <div class="actions"><button class="btn ghost" id="review">Review answers</button><button class="btn ghost" id="redo">Redo station</button>${nxt?`<button class="btn" id="nx">Next station: ${nxt} →</button>`:`<button class="btn" id="rp">See report card →</button>`}</div></div></div>`;
+ document.getElementById("to-map").onclick=()=>go({v:"map"});
+ document.getElementById("review").onclick=()=>go({v:"q",t,i:0});
+ document.getElementById("redo").onclick=()=>{qs.forEach(q=>delete S.ans[q.id]);save();go({v:"q",t,i:0})};
+ const nx=document.getElementById("nx");if(nx)nx.onclick=()=>openStation(nxt);
+ const rp=document.getElementById("rp");if(rp)rp.onclick=()=>go({v:"report"});
+}
+
+function renderReport(){
+ const answered=Q.filter(q=>S.ans[q.id]),total=answered.reduce((s,q)=>s+S.ans[q.id].s,0);
+ const overall=answered.length?total/answered.length:0,finished=answered.length===Q.length;
+ const today=new Date().toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+ const rows=LINES.map(l=>`<div class="rgroup" style="--lc:var(--${l.c})"><h3><span></span>${l.name}</h3>${l.st.map(t=>{const s=tekStat(t),full=s.done===s.n;let chip,w=0,col="var(--rule)";
+   if(!s.done)chip=`<span class="chip n">Not started</span>`;else{const [c,lbl]=level(s.avg);w=pct(s.avg);col=`var(--${c==="g"?"good":c==="p"?"warn":"bad"})`;chip=`<span class="chip ${c}">${pct(s.avg)}% · ${full?lbl:s.done+"/"+s.n+" done"}</span>`}
+   return`<div class="rrow"><span class="c">${t}</span><span>${TK[t]}</span>${chip}<div class="meter"><i style="width:${w}%;background:${col}"></i></div></div>`}).join("")}</div>`).join("");
+ const lines=[`STAAR Review Line – Cumulative Review`,`Student: ${S.name||"(no name)"}`,`Date: ${today}`,`Overall: ${pct(overall)}% (${answered.length}/${Q.length} questions answered)`,""];
+ ROUTE.forEach(t=>{const s=tekStat(t);lines.push(`${t} ${TK[t]}: ${s.done?pct(s.avg)+"% "+(s.done===s.n?level(s.avg)[1]:"("+s.done+"/"+s.n+" done)"):"not started"}`)});
+ const review=ROUTE.filter(t=>{const s=tekStat(t);return s.done===s.n&&s.avg<.8});
+ app.innerHTML=`<div class="report"><div class="st-head"><button class="back" id="to-map">← Map</button></div>
+  <header class="sign"><div class="eyebrow">Report card · ${esc(today)}</div><h1>${esc(S.name)||"Student"}</h1>
+  <div class="rhead"><div><div class="big" style="color:var(--sign-ink)">${pct(overall)}%</div></div><p>${finished?"Route complete.":`${answered.length} of ${Q.length} questions answered so far.`}${review.length?` Stations to revisit: ${review.join(", ")}.`:finished?" Every TEKS mastered.":""}</p></div></header>
+  ${S.name?"":`<p class="note">Add your name on the map screen so your teacher knows whose report this is.</p>`}
+  <div>${rows}</div>
+  <div class="panel" style="--lc:var(--ink)"><div class="qnum">Turn it in</div><p class="note" style="margin:0">Copy your results and paste them where your teacher asks (for example, a private comment in Google Classroom), or show this screen.</p>
+  <div class="btnrow"><button class="btn" id="copy">Copy my results</button></div><textarea id="sum" readonly hidden>${esc(lines.join("\n"))}</textarea></div>
+  <div class="btnrow"><button class="btn danger" id="reset">Erase all answers</button></div></div>`;
+ document.getElementById("to-map").onclick=()=>go({v:"map"});
+ const cp=document.getElementById("copy"),ta=document.getElementById("sum");
+ cp.onclick=()=>{const txt=lines.join("\n");const fall=()=>{ta.hidden=false;ta.focus();ta.select();cp.textContent="Select all and copy the text below"};
+  try{navigator.clipboard.writeText(txt).then(()=>{cp.textContent="Copied ✓";setTimeout(()=>cp.textContent="Copy my results",2000)},fall)}catch(e){fall()}};
+ const rs=document.getElementById("reset");let armed=0;
+ rs.onclick=()=>{if(!armed){armed=1;rs.textContent="Tap again to erase everything";setTimeout(()=>{armed=0;rs.textContent="Erase all answers"},4000);return}S={name:S.name,ans:{}};save();go({v:"map"})};
+}
+
+function startParticles(){
+ const box=document.getElementById("pbox");if(!box)return;
+ const cv=box.querySelector("canvas"),sl=box.querySelector("input"),out=box.querySelector("output"),ctx=cv.getContext("2d");
+ const W=600,H=240,css=getComputedStyle(document.documentElement),ps=[];
+ for(let k=0;k<36;k++){const gx=40+(k%9)*65,gy=42+Math.floor(k/9)*52;ps.push({gx,gy,x:gx,y:gy,a:Math.random()*6.283})}
+ function frame(){
+  const T=+sl.value;out.textContent=(T<0?"−"+Math.abs(T):T)+" °C"+(T<0?" · solid ice":T>=100?" · steam":" · liquid water");
+  ctx.fillStyle=css.getPropertyValue("--sky").trim()||"#0c1222";ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=css.getPropertyValue("--heat").trim()||"#d27608";
+  const sp=.4+(T+20)/140*5.5;
+  for(const p of ps){
+   if(T<0){const j=.6+(T+20)/20*2.2;p.x=p.gx+(Math.random()-.5)*j*2;p.y=p.gy+(Math.random()-.5)*j*2}
+   else{p.a+=(Math.random()-.5)*.35;p.x+=Math.cos(p.a)*sp;p.y+=Math.sin(p.a)*sp;
+    if(p.x<10||p.x>W-10){p.a=Math.PI-p.a;p.x=Math.max(10,Math.min(W-10,p.x))}
+    if(p.y<10||p.y>H-10){p.a=-p.a;p.y=Math.max(10,Math.min(H-10,p.y))}}
+   ctx.beginPath();ctx.arc(p.x,p.y,9,0,6.283);ctx.fill()}
+  anim=requestAnimationFrame(frame)}
+ frame();
+}
+function drawGalaxies(){
+ const cv=document.getElementById("gal");if(!cv)return;const ctx=cv.getContext("2d"),W=600,H=220,css=getComputedStyle(document.documentElement);
+ const r=rng(42),gauss=()=>{let u=0;while(!u)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(6.283*r())};
+ ctx.fillStyle=css.getPropertyValue("--sky").trim()||"#0c1222";ctx.fillRect(0,0,W,H);
+ ctx.strokeStyle="rgba(255,255,255,.18)";ctx.lineWidth=2;[200,400].forEach(x=>{ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()});
+ ctx.fillStyle=css.getPropertyValue("--sky-ink").trim()||"#dfe6f0";
+ const st=(x,y,s,a)=>{ctx.globalAlpha=a;ctx.beginPath();ctx.arc(x,y,s,0,6.283);ctx.fill()};
+ [[80,95,18],[122,125,14],[92,150,10],[135,82,9],[66,135,8]].forEach(([cx,cy,s])=>{for(let k=0;k<75;k++)st(cx+gauss()*s,cy+gauss()*s*.8,r()*1.4+.4,.35+r()*.6)});
+ for(let k=0;k<170;k++)st(300+gauss()*9,115+gauss()*6,r()*1.6+.5,.6+r()*.4);
+ for(let k=0;k<900;k++){const arm=k%2,t=r()*3.4,rad=10+t*22,ang=t*1.1+arm*Math.PI+gauss()*.18;st(300+Math.cos(ang)*rad+gauss()*3,115+Math.sin(ang)*rad*.6+gauss()*2,r()*1.2+.3,.3+r()*.6)}
+ for(let k=0;k<1100;k++){const a=gauss(),b=gauss();st(500+a*30,115+b*18,r()*1.2+.3,Math.max(.12,.9-Math.hypot(a,b)*.3))}
+ ctx.globalAlpha=1;ctx.font="800 20px Overpass, system-ui, sans-serif";["Galaxy 1","Galaxy 2","Galaxy 3"].forEach((l,k)=>ctx.fillText(l,14+k*200,30));
+}
+render();
+</script>
