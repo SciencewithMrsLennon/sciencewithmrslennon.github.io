@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Solar System Launch Review: a self-scoring TEKS 7.9 review game by Science with Mrs. Lennon.">
+<title>Solar System Launch Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one centered mission console (max 760px); a status strip on top, one question panel at a time. Deliberately single dark "night sky" theme. */
+:root{
+  --space:#0a0f1f; --panel:#131a31; --panel-2:#1b2442; --line:#2a3560;
+  --ink:#e9edf8; --muted:#97a1c3; --signal:#ffb547; --signal-ink:#1d1405;
+  --go:#46d39e; --nogo:#ff6f6f;
+  --display:"Chakra Petch","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  margin:0;
+  background:var(--space); color:var(--ink); font-family:var(--body); font-size:17px; line-height:1.55;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, #ffffff55 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 9%, #ffffff44 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 88% 42%, #ffffff55 50%, transparent 51%),
+    radial-gradient(1px 1px at 33% 64%, #ffffff33 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 88%, #ffffff44 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 6% 79%, #ffffff44 50%, transparent 51%);
+  background-attachment:fixed;
+}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:18px}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700}
+h2{font-size:1.5rem;font-weight:600}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.muted{color:var(--muted)}
+.mono{font-family:var(--mono)}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+.btn{background:var(--signal);color:var(--signal-ink);border:0;border-radius:10px;padding:12px 20px;font-family:var(--display);font-weight:700;font-size:1.05rem;letter-spacing:.03em;align-self:flex-start}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+/* start */
+.hero{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}
+.hero svg{width:150px;height:150px}
+@media (max-width:560px){.hero{grid-template-columns:1fr}.hero svg{display:none}}
+.field{display:flex;flex-direction:column;gap:6px;flex:1 1 200px;min-width:0}
+.field label{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.field input{background:var(--panel-2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:11px 12px;font:inherit;width:100%}
+.stagelist{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.stagelist li{display:grid;grid-template-columns:5.5rem 1fr auto;gap:12px;align-items:baseline;padding:10px 12px;border-radius:8px;background:var(--panel-2)}
+.stagelist .code{font-family:var(--mono);font-size:13px;color:var(--signal)}
+.stagelist .pts{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* status strip */
+.strip{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.strip b{color:var(--ink);font-weight:600}
+.pips{display:flex;gap:5px;flex-wrap:wrap}
+.pip{width:22px;height:6px;border-radius:3px;background:var(--line)}
+.pip.go{background:var(--go)}.pip.nogo{background:var(--nogo)}.pip.now{background:var(--signal)}
+
+/* question */
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--signal)}
+.qtext{font-size:1.2rem;font-weight:700}
+.opts{display:grid;gap:10px}
+.opt{display:grid;grid-template-columns:2rem 1fr;gap:10px;align-items:start;text-align:left;background:var(--panel-2);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.opt .ltr{font-family:var(--mono);font-weight:600;color:var(--muted)}
+.opt:hover:not(:disabled){border-color:var(--signal)}
+.opt:disabled{cursor:default}
+.opt.correct{border-color:var(--go);background:color-mix(in srgb,var(--go) 14%,var(--panel-2))}
+.opt.correct .ltr{color:var(--go)}
+.opt.wrong{border-color:var(--nogo);background:color-mix(in srgb,var(--nogo) 14%,var(--panel-2))}
+.opt.wrong .ltr{color:var(--nogo)}
+.fb{border-left:4px solid var(--go);padding:10px 14px;background:var(--panel-2);border-radius:0 8px 8px 0}
+.fb.miss{border-left-color:var(--nogo)}
+.fb strong{font-family:var(--display)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;min-width:100%}
+th,td{border:1px solid var(--line);padding:7px 12px;text-align:left}
+th{background:var(--panel-2);color:var(--muted);font-weight:600}
+
+/* sort */
+.sortgrid{display:grid;gap:10px}
+.card{display:grid;grid-template-columns:2rem 1fr;gap:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card .num{font-family:var(--mono);color:var(--muted)}
+.card .bins{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.bin{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.95rem}
+.bin:hover:not(:disabled){border-color:var(--signal)}
+.bin.correct{border-color:var(--go);background:color-mix(in srgb,var(--go) 22%,transparent)}
+.bin.wrong{border-color:var(--nogo);background:color-mix(in srgb,var(--nogo) 22%,transparent)}
+.card .why{font-size:.93rem;color:var(--muted);margin-top:6px}
+
+/* report */
+.scorebig{font-family:var(--display);font-size:3.2rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.bars{display:grid;gap:10px}
+.bar{display:grid;grid-template-columns:minmax(0,11rem) 1fr 4.2rem;gap:12px;align-items:center;font-size:.95rem}
+@media (max-width:480px){.bar{grid-template-columns:1fr 3.8rem}.bar .track{grid-column:1/-1;grid-row:2}}
+.track{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.fill{height:100%;background:var(--go)}
+.fill.mid{background:var(--signal)}.fill.low{background:var(--nogo)}
+.bar .v{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.studylist{margin:0;padding-left:1.2rem;display:grid;gap:6px}
+pre.report{white-space:pre-wrap;font-family:var(--mono);font-size:13px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:14px;margin:0;max-height:260px;overflow:auto}
+.foot{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;letter-spacing:.08em}
+@media (prefers-reduced-motion:no-preference){.panel{animation:rise .25s ease-out}@keyframes rise{from{transform:translateY(6px)}to{transform:none}}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+const STAGES = [
+{ code:"STAGE 1", teks:"7.9A", title:"Object Files", pts:10, type:"mc",
+  intro:"Read each clue file and identify the solar system object. Think PROPERTY, LOCATION, and MOVEMENT.",
+  qs:[
+  {q:"I am a medium-sized star made of hot hydrogen and helium gas. I hold about 99.8% of the solar system's mass. What am I?", o:["Jupiter","The Oort cloud","The Sun","Earth's Moon"], a:2, why:"The Sun is a star at the center of the solar system and holds almost all of its mass.", tag:"Properties of the Sun"},
+  {q:"I am a giant sphere-shaped shell of icy objects at the outermost edge of the solar system. Long-period comets come from me. What am I?", o:["The Oort cloud","The Kuiper belt","The asteroid belt","Saturn's rings"], a:0, why:"The Oort cloud surrounds the whole solar system far beyond the Kuiper belt and is the source of long-period comets.", tag:"Oort cloud"},
+  {q:"I am a disk-shaped region beyond Neptune's orbit filled with icy bodies and dwarf planets like Pluto. What am I?", o:["The asteroid belt","The Oort cloud","The habitable zone","The Kuiper belt"], a:3, why:"The Kuiper belt is disk-shaped, lies beyond Neptune, and is home to Pluto and short-period comets.", tag:"Kuiper belt"},
+  {q:"We are rocky or metallic chunks with irregular shapes. Most of us orbit the Sun between Mars and Jupiter. What are we?", o:["Comets","Asteroids","Moons","Meteorites"], a:1, why:"Asteroids are rocky or metal chunks, mostly found in the asteroid belt between Mars and Jupiter.", tag:"Asteroids"},
+  {q:"I am a 'dirty snowball' of ice, dust, and rock. I travel in a long, stretched-out orbit and grow a glowing tail near the Sun. What am I?", o:["A meteor","An asteroid","A comet","A dwarf planet"], a:2, why:"Comets are icy bodies with elliptical orbits. Near the Sun the ice heats up and forms a coma and tail.", tag:"Comets"},
+  {q:"A comet is passing close to the Sun. Which way does its tail point?", o:["Toward the Sun","In the direction the comet is moving","Toward Earth","Away from the Sun"], a:3, why:"Energy and particles from the Sun push the tail, so it always points away from the Sun.", tag:"Comets"},
+  {q:"I am a natural satellite that orbits a planet. The one closest to you takes about 27 days to orbit Earth. What am I?", o:["A moon","A star","An asteroid","A meteoroid"], a:0, why:"Moons are natural satellites that orbit planets. Earth's Moon orbits in about 27 days.", tag:"Moons"},
+  {q:"Which planet is the HOTTEST in our solar system?", o:["Mercury, because it is closest to the Sun","Venus, because its thick carbon dioxide atmosphere traps heat","Mars, because it is red","Jupiter, because it is the largest"], a:1, why:"Venus is hotter than Mercury. Its thick CO₂ atmosphere traps heat, keeping it around 465 °C.", tag:"Planet properties (Venus)"},
+  {q:"Which list puts the planets in the correct order from the Sun outward?", o:["Mercury, Venus, Mars, Earth, Jupiter, Saturn, Neptune, Uranus","Venus, Mercury, Earth, Mars, Saturn, Jupiter, Uranus, Neptune","Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune","Mercury, Earth, Venus, Mars, Jupiter, Uranus, Saturn, Neptune"], a:2, why:"My Very Eager Mother Just Served Us Nachos: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune.", tag:"Order of the planets"},
+  {q:"Which planet takes the LONGEST time to complete one revolution around the Sun?", o:["Mercury","Earth","Jupiter","Neptune"], a:3, why:"The farther a planet is from the Sun, the longer its year. Neptune is farthest, so its revolution is longest.", tag:"Planet movement"}
+]},
+{ code:"STAGE 2", teks:"7.9A", title:"Sort Station", pts:11, type:"sort",
+  intro:"Sort each card into the right group. Your first tap on each card is final, so read carefully.",
+  parts:[
+   {label:"Part A · Inner or outer planets?", bins:["Inner planets","Outer planets"], items:[
+    {q:"Small, rocky, and dense", a:0, why:"Mercury, Venus, Earth, and Mars are terrestrial (rocky) planets.", tag:"Inner vs. outer planets"},
+    {q:"Rings and many moons", a:1, why:"All four outer planets have rings and many moons.", tag:"Inner vs. outer planets"},
+    {q:"No solid surface", a:1, why:"Gas and ice giants are made mostly of gases, with no solid ground.", tag:"Inner vs. outer planets"},
+    {q:"Short orbits and fast orbital speeds", a:0, why:"Close to the Sun means a shorter path and a stronger pull, so inner planets orbit fast.", tag:"Inner vs. outer planets"},
+    {q:"Huge and low density", a:1, why:"Jupiter, Saturn, Uranus, and Neptune are giant but not dense.", tag:"Inner vs. outer planets"},
+    {q:"Few or no moons", a:0, why:"Mercury and Venus have none, Earth has 1, Mars has 2.", tag:"Inner vs. outer planets"},
+    {q:"Long orbits and slow orbital speeds", a:1, why:"Far from the Sun means a longer path and a weaker pull.", tag:"Inner vs. outer planets"},
+    {q:"Solid surfaces you could stand on", a:0, why:"Inner planets are rocky with solid surfaces.", tag:"Inner vs. outer planets"}
+   ]},
+   {label:"Part B · Meteoroid, meteor, or meteorite?", bins:["Meteoroid","Meteor","Meteorite"], items:[
+    {q:"A small rock tumbling through space", a:0, why:"It's a meteoroid while it is still in space.", tag:"Meteoroid → meteor → meteorite"},
+    {q:"A streak of light ('shooting star') burning up in Earth's atmosphere", a:1, why:"It's a meteor while it burns in the atmosphere.", tag:"Meteoroid → meteor → meteorite"},
+    {q:"A piece of space rock that landed on Earth's surface", a:2, why:"It's a meteorite once it reaches the ground.", tag:"Meteoroid → meteor → meteorite"}
+   ]}
+  ]},
+{ code:"STAGE 3", teks:"7.9B", title:"Gravity Control", pts:10, type:"mc",
+  intro:"Gravity is the boss of the solar system. Show how it controls the motion of every object.",
+  qs:[
+  {q:"Which two factors control how strong the gravitational pull is between two objects?", o:["Color and temperature","Mass and distance","Shape and speed","Size of the atmosphere and number of moons"], a:1, why:"More mass means stronger gravity. Greater distance means weaker gravity.", tag:"Mass and distance control gravity"},
+  {q:"Why do all the planets orbit the Sun instead of orbiting Jupiter?", o:["The Sun is the hottest object","The Sun is in the middle","The Sun has the most mass, so it has the strongest gravity","Jupiter has no gravity"], a:2, why:"The Sun holds about 99.8% of the solar system's mass, so its pull dominates.", tag:"Mass and distance control gravity"},
+  {q:"Which planet feels a WEAKER pull from the Sun's gravity, Mercury or Neptune?", o:["Neptune, because it is much farther away","Mercury, because it is smaller","Both feel exactly the same pull","Neptune, because it has rings"], a:0, why:"Greater distance means weaker gravity, so far-away Neptune feels a much weaker pull.", tag:"Mass and distance control gravity"},
+  {q:"If the Sun's gravity suddenly disappeared, what would Earth do?", o:["Fall into the Sun","Stop moving completely","Keep orbiting the same way","Fly off into space in a straight line"], a:3, why:"Without gravity, nothing bends Earth's path. Inertia carries it off in a straight line.", tag:"Inertia + gravity = orbit"},
+  {q:"If Earth suddenly stopped moving forward, what would happen?", o:["Gravity would pull Earth into the Sun","Earth would float in place forever","Earth would fly away in a straight line","Earth would start orbiting Mars"], a:0, why:"Without forward motion to balance it, the Sun's gravity would pull Earth straight inward.", tag:"Inertia + gravity = orbit"},
+  {q:"Which statement BEST explains why a planet moves in a curved orbit?", o:["The planet is pushed by solar wind","Its forward motion (inertia) and the Sun's gravity balance each other","The planet's moons pull it in a circle","Space is shaped like a circle"], a:1, why:"Inertia wants a straight line and gravity pulls inward. Together they bend the path into an orbit.", tag:"Inertia + gravity = orbit"},
+  {q:"Why do inner planets orbit FASTER than outer planets?", o:["They are made of rock","They have fewer moons","They feel a stronger pull from the Sun because they are closer","They are smaller"], a:2, why:"Closer to the Sun means stronger gravity, so inner planets move faster on shorter orbits.", tag:"Gravity and orbital speed"},
+  {q:"How does a comet's speed change during its long orbit?", o:["It stays the same the whole time","It speeds up near the Sun and slows down far away","It slows down near the Sun and speeds up far away","It stops when it reaches the Oort cloud"], a:1, why:"The Sun's pull is strongest up close, so the comet speeds up there and slows when far away.", tag:"Gravity and orbital speed"},
+  {q:"What causes the rise and fall of ocean tides on Earth?", o:["Wind blowing across the ocean","Earth's magnetic field","Heat from the Sun","The Moon's gravity pulling on Earth's oceans"], a:3, why:"The Moon's gravity tugs on Earth's oceans, causing tides.", tag:"Gravity at work (tides, formation)"},
+  {q:"A student has a mass of 45 kg on Earth. What is the student's mass on the Moon?", o:["45 kg, because mass stays the same everywhere","7.5 kg, because the Moon has less gravity","0 kg, because there is no gravity on the Moon","270 kg, because the Moon is smaller"], a:0, why:"Mass never changes. Weight changes: the student would WEIGH about 1/6 as much on the Moon.", tag:"Mass vs. weight"}
+]},
+{ code:"STAGE 4", teks:"7.9C", title:"Habitable World Check", pts:10, type:"mc",
+  intro:"Earth is the only place we know of with life. Analyze which characteristics make that possible.",
+  qs:[
+  {q:"What is the habitable zone?", o:["The part of Earth where people live","The distance from a star where liquid water can exist on a planet's surface","The region between Mars and Jupiter","The layer of gas around a planet"], a:1, why:"The habitable ('Goldilocks') zone is not too hot and not too cold, so water can stay liquid.", tag:"Proximity to the Sun"},
+  {q:"Which characteristic of Earth explains why our water stays liquid instead of boiling or freezing?", o:["Its distance from the Sun","Its number of moons","Its rings","Its size compared to Jupiter"], a:0, why:"Earth's proximity to the Sun puts it in the habitable zone.", tag:"Proximity to the Sun"},
+  {q:"Why can't Venus support life the way Earth does?", o:["It has no gravity","It is too far from the Sun","Its thick carbon dioxide atmosphere traps heat, making it about 465 °C","It is covered in liquid water"], a:2, why:"Venus's thick CO₂ atmosphere creates a runaway greenhouse effect.", tag:"Comparing Earth to other planets"},
+  {q:"Which description of Mars is accurate?", o:["Thick oxygen atmosphere and warm oceans","Thin atmosphere of mostly CO₂, very cold, ice but no stable liquid water on the surface","No atmosphere at all and very hot","Earth-like conditions with plants and animals"], a:1, why:"Mars's thin CO₂ atmosphere offers little protection and can't keep it warm.", tag:"Comparing Earth to other planets"},
+  {q:"About what is Earth's atmosphere made of?", o:["78% oxygen, 21% nitrogen","Mostly carbon dioxide","Mostly hydrogen and helium","About 78% nitrogen and 21% oxygen"], a:3, why:"Nitrogen ~78%, oxygen ~21%. Oxygen lets organisms breathe and CO₂ feeds plants.", tag:"Composition of the atmosphere"},
+  {q:"What does the ozone layer in Earth's atmosphere do for living things?", o:["Blocks harmful ultraviolet (UV) rays from the Sun","Makes rain","Creates Earth's gravity","Produces oxygen for animals"], a:0, why:"Ozone absorbs harmful UV radiation before it reaches the surface.", tag:"Composition of the atmosphere"},
+  {q:"About how much of Earth's surface is covered by liquid water?", o:["About 10%","About 25%","About 50%","About 71%"], a:3, why:"About 71% of Earth's surface is covered by liquid water.", tag:"Presence of water"},
+  {q:"Why is liquid water necessary for life?", o:["It makes Earth look blue","It dissolves nutrients and moves materials in cells","It creates gravity","It blocks UV rays"], a:1, why:"Every living thing needs water to dissolve nutrients and move materials in its cells.", tag:"Presence of water"},
+  {q:"Suppose Earth were moved much closer to the Sun. What would MOST likely happen?", o:["Earth would get colder","Nothing would change","The oceans would boil away and life would be at risk","Earth would gain more moons"], a:2, why:"Earth's characteristics work as a system. Too close, and liquid water would be lost.", tag:"Earth as a system"},
+  {q:"Which statement about life on Mars is scientifically accurate?", o:["Scientists have found plants on Mars","Mars may once have had conditions that could support microbes, and scientists are still investigating","Mars has always been exactly like Earth","Scientists proved nothing could ever have lived on Mars"], a:1, why:"No life has been found on Mars. Scientists are still studying whether microbes could once have lived there.", tag:"Comparing Earth to other planets"}
+]},
+{ code:"FINAL", teks:"7.9A–C", title:"Launch Check", pts:9, type:"mc",
+  intro:"Mixed STAAR-style questions with data and scenarios. Use everything you have reviewed.",
+  qs:[
+  {q:"Use the data table. Planet X is 5.2 AU from the Sun. Which is the BEST prediction for the length of its year?", table:[["Planet","Distance from Sun (AU)","Length of year"],["Mercury","0.39","88 Earth days"],["Earth","1.0","365 Earth days"],["Mars","1.5","687 Earth days"],["Planet X","5.2","?"]], o:["About 30 Earth days","About 365 Earth days","About 500 Earth days","Much longer than 687 Earth days"], a:3, why:"The pattern shows farther planets have longer years, so Planet X's year must be longer than Mars's. (Planet X is Jupiter, about 12 Earth years.)", tag:"Planet movement"},
+  {q:"A student claims, \"The closer a planet is to the Sun, the hotter it is. No exceptions.\" Which fact DISPROVES this claim?", o:["Neptune is the coldest planet","Venus is hotter than Mercury even though Mercury is closer to the Sun","Earth has liquid water","Mars is red"], a:1, why:"Venus is farther than Mercury but hotter, because its thick atmosphere traps heat.", tag:"Planet properties (Venus)"},
+  {q:"People see a bright streak in the night sky. The next day a farmer finds a scorched space rock in her field. What is the rock in the field called?", o:["A meteoroid","A meteor","A meteorite","A comet"], a:2, why:"Space rock that reaches the ground is a meteorite. The streak was the meteor.", tag:"Meteoroid → meteor → meteorite"},
+  {q:"Where is the Kuiper belt located?", o:["Between Mars and Jupiter","Between Earth and the Moon","Beyond Neptune's orbit","Inside the Sun"], a:2, why:"The Kuiper belt lies beyond Neptune. The asteroid belt is between Mars and Jupiter.", tag:"Kuiper belt"},
+  {q:"An astronaut could stand on a platform floating in Jupiter's clouds. Compared to Earth, the astronaut would weigh about 2.5 times MORE. Why?", o:["Jupiter has more mass, so its gravity is stronger","Jupiter is closer to the Sun","Jupiter's rings push down on the astronaut","The astronaut's mass increases on Jupiter"], a:0, why:"More mass means stronger gravity, so weight increases. The astronaut's mass stays the same.", tag:"Mass vs. weight"},
+  {q:"What is one astronomical unit (AU)?", o:["The distance from Earth to the Moon","The diameter of the Sun","Earth's average distance from the Sun, about 150 million km","The time it takes light to cross the solar system"], a:2, why:"1 AU = Earth's average distance from the Sun, about 150 million km.", tag:"Solar system vocabulary"},
+  {q:"How did the Sun and planets form in the first place?", o:["Gravity pulled clouds of gas and dust together","The planets broke off the Sun","Comets crashed together","Magnetism stuck rocks together"], a:0, why:"Gravity pulled gas and dust together to form the Sun and planets.", tag:"Gravity at work (tides, formation)"},
+  {q:"How long does it take Earth to complete ONE revolution around the Sun?", o:["1 day","About 27 days","1 month","1 year"], a:3, why:"Revolution is one trip around the Sun (1 year). Rotation is one spin on the axis (1 day).", tag:"Solar system vocabulary"},
+  {q:"A model shows what would happen if Earth lost its atmosphere. Which result would the model MOST likely show?", o:["More rain everywhere","Temperatures would swing wildly and harmful UV rays would reach the surface","Earth would orbit faster","The oceans would become deeper"], a:1, why:"The atmosphere traps just enough heat and blocks UV. Without it, temperatures swing and UV reaches the ground.", tag:"Earth as a system"}
+]}
+];
+
+const TOTAL = STAGES.reduce((s,x)=>s+x.pts,0);
+const L = "ABCD";
+const flatItems = st => st.type==="sort" ? st.parts.flatMap(p=>p.items.map(it=>({...it,bins:p.bins}))) : st.qs;
+
+let S = { screen:"start", name:"", period:"", stage:0, q:0, ans:STAGES.map(st=>flatItems(st).map(()=>null)), start:null, end:null };
+if (window.claude?.hot?.data?.S) S = window.claude.hot.data.S;
+window.claude?.hot?.snapshot?.(()=>({S}));
+
+const app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const stageScore = i => flatItems(STAGES[i]).reduce((s,it,k)=>s+(S.ans[i][k]===it.a?1:0),0);
+const totalScore = () => STAGES.reduce((s,_,i)=>s+stageScore(i),0);
+const mmss = ms => { const m=Math.floor(ms/60000), s=Math.floor(ms/1000)%60; return `${m} min ${String(s).padStart(2,"0")} s`; };
+
+function strip(){
+  const st=STAGES[S.stage], items=flatItems(st);
+  const pips = items.map((it,k)=>{
+    const v=S.ans[S.stage][k]; let c = v===null ? (st.type==="mc"&&k===S.q?"now":"") : (v===it.a?"go":"nogo");
+    return `<span class="pip ${c}"></span>`;}).join("");
+  return `<div class="strip"><span>${esc(st.code)} OF 5 · TEKS ${st.teks}</span><span>SCORE <b>${totalScore()}</b> / ${TOTAL}</span></div><div class="pips" aria-hidden="true">${pips}</div>`;
+}
+
+function render(){
+  window.scrollTo({top:0});
+  if (S.screen==="start") return renderStart();
+  if (S.screen==="report") return renderReport();
+  if (S.screen==="intro") return renderIntro();
+  const st=STAGES[S.stage];
+  st.type==="sort" ? renderSort() : renderMC();
+}
+
+function renderStart(){
+  app.innerHTML = `
+  <div class="brand">Science with Mrs. Lennon · TEKS 7.9 Review</div>
+  <section class="panel">
+    <div class="hero">
+      <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+        <h1>Solar System Launch Review</h1>
+        <p class="muted">Mission Control needs you ready before test day. Clear five stages on objects in the solar system, gravity, and why Earth supports life. Every answer comes with an explanation, so read them all.</p>
+      </div>
+      <svg viewBox="0 0 150 150" aria-hidden="true">
+        <circle cx="75" cy="75" r="14" fill="var(--signal)"/>
+        <circle cx="75" cy="75" r="32" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+        <circle cx="75" cy="75" r="50" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+        <circle cx="75" cy="75" r="68" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="3 5"/>
+        <circle cx="107" cy="75" r="5" fill="var(--go)"/>
+        <circle cx="40" cy="40" r="8" fill="#c99a6b"/>
+        <circle cx="75" cy="7" r="3" fill="var(--muted)"/>
+      </svg>
+    </div>
+    <div class="row">
+      <div class="field"><label for="nm">Your name</label><input id="nm" autocomplete="off" value="${esc(S.name)}"></div>
+      <div class="field" style="flex:0 1 140px"><label for="pd">Period</label><input id="pd" autocomplete="off" value="${esc(S.period)}"></div>
+    </div>
+    <ul class="stagelist">
+      ${STAGES.map(st=>`<li><span class="code">${st.code}</span><span>${st.title} <span class="muted">· ${st.teks}</span></span><span class="pts">${st.pts} pts</span></li>`).join("")}
+    </ul>
+    <p class="muted" style="font-size:.95rem">Your first click on each question is final. Record each answer on your recording sheet as you go. Plan on about 45 minutes.</p>
+    <button class="btn" id="go">Begin countdown</button>
+  </section>
+  <div class="foot">© Science with Mrs. Lennon · single-classroom license</div>`;
+  const nm=document.getElementById("nm"), pd=document.getElementById("pd"), go=document.getElementById("go");
+  const chk=()=>{S.name=nm.value.trim();S.period=pd.value.trim();go.disabled=!S.name;};
+  nm.oninput=chk; pd.oninput=chk; chk();
+  go.onclick=()=>{ if(!S.start) S.start=Date.now(); S.screen="intro"; render(); };
+}
+
+function renderIntro(){
+  const st=STAGES[S.stage];
+  app.innerHTML = `${strip()}
+  <section class="panel">
+    <div class="eyebrow">${st.code} · TEKS ${st.teks} · ${st.pts} points</div>
+    <h2>${st.title}</h2>
+    <p>${st.intro}</p>
+    <button class="btn" id="go">Start ${st.code.toLowerCase()}</button>
+  </section>`;
+  document.getElementById("go").onclick=()=>{S.screen="play";S.q=0;render();};
+}
+
+function renderMC(){
+  const st=STAGES[S.stage], it=st.qs[S.q], v=S.ans[S.stage][S.q];
+  const table = it.table ? `<div class="tablewrap"><table><tr>${it.table[0].map(h=>`<th>${h}</th>`).join("")}</tr>${it.table.slice(1).map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</table></div>`:"";
+  const opts = it.o.map((o,k)=>{
+    let c=""; if(v!==null){ if(k===it.a)c="correct"; else if(k===v)c="wrong"; }
+    return `<button class="opt ${c}" data-k="${k}" ${v!==null?"disabled":""}><span class="ltr">${L[k]}</span><span>${esc(o)}</span></button>`;}).join("");
+  const last = S.q===st.qs.length-1;
+  const fb = v===null ? "" : `<div class="fb ${v===it.a?"":"miss"}"><strong>${v===it.a?"Go for launch.":"Correct answer: "+L[it.a]+"."}</strong> ${esc(it.why)}</div>
+    <button class="btn" id="nx">${last?(S.stage===STAGES.length-1?"See mission report":"Finish "+st.code.toLowerCase()):"Next question"}</button>`;
+  app.innerHTML = `${strip()}
+  <section class="panel">
+    <div class="eyebrow">${st.title} · Question ${S.q+1} of ${st.qs.length}</div>
+    <p class="qtext">${esc(it.q)}</p>
+    ${table}
+    <div class="opts">${opts}</div>
+    ${fb}
+  </section>`;
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ if(S.ans[S.stage][S.q]!==null)return; S.ans[S.stage][S.q]=+b.dataset.k; render(); document.getElementById("nx")?.focus(); });
+  const nx=document.getElementById("nx"); if(nx) nx.onclick=()=>{ if(!last){S.q++;render();} else advance(); };
+}
+
+function renderSort(){
+  const st=STAGES[S.stage]; let n=0;
+  const parts = st.parts.map(p=>{
+    const cards = p.items.map(it=>{
+      const k=n++, v=S.ans[S.stage][k];
+      const bins = p.bins.map((b,j)=>{ let c=""; if(v!==null){ if(j===it.a)c="correct"; else if(j===v)c="wrong"; }
+        return `<button class="bin ${c}" data-k="${k}" data-j="${j}" ${v!==null?"disabled":""}>${b}</button>`;}).join("");
+      return `<div class="card"><span class="num">${k+1}</span><div style="min-width:0"><div>${esc(it.q)}</div><div class="bins">${bins}</div>${v!==null?`<div class="why">${v===it.a?"✓":"✗ "+esc(p.bins[it.a])+"."} ${esc(it.why)}</div>`:""}</div></div>`;
+    }).join("");
+    return `<h3>${p.label}</h3><div class="sortgrid">${cards}</div>`;
+  }).join("");
+  const done = S.ans[S.stage].every(x=>x!==null);
+  app.innerHTML = `${strip()}
+  <section class="panel">
+    <div class="eyebrow">${st.title} · TEKS ${st.teks}</div>
+    ${parts}
+    <button class="btn" id="nx" ${done?"":"disabled"}>${done?"Finish stage 2":"Sort every card to continue"}</button>
+  </section>`;
+  app.querySelectorAll(".bin").forEach(b=>b.onclick=()=>{ const k=+b.dataset.k; if(S.ans[S.stage][k]!==null)return; S.ans[S.stage][k]=+b.dataset.j; const y=window.scrollY; renderSort(); window.scrollTo({top:y}); });
+  document.getElementById("nx").onclick=advance;
+}
+
+function advance(){
+  if (S.stage<STAGES.length-1){ S.stage++; S.q=0; S.screen="intro"; }
+  else { S.end=S.end||Date.now(); S.screen="report"; }
+  render();
+}
+
+function missedTags(){
+  const m={};
+  STAGES.forEach((st,i)=>flatItems(st).forEach((it,k)=>{ if(S.ans[i][k]!==it.a){ m[it.tag]=(m[it.tag]||0)+1; } }));
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+
+function teksRows(){
+  const t={"7.9A":[0,0],"7.9B":[0,0],"7.9C":[0,0]};
+  const teksOf = tag => /gravity|orbit|inertia|weight|Mass and|tides/i.test(tag)?"7.9B":/Proximity|water|atmosphere|Earth as a system|Comparing/i.test(tag)?"7.9C":"7.9A";
+  STAGES.forEach((st,i)=>flatItems(st).forEach((it,k)=>{ const key = st.teks.length===4?st.teks:teksOf(it.tag); t[key][1]++; if(S.ans[i][k]===it.a)t[key][0]++; }));
+  return t;
+}
+
+function renderReport(){
+  const sc=totalScore(), pct=Math.round(sc/TOTAL*100), t=teksRows(), miss=missedTags();
+  const names={"7.9A":"Objects in the solar system","7.9B":"Gravity and motion","7.9C":"Earth and life"};
+  const bars = Object.entries(t).map(([k,[c,n]])=>{ const p=Math.round(c/n*100); const cl=p>=80?"":p>=60?"mid":"low";
+    return `<div class="bar"><span>${k} ${names[k]}</span><div class="track"><div class="fill ${cl}" style="width:${p}%"></div></div><span class="v">${c}/${n}</span></div>`;}).join("");
+  const stageLines = STAGES.map((st,i)=>`${st.code} ${st.title}: ${stageScore(i)}/${st.pts}`).join("\n");
+  const verdict = pct>=80?"Cleared for launch. You are ready for the test.":pct>=60?"Almost ready. Review the topics below before test day.":"Hold the launch. Go back through the topics below with your study guide.";
+  const report = `SOLAR SYSTEM LAUNCH REVIEW · MISSION REPORT
+Name: ${S.name}   Period: ${S.period||"-"}
+Score: ${sc}/${TOTAL} (${pct}%)
+Time: ${mmss((S.end||Date.now())-S.start)}
+${stageLines}
+7.9A: ${t["7.9A"][0]}/${t["7.9A"][1]}  7.9B: ${t["7.9B"][0]}/${t["7.9B"][1]}  7.9C: ${t["7.9C"][0]}/${t["7.9C"][1]}
+Study before the test: ${miss.length?miss.map(m=>m[0]).join("; "):"Nothing missed!"}`;
+  app.innerHTML = `
+  <div class="brand">Science with Mrs. Lennon · TEKS 7.9 Review</div>
+  <section class="panel">
+    <div class="eyebrow">Mission report · ${esc(S.name)}${S.period?" · Period "+esc(S.period):""}</div>
+    <div class="row" style="align-items:flex-end;gap:18px"><span class="scorebig">${sc}<span class="muted" style="font-size:1.4rem"> / ${TOTAL}</span></span><span class="mono muted">${pct}% · ${mmss((S.end||Date.now())-S.start)}</span></div>
+    <p><strong>${verdict}</strong></p>
+    <div class="bars">${bars}</div>
+  </section>
+  <section class="panel">
+    <h3>Study these before the test</h3>
+    ${miss.length?`<ul class="studylist">${miss.map(([tag,n])=>`<li>${esc(tag)} <span class="muted mono">(${n} missed)</span></li>`).join("")}</ul>`:`<p>You missed nothing. Skim your study guide once and you are set.</p>`}
+  </section>
+  <section class="panel">
+    <h3>Copy your report</h3>
+    <p class="muted">Copy this and paste it at the bottom of your recording sheet.</p>
+    <pre class="report" id="rep">${esc(report)}</pre>
+    <div class="row"><button class="btn" id="cp">Copy report</button><span class="mono muted" id="cpmsg" aria-live="polite"></span></div>
+  </section>
+  <div class="foot">© Science with Mrs. Lennon · single-classroom license</div>`;
+  document.getElementById("cp").onclick=()=>{
+    const msg=document.getElementById("cpmsg");
+    const sel=()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("rep"));const s=getSelection();s.removeAllRanges();s.addRange(r);msg.textContent="Selected. Press Ctrl+C (or ⌘+C) to copy.";};
+    try{ navigator.clipboard.writeText(report).then(()=>msg.textContent="Copied.",sel); }catch(e){ sel(); }
+  };
+}
+
+render();
+</script>
+</body>
+</html>
