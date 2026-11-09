@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hurricane Hunter Lab | Tropical Cyclones TEKS 8.10C</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0d1b33;--navy2:#132849;--teal:#19b5c9;--teal2:#0e8fa1;--yellow:#ffc93c;--coral:#ff6b5b;--green:#34c38f;--ink:#14213d;--paper:#f4f8fb;--line:#d9e3ec;--muted:#5c6b80}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Poppins,system-ui,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+button{font-family:inherit;cursor:pointer}
+.hide{display:none!important}
+header.top{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;padding:14px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header.top .logo{font-weight:800;font-size:20px}
+header.top .logo span{color:var(--yellow)}
+header.top .who{margin-left:auto;font-size:14px;opacity:.9}
+.btn{border:0;border-radius:12px;padding:11px 20px;font-weight:700;font-size:15px;background:var(--teal);color:#fff;transition:transform .1s}
+.btn:hover{transform:translateY(-1px)}
+.btn.y{background:var(--yellow);color:var(--ink)}
+.btn.ghost{background:transparent;border:2px solid rgba(255,255,255,.5)}
+.btn.gray{background:#e3e9f0;color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+/* intro */
+#intro{min-height:100vh;background:radial-gradient(ellipse at 80% 90%,#1d6f86 0%,transparent 55%),linear-gradient(160deg,#0b1730,#12284a);color:#fff;display:flex;align-items:center;justify-content:center;padding:24px}
+.introbox{max-width:760px;width:100%;text-align:center}
+.kicker{display:inline-block;background:var(--yellow);color:var(--ink);font-weight:700;border-radius:30px;padding:6px 18px;font-size:14px;margin-bottom:16px}
+.introbox h1{font-size:clamp(40px,8vw,72px);line-height:1.02;font-weight:800;letter-spacing:-1px}
+.introbox h1 span{color:var(--yellow)}
+.introbox p.sub{font-size:19px;margin:16px 0 26px;opacity:.92}
+.spin{width:170px;height:170px;margin:0 auto 18px;animation:rot 6s linear infinite}
+@keyframes rot{to{transform:rotate(-360deg)}}
+.namerow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.namerow input{font-family:inherit;font-size:17px;padding:12px 16px;border-radius:12px;border:0;min-width:260px}
+.rules{margin-top:26px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;text-align:left}
+.rules div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:12px 14px;font-size:14px}
+.rules b{color:var(--yellow)}
+/* hub */
+#hub{max-width:1080px;margin:0 auto;padding:26px 18px 60px}
+#hub h2{font-size:30px;font-weight:800}
+#hub p.lead{color:var(--muted);margin:4px 0 20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.scard{background:#fff;border:2px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:8px;position:relative}
+.scard .num{font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--teal2)}
+.scard h3{font-size:21px;font-weight:800}
+.scard p{font-size:14px;color:var(--muted);flex:1}
+.scard .prog{font-size:13px;font-weight:600}
+.scard.done{border-color:var(--green)}
+.scard.done::after{content:"✓ Complete";position:absolute;top:14px;right:14px;background:var(--green);color:#fff;font-size:12px;font-weight:700;border-radius:20px;padding:3px 10px}
+.scard.locked{opacity:.55}
+.bar{height:8px;background:#e8eef4;border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--teal);width:0}
+/* station */
+#station{max-width:1240px;margin:0 auto;padding:18px}
+.shead{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.shead h2{font-size:26px;font-weight:800}
+.shead .num{background:var(--navy);color:var(--yellow);font-weight:700;border-radius:20px;padding:4px 12px;font-size:13px}
+.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:16px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:#fff;border:2px solid var(--line);border-radius:18px;padding:16px}
+.panel h4{font-size:15px;font-weight:700;margin-bottom:8px}
+.sim svg{width:100%;height:auto;display:block;border-radius:12px}
+.controls{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;align-items:center}
+.ctl{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600}
+.ctl input[type=range]{width:200px;accent-color:var(--teal)}
+.seg{display:flex;border-radius:10px;overflow:hidden;border:2px solid var(--line)}
+.seg button{border:0;background:#fff;padding:7px 12px;font-weight:600;font-size:13px}
+.seg button.on{background:var(--navy);color:#fff}
+.readout{margin-top:12px;background:var(--paper);border-radius:12px;padding:12px 14px;font-size:14px;min-height:48px}
+.readout b{color:var(--teal2)}
+.tasks{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.tasks li{font-size:14px;padding:8px 10px;border-radius:10px;background:var(--paper);display:flex;gap:8px;align-items:flex-start}
+.tasks li::before{content:"○";font-weight:800;color:var(--muted)}
+.tasks li.ok{background:#e4f7ef}
+.tasks li.ok::before{content:"✓";color:var(--green)}
+.qlock{font-size:14px;color:var(--muted);background:var(--paper);border-radius:12px;padding:14px;text-align:center;margin-top:10px}
+.q{border-top:2px dashed var(--line);padding-top:12px;margin-top:12px}
+.q .qt{font-weight:600;font-size:15px;margin-bottom:8px}
+.q .qt small{display:block;font-weight:500;color:var(--muted);font-size:13px;margin-top:4px}
+.opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;margin-bottom:6px;font-size:14px}
+.opt:hover{border-color:var(--teal)}
+.opt.wrong{border-color:var(--coral);background:#fff0ee;text-decoration:line-through;color:#a14a40}
+.opt.right{border-color:var(--green);background:#e4f7ef;font-weight:600}
+.fb{font-size:13px;margin-top:4px;padding:8px 10px;border-radius:8px}
+.fb.no{background:#fff0ee;color:#9c3a2f}
+.fb.yes{background:#e4f7ef;color:#1d7a57}
+table.data{border-collapse:collapse;margin:6px 0;font-size:13px}
+table.data td,table.data th{border:1px solid var(--line);padding:4px 10px;text-align:left}
+table.data th{background:var(--navy);color:#fff}
+.labelbank{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.lab{border:2px solid var(--navy);background:#fff;border-radius:20px;padding:6px 14px;font-weight:700;font-size:13px}
+.lab.sel{background:var(--yellow)}
+.lab.used{opacity:.35;pointer-events:none}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin-top:8px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:18px;height:5px;border-radius:3px;margin-right:6px;vertical-align:middle;background:var(--c)}
+.navrow{display:flex;justify-content:space-between;margin-top:16px;gap:10px;flex-wrap:wrap}
+/* certificate */
+#cert{min-height:100vh;background:linear-gradient(160deg,#0b1730,#12284a);display:flex;align-items:center;justify-content:center;padding:24px}
+.certbox{background:#fff;border-radius:22px;max-width:720px;width:100%;padding:30px;border:8px solid var(--yellow);text-align:center}
+.certbox .kick{color:var(--teal2);font-weight:700;letter-spacing:2px;font-size:13px}
+.certbox h2{font-size:34px;font-weight:800;margin:6px 0}
+.certbox .nm{font-size:30px;font-weight:800;color:var(--navy);border-bottom:3px solid var(--line);display:inline-block;padding:0 20px 4px;margin:10px 0 16px}
+.big{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.big div{background:var(--paper);border-radius:14px;padding:12px 18px;min-width:150px}
+.big b{display:block;font-size:30px;color:var(--teal2)}
+.big small{font-size:12px;color:var(--muted);font-weight:600}
+table.cert{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+table.cert td{border-bottom:1px solid var(--line);padding:7px 6px;text-align:left}
+table.cert td:last-child{text-align:right;font-weight:700}
+.certbox .turnin{background:#fff8e1;border-radius:12px;padding:12px;font-size:14px;margin-top:10px;text-align:left}
+footer.foot{text-align:center;font-size:12px;color:var(--muted);padding:20px}
+</style>
+</head>
+<body>
+
+<!-- ============ INTRO ============ -->
+<section id="intro">
+ <div class="introbox">
+  <svg class="spin" viewBox="0 0 200 200" aria-hidden="true">
+   <defs><radialGradient id="sg" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0b1730"/><stop offset=".18" stop-color="#0b1730"/><stop offset=".22" stop-color="#fff"/><stop offset="1" stop-color="#bfe9f2" stop-opacity="0"/></radialGradient></defs>
+   <g fill="none" stroke="#e8f7fb" stroke-linecap="round">
+    <path d="M100 100 C 140 60, 180 90, 170 130" stroke-width="14" opacity=".9"/>
+    <path d="M100 100 C 60 140, 20 110, 30 70" stroke-width="14" opacity=".9"/>
+    <path d="M100 100 C 140 140, 110 185, 70 175" stroke-width="10" opacity=".6"/>
+    <path d="M100 100 C 60 60, 90 15, 130 25" stroke-width="10" opacity=".6"/>
+   </g>
+   <circle cx="100" cy="100" r="40" fill="url(#sg)"/>
+   <circle cx="100" cy="100" r="10" fill="#0b1730"/>
+  </svg>
+  <div class="kicker">TEKS 8.10C · TROPICAL CYCLONES</div>
+  <h1>Hurricane Hunter <span>Lab</span></h1>
+  <p class="sub">Build a storm, steer it across the ocean and find out how ocean currents and air masses team up to make hurricanes.</p>
+  <div class="namerow">
+   <input id="nameIn" placeholder="Type your first and last name" maxlength="40" aria-label="Your name">
+   <button class="btn y" id="startBtn">Start the mission</button>
+  </div>
+  <div class="rules">
+   <div><b>1. Do the lab tasks first.</b> Questions unlock after you run each model.</div>
+   <div><b>2. Answer carefully.</b> Your score counts answers correct on the first try.</div>
+   <div><b>3. Finish all 5 stations.</b> Screenshot your certificate and turn it in.</div>
+  </div>
+ </div>
+</section>
+
+<!-- ============ HUB ============ -->
+<section id="hub" class="hide">
+ <h2>Mission Control</h2>
+ <p class="lead">Complete Stations 1–4 in any order. The Final Certification unlocks when they're done.</p>
+ <div class="cards" id="cards"></div>
+</section>
+
+<!-- ============ STATION ============ -->
+<section id="station" class="hide">
+ <div class="shead"><span class="num" id="sNum"></span><h2 id="sTitle"></h2></div>
+ <div class="grid">
+  <div class="panel sim" id="simPanel"></div>
+  <div class="panel">
+   <h4>Lab tasks</h4>
+   <ul class="tasks" id="taskList"></ul>
+   <div id="qArea"></div>
+  </div>
+ </div>
+ <div class="navrow">
+  <button class="btn gray" id="backBtn">← Mission Control</button>
+ </div>
+</section>
+
+<!-- ============ CERTIFICATE ============ -->
+<section id="cert" class="hide">
+ <div class="certbox">
+  <div class="kick">CERTIFIED HURRICANE HUNTER</div>
+  <h2>Hurricane Hunter Lab</h2>
+  <div style="color:var(--muted);font-size:14px">Tropical Cyclones · TEKS 8.10C</div>
+  <div class="nm" id="cName"></div>
+  <div class="big">
+   <div><b id="cScore"></b><small>CORRECT ON FIRST TRY</small></div>
+   <div><b id="cPct"></b><small>SCORE</small></div>
+   <div><b id="cTime"></b><small>TIME IN LAB</small></div>
+  </div>
+  <table class="cert" id="cTable"></table>
+  <div style="font-size:12px;color:var(--muted)" id="cDate"></div>
+  <div class="turnin"><b>Last step: turn in your results!</b><br>Take a screenshot of this whole certificate (Windows: Shift + Windows key + S · Chromebook: Ctrl + Shift + Show windows · Mac: Shift + Command + 4) and upload it to your assignment. Don't close this page until you've turned it in.</div>
+  <div style="margin-top:14px"><button class="btn gray" id="certBack">Back to Mission Control</button></div>
+ </div>
+</section>
+
+<footer class="foot" id="foot">© Science with Mrs. Lennon · For single-classroom use · Models are simplified and not to scale.</footer>
+
+<script>
+/* ================= STATE ================= */
+const S = {name:"", start:0, end:0, tasks:{}, answers:{}};
+const $ = id => document.getElementById(id);
+function show(id){["intro","hub","station","cert"].forEach(s=>$(s).classList.toggle("hide",s!==id));window.scrollTo(0,0)}
+function esc(t){return String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+/* ================= QUESTIONS ================= */
+const STATIONS = [
+ {id:"s1", num:"STATION 1", title:"Storm Ingredients",
+  blurb:"Change the ocean temperature, the air mass and the wind to find the recipe for a hurricane.",
+  tasks:[["cold","Run the model with cold ocean water"],["dry","Run it with warm water but a dry air mass"],["shear","Run it with warm, moist air but high wind shear"],["made","Find the recipe that forms a hurricane"]],
+  qs:[
+   {q:"Which conditions formed a hurricane in the model?",o:["Warm ocean water, a warm and moist air mass, and low wind shear","Cold ocean water, a moist air mass, and low wind shear","Warm ocean water, a dry air mass, and high wind shear","Cold ocean water, a dry air mass, and high wind shear"],a:0,h:"Look back at the run where the storm started spinning."},
+   {q:"When the ocean water was cold, no storm formed. Which statement best explains why?",o:["Cold water gives the air above it less heat and less water vapor, so warm, moist air cannot keep rising","Cold water has more salt, which stops clouds","Cold water makes the wind shear stronger","Cold water blocks sunlight from reaching the air"],a:0,h:"A hurricane is powered by heat and water vapor from the ocean."},
+   {q:"Why did high wind shear stop the hurricane from forming?",o:["Winds blowing at different speeds high up tore the top of the storm away from the bottom, so it could not organize","The wind cooled the ocean below freezing","The wind added extra moisture to the storm","The wind made the storm spin too fast"],a:0,h:"Watch what happened to the cloud tops in the high-shear run."},
+   {q:"Where does a tropical cyclone get most of its energy?",o:["Heat and water vapor from warm ocean water","The Moon's gravity pulling on the ocean","Cold air sinking from the poles","Earthquakes on the ocean floor"],a:0,h:"Which control had to be warm for the storm to grow?"},
+   {q:"Atlantic hurricanes are most common from August to October. Which is the best explanation?",o:["The ocean has been heated by the Sun all summer, so the water is at its warmest","The days are longest in October","The air is driest in late summer","Cold fronts are strongest in late summer"],a:0,h:"Water heats up slowly. When is it warmest?"}
+  ]},
+ {id:"s2", num:"STATION 2", title:"Ocean Current Highway",
+  blurb:"Move a hurricane around the ocean map. Warm and cold currents change what happens to it.",
+  tasks:[["gulf","Move the storm into the Gulf of Mexico"],["carib","Move it into the Caribbean Sea"],["canary","Move it over the cold Canary Current"],["north","Move it into the cold North Atlantic"],["land","Move it over land in Texas"]],
+  qs:[
+   {q:"The storm grew stronger in the Gulf of Mexico. What feature of the Gulf caused this?",o:["Warm ocean currents keep the Gulf's surface water very warm","A cold current flows through the Gulf","Dry air from the desert flows over the Gulf","The Gulf is surrounded by tall mountains"],a:0,h:"Check the color of the current arrows in the Gulf."},
+   {q:"What happened when the storm moved over the Canary Current, and why?",o:["It weakened, because the cold current cooled the water and gave the storm less energy","It strengthened, because the cold current added more water vapor","It stayed the same, because currents do not affect storms","It turned into a typhoon, because the current changed its name"],a:0,h:"Is the Canary Current warm or cold?"},
+   {q:"Why did the hurricane weaken after it moved over land in Texas?",o:["It was cut off from the warm, moist ocean air that fuels it","Land is always colder than the ocean in summer","Land adds more water vapor to the storm","Wind shear always disappears over land"],a:0,h:"What does a hurricane need that it can only get over the ocean?"},
+   {q:"The Gulf Stream is a current that…",o:["carries warm water from the tropics north along the east coast of the United States","carries cold water south from the Arctic","flows only in the Pacific Ocean","stops hurricanes from reaching the United States"],a:0,h:"Look at the red arrow along the east coast."},
+   {q:"A hurricane is in the Caribbean. Forecasters say it will move north into the cold North Atlantic. What should they predict?",o:["The hurricane will weaken","The hurricane will get stronger","The hurricane will stay exactly the same","The hurricane will become a typhoon"],a:0,h:"What happened to the storm when you moved it to the North Atlantic?"}
+  ]},
+ {id:"s3", num:"STATION 3", title:"Inside the Storm",
+  blurb:"Watch warm ocean water and a moist air mass build a hurricane step by step, then label its parts.",
+  tasks:[["steps","Play all 5 steps of the storm builder"],["label","Label the eye, eyewall and rain bands correctly"]],
+  qs:[
+   {q:"In the storm builder, what happened right after the warm, moist air rose?",o:["The water vapor cooled and condensed into clouds, releasing heat","The air sank back down to the ocean","The ocean water froze","The air mass turned dry and cold"],a:0,h:"Replay step 3."},
+   {q:"Why does an area of low pressure form at the center of the storm?",o:["Warm air rises away from the surface, so less air is pressing down there","Cold air piles up at the center","The ocean pushes the air down","Rain makes the air heavier"],a:0,h:"Replay step 4 and watch the air at the surface."},
+   {q:"Why does air from all around the storm move toward its center?",o:["Air moves from areas of high pressure toward areas of low pressure","Air is pulled toward warm water by gravity","The eye blows air outward","Air always moves toward the equator"],a:0,h:"Which way do the arrows point in step 5?"},
+   {q:"Which part of a hurricane is the calmest, with light winds and sometimes clear skies?",o:["The eye","The eyewall","The rain bands","The outer edge"],a:0,h:"Look at the label you placed in the very center."},
+   {q:"Which part of a hurricane has the strongest winds and the heaviest rain?",o:["The eyewall","The eye","The rain bands far from the center","The clear air outside the storm"],a:0,h:"It's the ring of tall clouds right around the center."}
+  ]},
+ {id:"s4", num:"STATION 4", title:"Storm Tracker",
+  blurb:"Track a hurricane from birth to landfall, then find out what it's called around the world.",
+  tasks:[["track","Track the storm all the way to landfall"],["atl","Find the name for storms in the Atlantic"],["wpac","Find the name for storms in the western Pacific"],["ind","Find the name for storms in the Indian Ocean"]],
+  qs:[
+   {q:"What happened to the storm as it crossed the warm Atlantic Ocean?",o:["It grew stronger, from a tropical depression to a hurricane","It grew weaker and disappeared","It stayed a tropical depression the whole time","It became a tornado"],a:0,h:"Watch the strength meter as you move the slider."},
+   {q:"In which part of its track did the storm weaken the fastest?",o:["After it moved onto land","While it crossed the warm Gulf of Mexico","When it first formed near Africa","In the middle of the warm Atlantic"],a:0,h:"Look at the last few days of the track."},
+   {q:"The same kind of storm is called a typhoon when it forms in the…",o:["western Pacific Ocean, near Asia","Atlantic Ocean, near the United States","Gulf of Mexico","Arctic Ocean"],a:0,h:"Click the ocean near Japan and the Philippines."},
+   {q:"Which statement about hurricanes, typhoons and cyclones is correct?",o:["They are the same type of storm with different names based on where they form","Typhoons form over land and hurricanes form over water","Cyclones are always weaker than hurricanes","Only hurricanes need warm ocean water"],a:0,h:"Compare the three regions you clicked."},
+   {q:"A hurricane is fed by which type of air mass?",o:["Maritime tropical: warm, moist air that forms over tropical oceans","Continental polar: cold, dry air that forms over land","Continental tropical: hot, dry air that forms over deserts","Maritime polar: cold, moist air that forms over cold oceans"],a:0,h:"Maritime means over the ocean. Tropical means warm."}
+  ]},
+ {id:"s5", num:"FINAL", title:"Final Certification",
+  blurb:"Eight STAAR-style questions about real storms. Unlocks after Stations 1–4.",
+  tasks:[["ready","Complete Stations 1–4"]],
+  qs:[
+   {q:"In 2017, Hurricane Harvey moved very slowly near the Texas coast and kept dropping heavy rain for days. Which best explains why it stayed so strong for so long?",o:["Part of the storm stayed over the warm Gulf of Mexico, which kept feeding it heat and moisture","The storm was over the cold Canary Current","The storm pulled in dry desert air","Wind shear over Texas made the storm stronger"],a:0},
+   {q:"A meteorologist recorded three storms.<table class='data'><tr><th>Storm</th><th>Surface below the storm</th></tr><tr><td>A</td><td>Ocean water at 29 °C</td></tr><tr><td>B</td><td>Ocean water at 23 °C</td></tr><tr><td>C</td><td>Dry land</td></tr></table>Which storm is most likely to strengthen?",o:["Storm A","Storm B","Storm C","All three will strengthen the same amount"],a:0},
+   {q:"Typhoon Haiyan hit the Philippines in 2013. Why was it called a typhoon instead of a hurricane?",o:["It formed in the western Pacific Ocean","It was weaker than a hurricane","It formed over land","It formed in the Atlantic Ocean"],a:0},
+   {q:"Hurricanes almost never hit the coast of California. Which is the best explanation?",o:["The cold California Current keeps the ocean water there too cool to fuel hurricanes","California is too far north for any storms","Mountains in California block all wind","California's ocean water is too salty"],a:0},
+   {q:"A student's model shows a hurricane getting stronger as it moves over cold ocean water. What is wrong with the model?",o:["Hurricanes need warm ocean water to strengthen, so the storm should weaken over cold water","Hurricanes only form over land","Hurricanes are not affected by water temperature","Cold water adds more water vapor to storms"],a:0},
+   {q:"Which interaction produces a tropical cyclone?",o:["Warm ocean water heats and adds moisture to an air mass, and the warm, moist air rises and forms a spinning area of low pressure","Cold ocean currents cool the air until it sinks and spins","A dry air mass from a desert meets snow","Warm air over land meets a mountain range"],a:0},
+   {q:"On a satellite image, a ring of very tall, thick clouds surrounds a small clear circle in the middle of a hurricane. What is the ring of clouds?",o:["The eyewall","The eye","A rain band","A cold front"],a:0},
+   {q:"The Atlantic hurricane season runs from June through November. Which statement best explains why?",o:["These are the months when tropical ocean water is warm enough to fuel hurricanes","These are the months with the most snow","These are the months when ocean currents stop moving","These are the months when the air is driest"],a:0}
+  ]}
+];
+/* shuffle options once per load, track correct index */
+STATIONS.forEach(st=>st.qs.forEach(q=>{
+ const idx=q.o.map((t,i)=>i); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]}
+ q.opts=idx.map(i=>q.o[i]); q.correct=idx.indexOf(q.a);
+}));
+STATIONS.forEach(st=>{S.tasks[st.id]=new Set();S.answers[st.id]={}});
+
+function stationDone(st){return Object.keys(S.answers[st.id]).filter(k=>S.answers[st.id][k].done).length===st.qs.length}
+function tasksDone(st){return st.tasks.every(t=>S.tasks[st.id].has(t[0]))}
+function firstTry(st){return Object.values(S.answers[st.id]).filter(a=>a.first===true).length}
+function finalUnlocked(){return STATIONS.slice(0,4).every(stationDone)}
+
+/* ================= HUB ================= */
+function renderHub(){
+ const c=$("cards"); c.innerHTML="";
+ STATIONS.forEach(st=>{
+  const locked=st.id==="s5"&&!finalUnlocked();
+  const answered=Object.values(S.answers[st.id]).filter(a=>a.done).length;
+  const d=document.createElement("div");
+  d.className="scard"+(stationDone(st)?" done":"")+(locked?" locked":"");
+  d.innerHTML=`<div class="num">${st.num}</div><h3>${st.title}</h3><p>${st.blurb}</p>
+   <div class="prog">${answered} / ${st.qs.length} questions</div><div class="bar"><i style="width:${answered/st.qs.length*100}%"></i></div>
+   <button class="btn" ${locked?"disabled":""}>${locked?"🔒 Locked":stationDone(st)?"Review":"Start"}</button>`;
+  d.querySelector("button").onclick=()=>openStation(st.id);
+  c.appendChild(d);
+ });
+ if(finalUnlocked()&&stationDone(STATIONS[4])){
+  const d=document.createElement("div");d.className="scard";d.style.borderColor="var(--yellow)";
+  d.innerHTML=`<div class="num">ALL DONE</div><h3>Your certificate is ready</h3><p>Open it, screenshot it and turn it in.</p><button class="btn y">View certificate</button>`;
+  d.querySelector("button").onclick=showCert;c.appendChild(d);
+ }
+}
+
+/* ================= STATION FRAME ================= */
+let cur=null;
+function openStation(id){
+ cur=STATIONS.find(s=>s.id===id);
+ $("sNum").textContent=cur.num; $("sTitle").textContent=cur.title;
+ SIMS[id]();
+ if(id==="s5") S.tasks.s5.add("ready");
+ renderTasks(); show("station");
+}
+function markTask(key){
+ if(!S.tasks[cur.id].has(key)){S.tasks[cur.id].add(key);renderTasks()}
+}
+function renderTasks(){
+ $("taskList").innerHTML=cur.tasks.map(t=>`<li class="${S.tasks[cur.id].has(t[0])?"ok":""}">${t[1]}</li>`).join("");
+ renderQs();
+}
+function renderQs(){
+ const qa=$("qArea");
+ if(!tasksDone(cur)){qa.innerHTML=`<div class="qlock">🔒 Finish the lab tasks above to unlock ${cur.qs.length} questions.</div>`;return}
+ qa.innerHTML=`<h4 style="margin-top:14px">Questions</h4>`;
+ cur.qs.forEach((q,qi)=>{
+  const st=S.answers[cur.id][qi]||{tried:[],done:false};
+  const d=document.createElement("div");d.className="q";
+  d.innerHTML=`<div class="qt">${qi+1}. ${q.q}</div>`;
+  q.opts.forEach((o,oi)=>{
+   const b=document.createElement("button");b.className="opt";b.innerHTML=String.fromCharCode(65+oi)+". "+esc(o);
+   if(st.tried.includes(oi)) b.classList.add(oi===q.correct?"right":"wrong");
+   if(st.done) b.disabled=true;
+   b.onclick=()=>answer(qi,oi);
+   d.appendChild(b);
+  });
+  if(st.tried.length){
+   const f=document.createElement("div");
+   if(st.done){f.className="fb yes";f.textContent=st.first?"Correct on the first try!":"Correct. (This one doesn't count toward your first-try score.)"}
+   else{f.className="fb no";f.textContent="Not quite. "+(q.h?"Hint: "+q.h:"Reread the question and try again.")}
+   d.appendChild(f);
+  }
+  qa.appendChild(d);
+ });
+ if(stationDone(cur)){
+  const n=document.createElement("div");n.className="fb yes";n.style.marginTop="12px";
+  n.innerHTML=`<b>Station complete!</b> ${firstTry(cur)} of ${cur.qs.length} correct on the first try.`;
+  const b=document.createElement("button");b.className="btn";b.style.marginTop="10px";
+  b.textContent=cur.id==="s5"?"See my certificate":"Back to Mission Control";
+  b.onclick=()=>{if(cur.id==="s5")showCert();else{renderHub();show("hub")}};
+  qa.appendChild(n);qa.appendChild(b);
+ }
+}
+function answer(qi,oi){
+ const A=S.answers[cur.id]; const st=A[qi]||(A[qi]={tried:[],done:false,first:null});
+ if(st.done||st.tried.includes(oi))return;
+ st.tried.push(oi);
+ const q=cur.qs[qi];
+ if(oi===q.correct){st.done=true;st.first=st.tried.length===1}
+ else if(st.first===null) st.first=false;
+ const y=window.scrollY; renderQs(); window.scrollTo(0,y);
+}
+
+/* ================= SVG HELPERS ================= */
+const NS="http://www.w3.org/2000/svg";
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
+function stormIcon(g,r,opacity){
+ g.innerHTML="";
+ const grp=el("g",{opacity:opacity??1},g);
+ const arms=[["M0 0 C 0.8 -0.8, 1.6 -0.1, 1.4 0.7",1],["M0 0 C -0.8 0.8, -1.6 0.1, -1.4 -0.7",1],["M0 0 C 0.8 0.8, 0.1 1.6, -0.7 1.4",.7],["M0 0 C -0.8 -0.8, -0.1 -1.6, 0.7 -1.4",.7]];
+ arms.forEach(([d,o])=>el("path",{d,fill:"none",stroke:"#fff","stroke-width":0.38,"stroke-linecap":"round",opacity:o,transform:`scale(${r})`,"vector-effect":"non-scaling-stroke",style:`stroke-width:${Math.max(3,r*0.38)}px`},grp));
+ el("circle",{r:r*0.55,fill:"#fff",opacity:.85},grp);
+ el("circle",{r:Math.max(2,r*0.16),fill:"#0b2a4a"},grp);
+ return grp;
+}
+
+/* ================= STATION 1: INGREDIENTS ================= */
+const SIMS={};
+SIMS.s1=function(){
+ const P=$("simPanel");
+ P.innerHTML=`<h4>Storm Ingredients Model</h4>
+ <svg id="s1svg" viewBox="0 0 640 360"></svg>
+ <div class="controls">
+  <div class="ctl">Ocean surface temperature: <span id="tval"></span><input type="range" id="temp" min="20" max="31" value="24"></div>
+  <div class="ctl">Air mass over the ocean<div class="seg" id="air"><button data-v="dry">Dry</button><button data-v="moist" class="on">Warm &amp; moist</button></div></div>
+  <div class="ctl">Wind shear (winds high up)<div class="seg" id="shear"><button data-v="low" class="on">Low</button><button data-v="high">High</button></div></div>
+  <button class="btn y" id="run1">▶ Run 5 days</button>
+ </div>
+ <div class="readout" id="r1">Set the controls, then press <b>Run 5 days</b>.</div>`;
+ const svg=$("s1svg");
+ svg.innerHTML=`<defs>
+  <linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3ef"/><stop offset="1" stop-color="#d9f1fa"/></linearGradient>
+  <linearGradient id="sea1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" id="seaTop" stop-color="#1b8fb0"/><stop offset="1" stop-color="#0b3c63"/></linearGradient></defs>
+  <rect width="640" height="360" fill="url(#sky1)"/>
+  <g id="shearArrows" opacity="0"><path d="M30 40 H 260" stroke="#c43a2c" stroke-width="5" marker-end="url(#ah)"/><path d="M380 40 H 610" stroke="#c43a2c" stroke-width="5"/><polygon points="610,32 628,40 610,48" fill="#c43a2c"/><text x="40" y="30" font-size="13" font-weight="700" fill="#c43a2c">Strong winds high up</text></g>
+  <rect y="250" width="640" height="110" fill="url(#sea1)"/>
+  <g id="vapor"></g><g id="cloud"></g>
+  <g id="therm" transform="translate(585,190)"><rect x="-9" y="-80" width="18" height="120" rx="9" fill="#fff" stroke="#14213d" stroke-width="2"/><rect id="merc" x="-5" y="0" width="10" height="36" rx="5" fill="#ff6b5b"/><circle cy="44" r="13" fill="#ff6b5b" stroke="#14213d" stroke-width="2"/></g>
+  <text x="18" y="345" font-size="14" font-weight="700" fill="#fff">OCEAN</text>
+  <text id="day" x="18" y="80" font-size="16" font-weight="700" fill="#14213d"></text>`;
+ const st={air:"moist",shear:"low"};
+ const temp=$("temp");
+ function setT(){
+  const t=+temp.value;$("tval").textContent=t+" °C "+(t>=27?"(warm)":t>=24?"(cool)":"(cold)");
+  const h=(t-20)/11*90+8;const m=$("merc");m.setAttribute("y",40-h);m.setAttribute("height",h);
+  const col=t>=27?"#1fa6a8":t>=24?"#1b7fb0":"#2a5f9e";svg.querySelector("#seaTop").setAttribute("stop-color",col);
+ }
+ temp.oninput=setT;setT();
+ ["air","shear"].forEach(k=>$(k).querySelectorAll("button").forEach(b=>b.onclick=()=>{$(k).querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");st[k]=b.dataset.v;svg.querySelector("#shearArrows").setAttribute("opacity",st.shear==="high"?1:0)}));
+ let running=false;
+ $("run1").onclick=()=>{
+  if(running)return;running=true;$("run1").disabled=true;
+  const t=+temp.value, warm=t>=27, moist=st.air==="moist", low=st.shear==="low";
+  const vapor=svg.querySelector("#vapor"),cloud=svg.querySelector("#cloud");vapor.innerHTML="";cloud.innerHTML="";
+  const evap=warm?(moist?14:8):(t>=24?5:2);
+  for(let i=0;i<evap;i++){const x=60+Math.random()*460;const c=el("circle",{cx:x,cy:248,r:3,fill:"#fff",opacity:.8},vapor);c.style.transition=`transform ${2+Math.random()*1.5}s ease-out, opacity 3s`;setTimeout(()=>{c.style.transform=`translateY(${-100-Math.random()*60}px)`;c.style.opacity=.1},50+i*80)}
+  let outcome;
+  if(!warm) outcome={k:"cold",size:0,txt:`<b>No storm.</b> The ${t} °C water is too cool. Very little heat and water vapor rise from it, so there is nothing to fuel a storm.`};
+  else if(!moist) outcome={k:"dry",size:1,txt:`<b>A few weak clouds, then nothing.</b> The water is warm, but the dry air mass dries out the rising air. Without enough water vapor, clouds can't keep growing.`};
+  else if(!low) outcome={k:"shear",size:2,txt:`<b>Thunderstorms formed, but they were torn apart.</b> Strong winds high up blew the cloud tops away from the bottom of the storm, so it could never organize and spin.`};
+  else outcome={k:"made",size:3,txt:`<b>A hurricane formed!</b> Warm water heated a warm, moist air mass. The air rose, built tall clouds, and with low wind shear the storm organized and began to spin.`};
+  let d=0;const dayT=svg.querySelector("#day");
+  const iv=setInterval(()=>{d++;dayT.textContent="Day "+d;
+   cloud.innerHTML="";
+   const grow=d/5;
+   if(outcome.size===1&&d<=3){[[200,170],[360,180]].forEach(([x,y])=>{el("ellipse",{cx:x,cy:y,rx:40*grow+10,ry:18*grow+6,fill:"#fff",opacity:.9-.25*d},cloud)})}
+   if(outcome.size===2){[[180,150],[300,140],[420,155]].forEach(([x,y],i)=>{const g=el("g",{},cloud);el("rect",{x:x-25,y:y+10,width:50,height:90*grow,fill:"#eef3f7"},g);el("ellipse",{cx:x+30*d,cy:y,rx:50,ry:22,fill:"#fff",opacity:Math.max(.2,1-d*.15)},g)})}
+   if(outcome.size===3){const g=el("g",{transform:`translate(300,160)`},cloud);const s=stormIcon(g,25+grow*55);s.style.transformOrigin="0 0";s.style.animation="rot 3s linear infinite"}
+   if(d>=5){clearInterval(iv);running=false;$("run1").disabled=false;$("r1").innerHTML=outcome.txt;markTask(outcome.k)}
+  },650);
+ };
+};
+
+/* ================= STATION 2: OCEAN CURRENTS ================= */
+SIMS.s2=function(){
+ const P=$("simPanel");
+ P.innerHTML=`<h4>Ocean Current Highway: click a spot to move the hurricane there</h4>
+ <svg id="s2svg" viewBox="0 0 640 400"></svg>
+ <div class="legend"><span style="--c:#ff6b5b">Warm current</span><span style="--c:#3c8be0">Cold current</span><span style="--c:#ffc93c">Click a spot</span></div>
+ <div class="readout" id="r2">The hurricane starts in the warm Atlantic. Click a yellow spot to move it.</div>`;
+ const svg=$("s2svg");
+ svg.innerHTML=`<defs><marker id="aw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ff6b5b"/></marker><marker id="ac" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3c8be0"/></marker></defs>
+ <rect width="640" height="400" fill="#2a77a8"/>
+ <path d="M0 0 H250 C 235 40 200 70 205 100 C 215 120 250 115 268 140 L 255 165 C 235 160 225 175 205 185 C 190 165 170 160 150 170 C 130 185 140 215 160 235 C 185 255 210 262 225 290 L 260 330 L 250 400 H0 Z" fill="#c9b17c"/>
+ <path d="M640 0 V400 H540 C 520 340 540 300 520 260 C 495 225 470 210 478 175 C 490 140 500 110 520 85 C 540 60 560 30 560 0 Z" fill="#c9b17c"/>
+ <path d="M265 175 C 300 182 330 190 360 186 L 345 205 C 315 210 290 205 268 200 Z" fill="#c9b17c"/>
+ <text x="40" y="60" font-size="15" font-weight="700" fill="#5b4a28">NORTH AMERICA</text>
+ <text x="545" y="220" font-size="14" font-weight="700" fill="#5b4a28" transform="rotate(90 560 220)">AFRICA</text>
+ <text x="70" y="330" font-size="14" font-weight="700" fill="#5b4a28">SOUTH AMERICA</text>
+ <text x="330" y="110" font-size="14" font-weight="700" fill="#cfe7f5">ATLANTIC OCEAN</text>
+ <path d="M500 250 C 420 255 340 240 280 225" stroke="#ff6b5b" stroke-width="6" fill="none" marker-end="url(#aw)" opacity=".9"/>
+ <path d="M262 160 C 290 120 300 80 330 40" stroke="#ff6b5b" stroke-width="6" fill="none" marker-end="url(#aw)" opacity=".9"/>
+ <text x="300" y="70" font-size="12" font-weight="700" fill="#fff" transform="rotate(-55 300 70)">Gulf Stream</text>
+ <path d="M500 60 C 480 110 470 150 478 205" stroke="#3c8be0" stroke-width="6" fill="none" marker-end="url(#ac)"/>
+ <text x="455" y="140" font-size="12" font-weight="700" fill="#e2efff" transform="rotate(80 455 140)">Canary Current</text>
+ <path d="M240 40 C 300 30 380 25 460 30" stroke="#3c8be0" stroke-width="4" fill="none" marker-end="url(#ac)" opacity=".8"/>
+ <text x="300" y="20" font-size="12" font-weight="700" fill="#e2efff">Cold North Atlantic</text>
+ <g id="spots"></g><g id="storm2" style="transition:transform 1.2s ease-in-out"></g>`;
+ const spots=[
+  {k:"gulf",x:182,y:205,name:"Gulf of Mexico",size:46,txt:"<b>Stronger!</b> The Gulf's surface water is very warm. The storm pulls in more heat and water vapor, so its winds speed up."},
+  {k:"carib",x:300,y:245,name:"Caribbean Sea",size:42,txt:"<b>Stronger!</b> A warm current flows west into the Caribbean, keeping the water warm enough to fuel the storm."},
+  {k:"canary",x:468,y:135,name:"Canary Current",size:18,txt:"<b>Weaker.</b> The cold Canary Current cools the surface water. Less heat and moisture rise into the storm, so it loses energy."},
+  {k:"north",x:380,y:45,name:"North Atlantic",size:14,txt:"<b>Much weaker.</b> The water this far north is cold. The storm runs out of warm, moist air and falls apart."},
+  {k:"land",x:115,y:175,name:"Texas (land)",size:12,txt:"<b>Weaker after landfall.</b> Over land, the storm is cut off from warm ocean water and moist air. Its winds slow down, but it can still drop heavy rain."}
+ ];
+ const g=svg.querySelector("#spots"),sg=svg.querySelector("#storm2");
+ let pos={x:400,y:225};
+ const inner=el("g",{},sg);
+ function place(x,y,r){sg.setAttribute("transform",`translate(${x},${y})`);const s=stormIcon(inner,r);s.style.animation="rot 3s linear infinite"}
+ place(pos.x,pos.y,32);
+ spots.forEach(sp=>{
+  const c=el("circle",{cx:sp.x,cy:sp.y,r:11,fill:"#ffc93c",stroke:"#14213d","stroke-width":2,style:"cursor:pointer"},g);
+  el("text",{x:sp.x,y:sp.y+27,"text-anchor":"middle","font-size":11,"font-weight":700,fill:"#fff",style:"pointer-events:none;paint-order:stroke",stroke:"#14213d","stroke-width":3},g).textContent=sp.name;
+  c.onclick=()=>{place(sp.x,sp.y,sp.size);$("r2").innerHTML=`<b>${sp.name}:</b> `+sp.txt;markTask(sp.k)};
+ });
+};
+
+/* ================= STATION 3: INSIDE THE STORM ================= */
+SIMS.s3=function(){
+ const P=$("simPanel");
+ P.innerHTML=`<h4>Storm Builder</h4>
+ <svg id="s3svg" viewBox="0 0 640 300"></svg>
+ <div class="controls"><button class="btn gray" id="prev3">◀ Back</button><button class="btn y" id="next3">Step 1 ▶</button><span id="stepTag" style="font-weight:700"></span></div>
+ <div class="readout" id="r3">Press <b>Step 1</b> to start building a hurricane.</div>
+ <h4 style="margin-top:18px">Label the hurricane (top view)</h4>
+ <div style="font-size:13px;color:var(--muted)">Click a label, then click where it belongs.</div>
+ <svg id="topsvg" viewBox="0 0 640 300"></svg>
+ <div class="labelbank" id="bank"><button class="lab" data-l="eye">Eye</button><button class="lab" data-l="wall">Eyewall</button><button class="lab" data-l="bands">Rain bands</button></div>
+ <div class="readout" id="r3b">Labels placed: 0 of 3</div>`;
+ const svg=$("s3svg");
+ svg.innerHTML=`<defs><marker id="au" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ff6b5b"/></marker><marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#14213d"/></marker></defs>
+  <rect width="640" height="300" fill="#bfe6f5"/><rect y="230" width="640" height="70" fill="#1fa6a8"/>
+  <text x="14" y="290" font-size="13" font-weight="700" fill="#fff">WARM OCEAN WATER (27 °C or warmer)</text>
+  <g id="lay"></g>`;
+ const lay=svg.querySelector("#lay");
+ const steps=[
+  ["1. Warm water heats the air","The Sun has heated the tropical ocean. Warm water heats the air mass above it and evaporates, adding lots of water vapor. Now the air is <b>warm and moist</b>.",(L)=>{for(let i=0;i<9;i++){el("path",{d:`M${80+i*55} 228 q 6 -12 0 -24 q -6 -12 0 -24`,stroke:"#fff","stroke-width":3,fill:"none",opacity:.8},L)}}],
+  ["2. Warm, moist air rises","Warm air is less dense than the air around it, so it <b>rises</b>.",(L)=>{steps[0][2](L);[[220],[320],[420]].forEach(([x])=>el("path",{d:`M${x} 220 V 120`,stroke:"#ff6b5b","stroke-width":6,"marker-end":"url(#au)"},L))}],
+  ["3. Clouds form and release heat","As the air rises it cools. Water vapor <b>condenses</b> into tall clouds and rain, and condensing <b>releases heat</b>, which makes the air rise even faster.",(L)=>{steps[1][2](L);[[230,70],[320,55],[410,70]].forEach(([x,y])=>{el("ellipse",{cx:x,cy:y,rx:70,ry:34,fill:"#fff"},L)});el("text",{x:320,y:60,"text-anchor":"middle","font-size":14,"font-weight":800,fill:"#c43a2c"},L).textContent="heat released"}],
+  ["4. Low pressure forms","So much air rises away from the surface that <b>less air is pressing down</b> at the center. An area of <b>low pressure</b> forms over the ocean.",(L)=>{steps[2][2](L);el("circle",{cx:320,cy:205,r:24,fill:"#14213d"},L);el("text",{x:320,y:211,"text-anchor":"middle","font-size":18,"font-weight":800,fill:"#ffc93c"},L).textContent="L";el("text",{x:60,y:205,"font-size":18,"font-weight":800,fill:"#14213d"},L).textContent="H";el("text",{x:565,y:205,"font-size":18,"font-weight":800,fill:"#14213d"},L).textContent="H"}],
+  ["5. Air rushes in and spins","Air flows from <b>high pressure toward low pressure</b>. As it rushes in across the warm ocean it picks up more heat and moisture, and Earth's rotation makes it <b>spin</b>. A tropical cyclone is born!",(L)=>{steps[3][2](L);el("path",{d:"M90 210 H 280",stroke:"#14213d","stroke-width":5,"marker-end":"url(#ab)"},L);el("path",{d:"M555 210 H 360",stroke:"#14213d","stroke-width":5,"marker-end":"url(#ab)"},L);const g=el("g",{transform:"translate(560,60)"},L);const s=stormIcon(g,26);s.style.animation="rot 2.5s linear infinite";el("rect",{x:0,y:0,width:0,height:0},L)}]
+ ];
+ let step=-1,seen=new Set();
+ function draw(){lay.innerHTML="";if(step>=0){steps[step][2](lay);$("r3").innerHTML=`<b>${steps[step][0]}</b><br>${steps[step][1]}`;seen.add(step);if(seen.size===5)markTask("steps")}
+  $("next3").textContent=step>=4?"Done ✓":`Step ${step+2} ▶`;$("next3").disabled=step>=4;$("prev3").disabled=step<=0;$("stepTag").textContent=step>=0?`Step ${step+1} of 5`:""}
+ $("next3").onclick=()=>{if(step<4){step++;draw()}};$("prev3").onclick=()=>{if(step>0){step--;draw()}};draw();
+ /* labeling */
+ const top=$("topsvg");
+ top.innerHTML=`<rect width="640" height="300" fill="#1f5f8f"/><g id="tb" transform="translate(320,150)"></g><g id="zones"></g><g id="placed"></g>`;
+ const tb=top.querySelector("#tb");
+ [[130,.35],[105,.5]].forEach(([r,o])=>el("circle",{r,fill:"#e8f4fa",opacity:o},tb));
+ for(let i=0;i<4;i++){el("path",{d:"M0 0 C 70 -70, 150 -20, 145 50",fill:"none",stroke:"#fff","stroke-width":18,"stroke-linecap":"round",opacity:.8,transform:`rotate(${i*90})`},tb)}
+ el("circle",{r:52,fill:"#fff"},tb);el("circle",{r:22,fill:"#1f5f8f"},tb);
+ const zones=top.querySelector("#zones"),placed=top.querySelector("#placed");
+ const Z={eye:{x:320,y:150,r:18},wall:{x:358,y:150,r:13},bands:{x:455,y:205,r:30}};
+ Object.entries(Z).forEach(([k,z])=>{const c=el("circle",{cx:z.x,cy:z.y,r:z.r,fill:"#ffc93c",opacity:.25,stroke:"#ffc93c","stroke-width":2,"stroke-dasharray":"4 3",style:"cursor:pointer"},zones);c.dataset.z=k;c.onclick=()=>drop(k)});
+ let sel=null,done={};
+ $("bank").querySelectorAll(".lab").forEach(b=>b.onclick=()=>{$("bank").querySelectorAll(".lab").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");sel=b.dataset.l});
+ function drop(z){
+  if(!sel){$("r3b").innerHTML="Click a label first, then click a yellow circle.";return}
+  if(done[z])return;
+  if(sel===z){done[z]=true;const names={eye:"Eye",wall:"Eyewall",bands:"Rain bands"};const zz=Z[z];
+   const ly=z==="eye"?zz.y+5:z==="wall"?zz.y-zz.r-30:zz.y-zz.r-6;const lx=z==="wall"?zz.x+40:zz.x;if(z==="wall")el("line",{x1:zz.x,y1:zz.y-zz.r,x2:lx-10,y2:ly+4,stroke:"#ffc93c","stroke-width":2,style:"pointer-events:none"},placed);const t=el("text",{x:lx,y:ly,"text-anchor":"middle","font-size":15,"font-weight":800,fill:"#ffc93c",stroke:"#14213d","stroke-width":4,style:"paint-order:stroke;pointer-events:none"},placed);t.textContent=names[z];
+   $("bank").querySelector(`[data-l="${z}"]`).classList.add("used");
+   const msg={eye:"The <b>eye</b> is the calm center: light winds, sinking air and sometimes clear skies.",wall:"The <b>eyewall</b> is the ring of tall clouds around the eye. It has the strongest winds and heaviest rain.",bands:"<b>Rain bands</b> are spiral arms of clouds and storms that reach far out from the center."}[z];
+   $("r3b").innerHTML=`✓ ${msg}<br>Labels placed: ${Object.keys(done).length} of 3`;sel=null;$("bank").querySelectorAll(".lab").forEach(x=>x.classList.remove("sel"));
+   if(Object.keys(done).length===3)markTask("label");
+  } else {$("r3b").innerHTML="That label doesn't go there. Think about which part is in the center, which is the ring around it, and which spirals outward.";}
+ }
+};
+
+/* ================= STATION 4: STORM TRACKER ================= */
+SIMS.s4=function(){
+ const P=$("simPanel");
+ P.innerHTML=`<h4>Storm Tracker: drag the slider to follow the storm</h4>
+ <svg id="s4svg" viewBox="0 0 640 330"></svg>
+ <div class="controls"><div class="ctl" style="flex:1"><span>Day <span id="dval">1</span> of 12</span><input type="range" id="day4" min="1" max="12" value="1" style="width:100%"></div></div>
+ <div class="readout" id="r4"></div>
+ <h4 style="margin-top:18px">Name that storm: click each ocean region</h4>
+ <svg id="worldsvg" viewBox="0 0 640 300"></svg>
+ <div class="readout" id="r4b">Same kind of storm, different names. Click the glowing regions.</div>`;
+ const svg=$("s4svg");
+ svg.innerHTML=`<rect width="640" height="330" fill="#2a77a8"/>
+  <path d="M0 0 H200 C 190 40 170 80 175 110 C 190 130 225 125 240 150 L 228 170 C 210 168 196 180 180 190 C 165 172 140 168 122 178 C 105 195 112 225 130 245 L 150 330 H 0Z" fill="#c9b17c"/>
+  <path d="M640 0 V330 H560 C 540 280 555 240 540 205 C 520 175 500 160 505 130 C 515 95 530 60 550 30 L 560 0Z" fill="#c9b17c"/>
+  <text x="20" y="40" font-size="14" font-weight="700" fill="#5b4a28">UNITED STATES</text><text x="98" y="160" font-size="11" font-weight="700" fill="#5b4a28">Texas</text>
+  <text x="575" y="170" font-size="13" font-weight="700" fill="#5b4a28" transform="rotate(90 590 170)">AFRICA</text>
+  <rect x="270" y="190" width="250" height="80" fill="#ff6b5b" opacity=".12"/><text x="300" y="290" font-size="12" font-weight="700" fill="#ffd9d3">warm tropical Atlantic</text>
+  <path id="trk" d="M520 235 C 450 240 380 238 320 230 C 260 222 220 210 190 200 C 160 192 130 185 110 168 C 95 155 85 140 80 120" stroke="#fff" stroke-width="3" stroke-dasharray="6 6" fill="none" opacity=".7"/>
+  <g id="dots"></g><g id="st4"></g>
+  <g transform="translate(20,250)"><rect width="200" height="70" rx="10" fill="#fff" opacity=".95"/><text x="12" y="22" font-size="12" font-weight="700" fill="#14213d">STRENGTH</text><rect x="12" y="32" width="176" height="14" rx="7" fill="#e3e9f0"/><rect id="meter" x="12" y="32" width="20" height="14" rx="7" fill="#19b5c9"/><text id="cat" x="12" y="62" font-size="13" font-weight="700" fill="#14213d"></text></g>`;
+ const path=svg.querySelector("#trk"),L=path.getTotalLength();
+ const data=[null,
+  {s:1,c:"Tropical depression",n:"Thunderstorms off the coast of Africa begin to spin over warm water. A tropical depression forms."},
+  {s:2,c:"Tropical depression",n:"Trade winds push the storm west across the warm tropical Atlantic."},
+  {s:3,c:"Tropical storm",n:"Warm water feeds the storm more heat and moisture. Winds pass 63 km/h, so it gets a name: Tropical Storm Lena."},
+  {s:4,c:"Tropical storm",n:"Lena keeps pulling in warm, moist maritime tropical air and grows."},
+  {s:5,c:"Category 1 hurricane",n:"Winds reach hurricane strength. An eye begins to form."},
+  {s:6,c:"Category 2 hurricane",n:"Over the warm Caribbean, Hurricane Lena keeps strengthening."},
+  {s:7,c:"Category 3 hurricane",n:"Lena enters the very warm Gulf of Mexico and becomes a major hurricane."},
+  {s:8,c:"Category 4 hurricane",n:"The warm Gulf water gives Lena even more energy. She reaches Category 4."},
+  {s:7.5,c:"Category 4 hurricane",n:"Lena approaches the Texas coast."},
+  {s:5,c:"Category 1 hurricane",n:"Landfall! Over land, Lena is cut off from warm, moist ocean air and weakens quickly, while dropping heavy rain."},
+  {s:2.5,c:"Tropical storm",n:"Lena keeps weakening as it moves inland."},
+  {s:1,c:"Tropical depression",n:"Over dry land with no ocean to feed it, Lena falls apart."}];
+ const dots=svg.querySelector("#dots"),st4=svg.querySelector("#st4");
+ const inner=el("g",{},st4);
+ let maxSeen=1;
+ function upd(){
+  const d=+$("day4").value;$("dval").textContent=d;maxSeen=Math.max(maxSeen,d);
+  const p=path.getPointAtLength(L*(d-1)/11);
+  st4.setAttribute("transform",`translate(${p.x},${p.y})`);
+  const s=stormIcon(inner,8+data[d].s*3.5);s.style.animation="rot 2.5s linear infinite";
+  dots.innerHTML="";for(let i=1;i<=d;i++){const q=path.getPointAtLength(L*(i-1)/11);el("circle",{cx:q.x,cy:q.y,r:4,fill:data[i].s>=5?"#ff6b5b":data[i].s>=3?"#ffc93c":"#fff"},dots)}
+  svg.querySelector("#meter").setAttribute("width",Math.max(14,176*data[d].s/8));
+  svg.querySelector("#meter").setAttribute("fill",data[d].s>=5?"#ff6b5b":data[d].s>=3?"#ffc93c":"#19b5c9");
+  svg.querySelector("#cat").textContent=data[d].c;
+  $("r4").innerHTML=`<b>Day ${d}: ${data[d].c}.</b> ${data[d].n}`;
+  if(d===12&&maxSeen===12)markTask("track");
+ }
+ $("day4").oninput=upd;upd();
+ /* world map */
+ const w=$("worldsvg");
+ w.innerHTML=`<rect width="640" height="300" fill="#2a77a8"/>
+  <path d="M60 40 C 110 30 160 40 190 70 C 200 100 180 120 170 140 C 190 160 200 200 190 260 L 165 260 C 150 220 130 190 120 160 C 90 130 60 100 60 40Z" fill="#c9b17c"/>
+  <path d="M300 40 C 340 35 360 50 370 80 C 360 110 365 150 360 200 C 345 240 330 250 320 230 C 305 190 290 150 285 110 C 280 80 285 55 300 40Z" fill="#c9b17c"/>
+  <path d="M380 40 C 450 30 540 35 580 60 C 590 90 560 110 530 120 C 520 140 500 150 480 140 C 460 120 430 120 410 110 C 390 90 380 70 380 40Z" fill="#c9b17c"/>
+  <path d="M520 200 C 560 195 590 205 595 225 C 590 245 555 250 530 240 C 515 230 510 210 520 200Z" fill="#c9b17c"/>
+  <g id="regions"></g>`;
+ const R=[
+  {k:"atl",x:240,y:120,label:"Atlantic Ocean",name:"Hurricane",txt:"In the <b>Atlantic Ocean</b> (and the eastern Pacific near Mexico), these storms are called <b>hurricanes</b>."},
+  {k:"wpac",x:596,y:150,label:"Western Pacific",name:"Typhoon",txt:"In the <b>western Pacific Ocean</b> near Japan, China and the Philippines, the same storms are called <b>typhoons</b>."},
+  {k:"ind",x:430,y:200,label:"Indian Ocean",name:"Cyclone",txt:"In the <b>Indian Ocean</b> and the South Pacific near Australia, they are called <b>cyclones</b>."}
+ ];
+ const rg=w.querySelector("#regions");
+ R.forEach(r=>{const g=el("g",{style:"cursor:pointer"},rg);
+  const c=el("circle",{cx:r.x,cy:r.y,r:34,fill:"#ffc93c",opacity:.35,stroke:"#ffc93c","stroke-width":3},g);
+  el("text",{x:r.k==="wpac"?630:r.x,y:r.y+52,"text-anchor":r.k==="wpac"?"end":"middle","font-size":12,"font-weight":700,fill:"#fff",stroke:"#14213d","stroke-width":3,style:"paint-order:stroke"},g).textContent=r.label;
+  const nm=el("text",{x:r.x,y:r.y+5,"text-anchor":"middle","font-size":13,"font-weight":800,fill:"#14213d"},g);nm.textContent="?";
+  g.onclick=()=>{nm.textContent=r.name;c.setAttribute("opacity",.85);$("r4b").innerHTML=r.txt+" All three are tropical cyclones, fueled by warm ocean water.";markTask(r.k)};
+ });
+};
+
+/* ================= STATION 5: FINAL ================= */
+SIMS.s5=function(){
+ const P=$("simPanel");
+ P.innerHTML=`<h4>Final Certification</h4>
+ <svg viewBox="0 0 640 260"><rect width="640" height="260" fill="#0f2547"/><g transform="translate(320,130)" id="fin"></g>
+ <text x="320" y="240" text-anchor="middle" font-size="16" font-weight="700" fill="#ffc93c">Answer all 8 questions to earn your certificate</text></svg>
+ <div class="readout"><b>Think like a forecaster.</b> Each question is about a real storm or real data. Use what you learned at Stations 1–4: warm ocean water and warm, moist air masses fuel tropical cyclones; cold currents and land weaken them.</div>`;
+ const s=stormIcon(P.querySelector("#fin"),70);s.style.animation="rot 4s linear infinite";
+};
+
+/* ================= CERTIFICATE ================= */
+function showCert(){
+ if(!S.end)S.end=Date.now();
+ const total=STATIONS.reduce((a,s)=>a+s.qs.length,0),ft=STATIONS.reduce((a,s)=>a+firstTry(s),0);
+ $("cName").textContent=S.name;$("cScore").textContent=`${ft} / ${total}`;$("cPct").textContent=Math.round(ft/total*100)+"%";
+ const m=Math.round((S.end-S.start)/60000);$("cTime").textContent=m+" min";
+ $("cTable").innerHTML=STATIONS.map(s=>`<tr><td>${s.num==="FINAL"?"Final":s.num.replace("STATION","Station")}: ${s.title}</td><td>${firstTry(s)} / ${s.qs.length}</td></tr>`).join("");
+ $("cDate").textContent="Completed "+new Date(S.end).toLocaleString();
+ show("cert");
+}
+
+/* ================= WIRING ================= */
+$("startBtn").onclick=()=>{
+ const n=$("nameIn").value.trim();
+ if(n.length<2){$("nameIn").focus();$("nameIn").style.outline="3px solid #ff6b5b";return}
+ S.name=n;S.start=Date.now();$("foot").innerHTML="© Science with Mrs. Lennon · For single-classroom use · Models are simplified and not to scale.";
+ renderHub();show("hub");
+};
+$("nameIn").addEventListener("keydown",e=>{if(e.key==="Enter")$("startBtn").click()});
+$("backBtn").onclick=()=>{renderHub();show("hub")};
+$("certBack").onclick=()=>{renderHub();show("hub")};
+window.addEventListener("beforeunload",e=>{if(S.start&&!S.end){e.preventDefault();e.returnValue=""}});
+</script>
+</body>
+</html>
