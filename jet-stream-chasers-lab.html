@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jet Stream Chasers: Global Winds Lab (TEKS 8.10B)</title>
+<style>
+:root{--bg:#0b1a33;--panel:#12284d;--panel2:#183463;--ink:#eaf2ff;--muted:#a9bddf;--accent:#38d3ff;--warm:#ff8a3d;--cold:#5aa9ff;--good:#3ddc97;--bad:#ff5d73;--gold:#ffd166;}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:radial-gradient(1200px 600px at 20% -10%,#1d3f7a 0%,var(--bg) 60%) fixed;color:var(--ink);min-height:100vh;line-height:1.45}
+header{position:sticky;top:0;z-index:10;background:rgba(9,22,44,.92);backdrop-filter:blur(6px);border-bottom:1px solid #24467f;padding:10px 18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.brand{font-weight:800;font-size:20px;letter-spacing:.3px}
+.brand span{display:block;font-size:12px;font-weight:600;color:var(--accent);letter-spacing:1px;text-transform:uppercase}
+#chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:5px 11px;border-radius:999px;background:#1a335f;color:var(--muted);font-size:13px;font-weight:700;border:1px solid #2a4c86}
+.chip.on{background:var(--accent);color:#06203a;border-color:var(--accent)}
+.chip.done{background:#1f5a4a;color:#bff5df;border-color:#2f8a6f}
+main{max-width:980px;margin:0 auto;padding:22px 16px 60px}
+.screen{display:none;animation:fade .35s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1{font-size:34px;margin:6px 0 4px}
+h2{font-size:26px;margin:4px 0 6px}
+h3{margin:18px 0 8px;font-size:19px;color:var(--gold)}
+.tag{display:inline-block;background:#21437a;color:var(--accent);font-weight:800;font-size:12px;letter-spacing:1px;padding:4px 10px;border-radius:6px;text-transform:uppercase}
+.brief{background:linear-gradient(135deg,#183463,#122a52);border-left:5px solid var(--accent);padding:12px 16px;border-radius:10px;color:#d8e6ff;margin:12px 0}
+.card{background:var(--panel);border:1px solid #24467f;border-radius:14px;padding:16px;margin:14px 0}
+svg{width:100%;height:auto;display:block;border-radius:12px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:center}
+button{font:inherit;cursor:pointer;border:none;border-radius:10px;padding:10px 16px;font-weight:700;background:var(--accent);color:#06203a;transition:transform .1s,filter .15s}
+button:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-1px)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.ghost{background:#21437a;color:var(--ink)}
+button.warm{background:var(--warm);color:#2a1100}
+.note{margin-top:12px;color:#d8e6ff;min-height:1.2em}
+.note b{color:var(--gold)}
+.hidden{display:none!important}
+.nav{display:flex;justify-content:flex-end;margin-top:18px}
+.next{background:var(--good);color:#04291c;font-size:17px;padding:12px 22px}
+.q{background:var(--panel2);border:1px solid #2b5294;border-radius:12px;padding:14px;margin:12px 0}
+.qn{font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:1px}
+.qt{font-weight:700;margin:4px 0 10px;font-size:17px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;background:#0f2346;color:var(--ink);border:2px solid #2b5294;font-weight:600}
+.opt.right{background:#16533f;border-color:var(--good)}
+.opt.wrong{background:#5a1f2b;border-color:var(--bad)}
+.opt:disabled{opacity:1;cursor:default}
+.opt.wrong:disabled{opacity:.75}
+.fb{margin-top:8px;font-size:15px}
+.fb.good{color:#bff5df}.fb.bad{color:#ffc2cb}
+label.f{display:block;font-weight:700;margin:10px 0 4px}
+input[type=text],textarea,select{font:inherit;width:100%;padding:10px 12px;border-radius:10px;border:2px solid #2b5294;background:#0f2346;color:var(--ink)}
+select{width:auto;min-width:220px}
+textarea{min-height:130px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}h1{font-size:27px}}
+.missions{list-style:none;padding:0;margin:10px 0;display:grid;gap:8px}
+.missions li{background:#132c55;border-radius:10px;padding:10px 14px;border:1px solid #24467f}
+.missions b{color:var(--gold)}
+.slider{display:flex;align-items:center;gap:10px;flex:1;min-width:250px}
+.slider input{flex:1;accent-color:var(--accent)}
+.slider span{font-weight:700;min-width:150px}
+.challenge{background:#2a1f05;border:2px solid var(--gold);border-radius:12px;padding:12px 14px;margin:12px 0}
+.challenge .tag{background:var(--gold);color:#2a1f05}
+.status{font-weight:700;margin-top:8px}
+.labelrow{display:flex;align-items:center;gap:12px;margin:8px 0;flex-wrap:wrap}
+.labelrow b{min-width:110px}
+.sortwrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+.bin{border:2px dashed #3d67ad;border-radius:12px;min-height:150px;padding:10px;cursor:pointer;transition:background .2s}
+.bin:hover{background:#163563}
+.bin h4{margin:0 0 8px;font-size:18px}
+.bin.high h4{color:var(--cold)}.bin.low h4{color:var(--bad)}
+.pool{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-height:48px}
+.sc{background:#0f2346;border:2px solid #3d67ad;border-radius:999px;padding:7px 14px;font-weight:600;cursor:pointer;user-select:none;display:inline-block;margin:3px}
+.sc.sel{border-color:var(--gold);background:#3a2f0b}
+.sc.ok{border-color:var(--good);background:#16533f;cursor:default}
+.sc.no{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.flow{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:14 10;animation:flow 2.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-240}}
+.jet{fill:none;stroke:#fff;stroke-width:7;stroke-linecap:round;stroke-dasharray:18 10;animation:flow 2.5s linear infinite;filter:drop-shadow(0 0 6px #38d3ff)}
+.spinCW{animation:spin 9s linear infinite;transform-box:view-box}
+.spinCCW{animation:spin 9s linear infinite reverse;transform-box:view-box}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mover{transition:transform 2.6s ease-in-out}
+.forecast-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.score-table{width:100%;border-collapse:collapse;margin-top:10px}
+.score-table td,.score-table th{padding:9px 10px;border-bottom:1px solid #2b5294;text-align:left}
+.score-table th{color:var(--accent)}
+.big{font-size:44px;font-weight:900;color:var(--gold)}
+.vocab{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.vocab span{background:#21437a;padding:4px 10px;border-radius:6px;font-size:13px;font-weight:600}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:20px}
+.cer{white-space:pre-wrap;background:#f4f4f4;color:#111;padding:10px;border-radius:8px}
+@media print{
+ header,footer,.nav,button,.controls{display:none!important}
+ body{background:#fff;color:#000}
+ .screen{display:none!important}
+ #s-results{display:block!important}
+ .card{background:#fff;border:1px solid #999;color:#000}
+ .score-table th{color:#000}.big{color:#000}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">🌀 Jet Stream Chasers <span>Global Winds Lab • TEKS 8.10B</span></div>
+  <nav id="chips"></nav>
+</header>
+
+<main>
+<!-- START -->
+<section id="s-start" class="screen active">
+  <span class="tag">Science with Mrs. Lennon • Digital Lab</span>
+  <h1>Jet Stream Chasers 🌎💨</h1>
+  <div class="brief">The National Weather Service needs new forecasters! Before you get your badge, you have to show that you understand the <b>global winds</b> that carry weather around the planet. Finish all 5 missions to find out how worldwide air movement controls the weather in <b>your</b> town.</div>
+  <div class="card">
+    <div class="grid2">
+      <div><label class="f" for="name">First &amp; last name</label><input id="name" type="text" placeholder="Your name" autocomplete="off"></div>
+      <div><label class="f" for="period">Class period</label><input id="period" type="text" placeholder="e.g., 3rd" autocomplete="off"></div>
+    </div>
+    <ul class="missions">
+      <li><b>Mission 1:</b> The Sun's Uneven Heating: why air rises and sinks</li>
+      <li><b>Mission 2:</b> Spin the Planet: global wind belts and the Coriolis effect</li>
+      <li><b>Mission 3:</b> Steer the Jet Stream: move cold and warm air across the U.S.</li>
+      <li><b>Mission 4:</b> Highs, Lows &amp; Fronts: read a weather map</li>
+      <li><b>Mission 5:</b> Forecast Challenge: predict tomorrow's weather</li>
+      <li><b>Exit Ticket:</b> STAAR-style check + CER response</li>
+    </ul>
+    <div class="vocab"><span>global winds</span><span>air pressure</span><span>high pressure</span><span>low pressure</span><span>convection</span><span>Coriolis effect</span><span>trade winds</span><span>prevailing westerlies</span><span>polar easterlies</span><span>jet stream</span><span>front</span></div>
+    <div class="nav"><button class="next" id="startBtn">Start Mission 1 →</button></div>
+    <div id="startMsg" class="fb bad"></div>
+  </div>
+</section>
+
+<!-- MISSION 1 -->
+<section id="s-m1" class="screen">
+  <span class="tag">Mission 1 of 5</span>
+  <h2>☀️ The Sun's Uneven Heating</h2>
+  <div class="brief">This model is a side view of Earth's atmosphere from the <b>equator (0°)</b> to the <b>North Pole (90°)</b>. Run both steps. Watch where the sunlight is concentrated, then watch what the air does.</div>
+  <div class="card">
+    <svg id="m1svg" viewBox="0 0 720 352"></svg>
+    <div class="controls">
+      <button id="m1sun" class="warm">☀️ Step 1: Turn on the Sun</button>
+      <button id="m1air" disabled>💨 Step 2: Let the air move</button>
+    </div>
+    <div id="m1note" class="note">Click <b>Step 1</b> to begin.</div>
+  </div>
+  <div id="m1q" class="hidden"></div>
+  <div class="nav"><button class="next" id="m1next" disabled>Next: Mission 2 →</button></div>
+</section>
+
+<!-- MISSION 2 -->
+<section id="s-m2" class="screen">
+  <span class="tag">Mission 2 of 5</span>
+  <h2>🌍 Spin the Planet</h2>
+  <div class="brief">In Mission 1, air moved straight toward the poles or the equator. But Earth <b>spins</b>. Toggle Earth's rotation OFF and ON and compare how the surface winds move.</div>
+  <div class="card">
+    <svg id="m2svg" viewBox="0 0 720 420"></svg>
+    <div class="controls">
+      <button id="m2toggle" class="ghost">🌍 Earth's rotation: OFF</button>
+    </div>
+    <div id="m2note" class="note">Right now Earth is <b>not spinning</b>. Look at the arrows, then turn rotation ON.</div>
+  </div>
+  <div id="m2label" class="card hidden">
+    <h3>🏷️ Label the Northern Hemisphere wind belts</h3>
+    <p>Use the model with rotation ON. Choose the correct name for each belt.</p>
+    <div class="labelrow"><b>0° – 30°N</b><select data-ans="trade"><option value="">— choose —</option><option value="trade">Trade winds</option><option value="west">Prevailing westerlies</option><option value="polar">Polar easterlies</option></select></div>
+    <div class="labelrow"><b>30°N – 60°N</b><select data-ans="west"><option value="">— choose —</option><option value="trade">Trade winds</option><option value="west">Prevailing westerlies</option><option value="polar">Polar easterlies</option></select></div>
+    <div class="labelrow"><b>60°N – 90°N</b><select data-ans="polar"><option value="">— choose —</option><option value="trade">Trade winds</option><option value="west">Prevailing westerlies</option><option value="polar">Polar easterlies</option></select></div>
+    <p style="color:var(--muted);font-size:14px">Hint: wind belts are named for the direction the wind blows <b>FROM</b>. "Westerlies" blow from the west.</p>
+    <div class="controls"><button id="m2check">Check my labels</button></div>
+    <div id="m2labelfb" class="fb"></div>
+  </div>
+  <div id="m2q" class="hidden"></div>
+  <div class="nav"><button class="next" id="m2next" disabled>Next: Mission 3 →</button></div>
+</section>
+
+<!-- MISSION 3 -->
+<section id="s-m3" class="screen">
+  <span class="tag">Mission 3 of 5</span>
+  <h2>✈️ Steer the Jet Stream</h2>
+  <div class="brief">The <b>jet stream</b> is a fast river of wind about 9–12 km up, flowing west to east. It acts like a fence: <b>cold polar air</b> stays north of it, and <b>warmer air</b> stays south. Use the sliders to bend the jet stream and complete each challenge.</div>
+  <div class="card">
+    <svg id="m3svg" viewBox="0 0 700 420"></svg>
+    <div class="controls">
+      <div class="slider"><label for="m3pos">Dip location</label><input id="m3pos" type="range" min="-118" max="-78" step="1" value="-100"><span id="m3posv"></span></div>
+      <div class="slider"><label for="m3dep">Dip depth</label><input id="m3dep" type="range" min="0" max="16" step="1" value="4"><span id="m3depv"></span></div>
+    </div>
+    <div id="m3chal" class="challenge"></div>
+  </div>
+  <div id="m3q" class="hidden"></div>
+  <div class="nav"><button class="next" id="m3next" disabled>Next: Mission 4 →</button></div>
+</section>
+
+<!-- MISSION 4 -->
+<section id="s-m4" class="screen">
+  <span class="tag">Mission 4 of 5</span>
+  <h2>🌀 Highs, Lows &amp; Fronts</h2>
+  <div class="brief">Global winds push <b>pressure systems</b> and <b>fronts</b> across the map, and those are what you feel as local weather. Investigate both systems in this map view of the Northern Hemisphere.</div>
+  <div class="card">
+    <svg id="m4svg" viewBox="0 0 720 300"></svg>
+    <div class="controls">
+      <button id="m4hi" class="ghost">🔵 Investigate the HIGH</button>
+      <button id="m4lo" class="ghost">🔴 Investigate the LOW</button>
+    </div>
+    <div class="grid2">
+      <div id="m4hiNote" class="note"></div>
+      <div id="m4loNote" class="note"></div>
+    </div>
+  </div>
+  <div id="m4sort" class="card hidden">
+    <h3>🗂️ Sort It: High or Low?</h3>
+    <p>Tap a card, then tap the bin it belongs in. When all 8 cards are placed, click <b>Check</b>.</p>
+    <div id="m4pool" class="pool"></div>
+    <div class="sortwrap">
+      <div class="bin high" data-bin="H"><h4>🔵 HIGH pressure</h4><div class="binbody"></div></div>
+      <div class="bin low" data-bin="L"><h4>🔴 LOW pressure</h4><div class="binbody"></div></div>
+    </div>
+    <div class="controls"><button id="m4check" disabled>Check</button></div>
+    <div id="m4fb" class="fb"></div>
+  </div>
+  <div id="m4fronts" class="card hidden">
+    <h3>🗺️ Weather Map Key: Fronts</h3>
+    <p>A <b>front</b> is the boundary where two different air masses meet. Use the key to answer the questions below.</p>
+    <svg id="m4key" viewBox="0 0 720 100"></svg>
+  </div>
+  <div id="m4q" class="hidden"></div>
+  <div class="nav"><button class="next" id="m4next" disabled>Next: Mission 5 →</button></div>
+</section>
+
+<!-- MISSION 5 -->
+<section id="s-m5" class="screen">
+  <span class="tag">Mission 5 of 5</span>
+  <h2>📡 Forecast Challenge</h2>
+  <div class="brief">You're on the forecast desk. For each map, use what you know about the <b>prevailing westerlies</b> and <b>pressure systems</b> to make a forecast. When you're correct, the map fast-forwards so you can watch it happen.</div>
+  <div class="card">
+    <div class="forecast-head"><h3 id="m5title" style="margin:0"></h3><span id="m5count" class="tag"></span></div>
+    <svg id="m5svg" viewBox="0 0 700 420" style="margin-top:10px"></svg>
+    <div id="m5q"></div>
+    <div class="controls"><button id="m5go" class="hidden">Next forecast →</button></div>
+  </div>
+  <div class="nav"><button class="next" id="m5next" disabled>Next: Exit Ticket →</button></div>
+</section>
+
+<!-- EXIT -->
+<section id="s-exit" class="screen">
+  <span class="tag">Exit Ticket</span>
+  <h2>🎓 Forecaster Certification</h2>
+  <div class="brief">This is your final check. <b>You only get ONE try on each question</b>, so think before you click!</div>
+  <div id="exq"></div>
+  <div class="card">
+    <h3>✍️ CER: Claim, Evidence, Reasoning</h3>
+    <p><b>Question:</b> How do global patterns of atmospheric movement influence the weather in your town?</p>
+    <p style="color:var(--muted);font-size:14px">Write a <b>claim</b>. Give <b>evidence</b> from at least two missions (for example, the westerlies, the jet stream, or high/low pressure). Then explain your <b>reasoning</b>: the science that connects your evidence to your claim.</p>
+    <textarea id="cer" placeholder="Claim: ...&#10;Evidence: ...&#10;Reasoning: ..."></textarea>
+    <div id="cerMsg" class="fb" style="color:var(--muted)"></div>
+  </div>
+  <div class="nav"><button class="next" id="finish" disabled>Finish &amp; see my results →</button></div>
+</section>
+
+<!-- RESULTS -->
+<section id="s-results" class="screen">
+  <span class="tag">Lab Complete</span>
+  <h2>🏅 Certified Jet Stream Chaser</h2>
+  <div class="card">
+    <div id="resHead"></div>
+    <table class="score-table" id="resTable"></table>
+    <h3>CER Response</h3>
+    <div id="resCer" class="cer"></div>
+    <p style="color:var(--muted);font-size:13px" id="resTime"></p>
+  </div>
+  <div class="controls">
+    <button id="printBtn">🖨️ Print / Save as PDF</button>
+    <button id="restart" class="ghost">↺ Start over</button>
+  </div>
+  <p style="color:var(--muted)">Turn in your work the way your teacher asks: print this page, save it as a PDF, or take a screenshot.</p>
+</section>
+</main>
+<footer>© Science with Mrs. Lennon • For single-classroom use</footer>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+function S(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function T(parent,x,y,txt,attrs){const t=S('text',Object.assign({x,y,fill:'#eaf2ff','font-size':14,'font-weight':700,'font-family':'Segoe UI,Arial,sans-serif'},attrs||{}),parent);t.textContent=txt;return t;}
+
+/* ---------- state & navigation ---------- */
+const ORDER=['start','m1','m2','m3','m4','m5','exit','results'];
+const LABELS={start:'Start',m1:'1',m2:'2',m3:'3',m4:'4',m5:'5',exit:'Exit',results:'Results'};
+const NAMES={m1:'Mission 1: Uneven Heating',m2:'Mission 2: Wind Belts & Coriolis',m3:'Mission 3: Jet Stream',m4:'Mission 4: Highs, Lows & Fronts',m5:'Mission 5: Forecast Challenge',exit:'Exit Ticket'};
+const score={};ORDER.forEach(k=>score[k]={e:0,p:0});
+let current='start',student={name:'',period:''},inProgress=false;
+const built={};
+function chips(){const c=$('#chips');c.innerHTML='';const ci=ORDER.indexOf(current);ORDER.forEach((k,i)=>{const d=document.createElement('span');d.className='chip'+(k===current?' on':(i<ci?' done':''));d.textContent=LABELS[k];c.appendChild(d);});}
+function go(id){current=id;document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$('#s-'+id).classList.add('active');chips();window.scrollTo({top:0,behavior:'smooth'});if(BUILD[id]&&!built[id]){built[id]=true;BUILD[id]();}}
+window.addEventListener('beforeunload',e=>{if(inProgress){e.preventDefault();e.returnValue='';}});
+
+/* ---------- question engine ---------- */
+function renderQs(container,qs,key,done,test){
+  container.classList.remove('hidden');
+  score[key].p+=qs.length;let remaining=qs.length;
+  qs.forEach((item,i)=>{
+    const card=document.createElement('div');card.className='q';
+    card.innerHTML='<div class="qn">'+(test?'Exit Question ':'Check for Understanding ')+(i+1)+'</div><div class="qt">'+item.q+'</div>';
+    const opts=document.createElement('div');opts.className='opts';
+    const fb=document.createElement('div');fb.className='fb';
+    let first=true,locked=false;
+    item.c.forEach((txt,j)=>{
+      const b=document.createElement('button');b.className='opt';b.textContent=String.fromCharCode(65+j)+'.  '+txt;
+      b.onclick=()=>{
+        if(locked)return;
+        const lockAll=()=>{locked=true;[...opts.children].forEach(x=>x.disabled=true);remaining--;if(remaining===0&&done)done();};
+        if(j===item.a){b.classList.add('right');if(first)score[key].e++;fb.className='fb good';fb.innerHTML='✅ '+(first?'Correct! ':'You got it! ')+(item.why||'');lockAll();}
+        else{b.classList.add('wrong');first=false;
+          if(test){opts.children[item.a].classList.add('right');fb.className='fb bad';fb.innerHTML='❌ Not quite. The correct answer is highlighted in green. '+(item.why||'');lockAll();}
+          else{b.disabled=true;fb.className='fb bad';fb.textContent='❌ Not quite. Look back at the model and try again.';}}
+      };
+      opts.appendChild(b);
+    });
+    card.append(opts,fb);container.appendChild(card);
+  });
+}
+
+/* ---------- START ---------- */
+$('#startBtn').onclick=()=>{
+  const n=$('#name').value.trim(),p=$('#period').value.trim();
+  if(!n){$('#startMsg').textContent='Please type your name first.';return;}
+  student={name:n,period:p};inProgress=true;go('m1');
+};
+
+/* ---------- MISSION 1 ---------- */
+const M1Q=[
+ {q:'Which latitude received the MOST direct sunlight and became the warmest?',c:['0° (the equator)','30°N','60°N','90°N (the North Pole)'],a:0,why:'Sunlight hits the equator most directly, so its energy is concentrated there and the air gets the warmest.'},
+ {q:'What happened to the warm air at the equator?',c:['It sank and created high pressure','It rose and created low pressure','It stayed still','It froze into clouds'],a:1,why:'Warm air is less dense, so it rises. Rising air leaves LOW pressure at the surface.'},
+ {q:'Air sinks near 30° latitude. What kind of pressure and weather does sinking air create?',c:['Low pressure; rainy weather','High pressure; dry, clear weather','Low pressure; hurricanes','High pressure; heavy snow'],a:1,why:'Sinking air creates HIGH pressure. The air warms and dries as it sinks, so clouds can\'t form. That\'s why many of the world\'s biggest deserts are near 30°.'},
+ {q:'What is the original energy source that drives Earth\'s global winds?',c:['Earth\'s magnetic field','The Moon\'s gravity','Uneven heating of Earth by the Sun','Ocean tides'],a:2,why:'The Sun heats Earth unevenly. The temperature differences cause pressure differences, and air moves from high to low pressure. That moving air is wind.'}
+];
+function buildM1(){
+  const s=$('#m1svg');
+  s.innerHTML='<defs><linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1c3d"/><stop offset="1" stop-color="#2a5a9e"/></linearGradient>'+
+   '<marker id="arrW" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ffffff"/></marker></defs>';
+  S('rect',{x:30,y:8,width:660,height:282,rx:12,fill:'url(#sky1)'},s);
+  S('g',{id:'m1rays'},s);S('g',{id:'m1cells'},s);
+  S('rect',{x:30,y:288,width:660,height:24,fill:'#3b7a4b'},s);
+  const lats=[[70,'0° Equator'],[270,'30°N'],[470,'60°N'],[650,'90°N Pole']];
+  lats.forEach(([x,l])=>{S('line',{x1:x,y1:288,x2:x,y2:316,stroke:'#cfe',['stroke-width']:2},s);T(s,x,332,l,{'text-anchor':'middle'});});
+  S('g',{id:'m1temps'},s);S('g',{id:'m1press'},s);
+  T(s,360,30,'Atmosphere (side view)',{'text-anchor':'middle',fill:'#a9bddf','font-size':13});
+}
+$('#m1sun').onclick=()=>{
+  const g=$('#m1rays');g.innerHTML='';
+  const zones=[[34,170,11],[170,370,22],[370,560,40],[560,686,70]];
+  zones.forEach(([a,b,sp])=>{for(let x=a+sp/2;x<b;x+=sp){S('line',{x1:x,y1:14,x2:x,y2:286,stroke:'#ffd166','stroke-width':2.5,opacity:.55},g);}});
+  const temps=[[70,'80°F','#ff8a3d'],[270,'68°F','#ffb35a'],[470,'40°F','#8cc4ff'],[650,'-4°F','#5aa9ff']];
+  const tg=$('#m1temps');tg.innerHTML='';
+  temps.forEach(([x,t,c])=>{S('rect',{x:x-30,y:337,width:60,height:15,rx:4,fill:c},tg);T(tg,x,349,'🌡 '+t,{'text-anchor':'middle',fill:'#08162c','font-size':12});});
+  $('#m1sun').disabled=true;$('#m1air').disabled=false;
+  $('#m1note').innerHTML='Look at the yellow sunlight. Near the <b>equator</b> the rays are packed close together, so the energy is concentrated and the air heats up. Near the <b>pole</b> the same sunlight is spread out, so it\'s much colder. Now click <b>Step 2</b>.';
+};
+$('#m1air').onclick=()=>{
+  const g=$('#m1cells');g.innerHTML='';
+  const cells=[['M70 280 L70 100 L258 100 L258 280 Z','#ff8a3d','Hadley cell',164,195],['M462 280 L462 122 L282 122 L282 280 Z','#3ddc97','Ferrel cell',372,205],['M478 280 L478 145 L650 145 L650 280 Z','#5aa9ff','Polar cell',564,215]];
+  cells.forEach(([d,c,n,x,y])=>{S('path',{d,class:'flow',stroke:c},g);T(g,x,y,n,{'text-anchor':'middle',fill:c,'font-size':13});});
+  [[70,92,'↑ rising'],[270,114,'↓ sinking'],[470,137,'↑ rising'],[650,137,'↓ sinking']].forEach(([x,y,t])=>T(g,x,y,t,{'text-anchor':'middle','font-size':12,fill:'#fff'}));
+  const pg=$('#m1press');pg.innerHTML='';
+  [[70,'L','#ff5d73'],[270,'H','#5aa9ff'],[470,'L','#ff5d73'],[650,'H','#5aa9ff']].forEach(([x,l,c])=>{S('circle',{cx:x,cy:300,r:11,fill:c,stroke:'#fff','stroke-width':2},pg);T(pg,x,305,l,{'text-anchor':'middle','font-size':14,fill:'#fff'});});
+  $('#m1air').disabled=true;
+  $('#m1note').innerHTML='Warm air <b>rises</b> at the equator, leaving <b>Low pressure (L)</b> at the surface. It cools, spreads toward the poles, then <b>sinks</b> near 30°, creating <b>High pressure (H)</b>. These giant loops are <b>convection cells</b>. At the surface, air flows from <b>H → L</b>, and that flow is <b>wind</b>! Answer the questions below.';
+  renderQs($('#m1q'),M1Q,'m1',()=>$('#m1next').disabled=false);
+  setTimeout(()=>$('#m1q').scrollIntoView({behavior:'smooth',block:'start'}),400);
+};
+$('#m1next').onclick=()=>go('m2');
+
+/* ---------- MISSION 2 ---------- */
+let rot=false,seenOn=false;
+const M2Q=[
+ {q:'With Earth\'s rotation OFF, the winds blew straight north or south. What made them curve when rotation was ON?',c:['The Coriolis effect caused by Earth\'s rotation','Mountains blocking the wind','The Moon pulling on the air','Ocean waves'],a:0,why:'Because Earth spins, moving air gets deflected (curved). This is called the Coriolis effect.'},
+ {q:'In the Northern Hemisphere, moving air is deflected to the…',c:['left','right','straight up','straight down'],a:1,why:'In the Northern Hemisphere winds curve to the RIGHT. In the Southern Hemisphere they curve to the LEFT.'},
+ {q:'Most of the continental United States lies in which global wind belt?',c:['Trade winds','Prevailing westerlies','Polar easterlies','No wind belt'],a:1,why:'Most of the U.S. is between 30°N and 60°N, which is the zone of the prevailing westerlies.'},
+ {q:'Because the U.S. is in the prevailing westerlies, weather systems usually move across the country from…',c:['east to west','north to south','west to east','south to north'],a:2,why:'Westerlies blow FROM the west, so storms and fronts usually travel west → east. Forecasters look WEST to see what\'s coming!'}
+];
+const CX=360,CY=210,R=185;
+const yLat=l=>CY-R*Math.sin(l*Math.PI/180);
+const hc=l=>R*Math.cos(l*Math.PI/180);
+function buildM2(){
+  const s=$('#m2svg');
+  s.innerHTML='<defs><radialGradient id="oc" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#3f8fe0"/><stop offset="1" stop-color="#143e80"/></radialGradient>'+
+   ['#ff8a3d','#3ddc97','#38d3ff'].map((c,i)=>'<marker id="m2a'+i+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="'+c+'"/></marker>').join('')+'</defs>';
+  S('rect',{x:0,y:0,width:720,height:420,fill:'#0a1830'},s);
+  S('circle',{cx:CX,cy:CY,r:R,fill:'url(#oc)',stroke:'#9cc8ff','stroke-width':2},s);
+  [-60,-30,0,30,60].forEach(l=>{S('line',{x1:CX-hc(l),y1:yLat(l),x2:CX+hc(l),y2:yLat(l),stroke:l===0?'#ffd166':'#cfe3ff','stroke-width':l===0?2.5:1.5,'stroke-dasharray':l===0?'':'6 5',opacity:.8},s);
+    T(s,CX-hc(l)-8,yLat(l)+5,l===0?'0°':(Math.abs(l)+'°'+(l>0?'N':'S')),{'text-anchor':'end','font-size':13,fill:'#cfe3ff'});});
+  T(s,CX,CY-R-8,'North Pole',{'text-anchor':'middle','font-size':12,fill:'#cfe3ff'});
+  T(s,CX,CY+R+18,'South Pole',{'text-anchor':'middle','font-size':12,fill:'#cfe3ff'});
+  S('g',{id:'m2arrows'},s);S('g',{id:'m2names'},s);
+  S('g',{id:'m2spin'},s);
+  drawM2();
+}
+function drawM2(){
+  const g=$('#m2arrows');g.innerHTML='';
+  const belts=[[15,0],[45,1],[75,2],[-15,0],[-45,1],[-75,2]];
+  belts.forEach(([lat,type])=>{
+    const nh=lat>0;let dx,dy;
+    if(!rot){ // straight toward equator (trades, polar) or pole (westerlies)
+      const towardEq=(type!==1);dx=0;dy=(nh?1:-1)*(towardEq?1:-1);
+    }else{
+      if(type===1){dx=1;dy=nh?-0.35:0.35;}else{dx=-1;dy=nh?0.35:-0.35;}
+    }
+    const len=type===2?28:44,m=Math.hypot(dx,dy);dx/=m;dy/=m;
+    const y=yLat(lat),w=hc(lat);
+    const fr=type===2?[-0.35,0.35]:[-0.55,0,0.55];
+    fr.forEach(f=>{const x=CX+f*w;S('line',{x1:x-dx*len/2,y1:y-dy*len/2,x2:x+dx*len/2,y2:y+dy*len/2,stroke:['#ff8a3d','#3ddc97','#38d3ff'][type],'stroke-width':4,'stroke-linecap':'round','marker-end':'url(#m2a'+type+')'},g);});
+  });
+  const sp=$('#m2spin');sp.innerHTML='';
+  if(rot){T(sp,CX,22,'⟳ Earth spinning west → east',{'text-anchor':'middle','font-size':14,fill:'#ffd166'});}
+  else{T(sp,CX,22,'Earth NOT spinning',{'text-anchor':'middle','font-size':14,fill:'#a9bddf'});}
+}
+function showM2Names(){
+  const g=$('#m2names');g.innerHTML='';
+  [[15,'Trade winds','#ff8a3d'],[45,'Prevailing westerlies','#3ddc97'],[75,'Polar easterlies','#38d3ff'],[-15,'Trade winds','#ff8a3d'],[-45,'Prevailing westerlies','#3ddc97'],[-75,'Polar easterlies','#38d3ff']].forEach(([l,n,c])=>T(g,CX+hc(l)+10,yLat(l)+5,n,{fill:c,'font-size':13}));
+  T(g,CX+hc(38)-60,yLat(38)+4,'★ U.S.',{fill:'#ffd166','font-size':13});
+}
+$('#m2toggle').onclick=()=>{
+  rot=!rot;drawM2();
+  $('#m2toggle').textContent="🌍 Earth's rotation: "+(rot?'ON':'OFF');
+  if(rot){$('#m2note').innerHTML='Earth is spinning! The winds now <b>curve</b>. In the Northern Hemisphere they bend to the <b>right</b>, and in the Southern Hemisphere to the <b>left</b>. This bending is the <b>Coriolis effect</b>. Toggle back and forth to compare, then label the belts below.';
+    if(!seenOn){seenOn=true;$('#m2label').classList.remove('hidden');}}
+  else{$('#m2note').innerHTML='Rotation OFF: the air moves <b>straight</b> toward the equator or the poles, just like the convection cells in Mission 1.';}
+};
+let m2LabelFirst=true;
+$('#m2check').onclick=()=>{
+  const sels=[...document.querySelectorAll('#m2label select')];
+  let right=0;sels.forEach(s=>{const ok=s.value===s.dataset.ans;s.style.borderColor=ok?'#3ddc97':'#ff5d73';if(ok)right++;});
+  if(m2LabelFirst){score.m2.e+=right;score.m2.p+=3;m2LabelFirst=false;}
+  if(right===3){$('#m2labelfb').className='fb good';$('#m2labelfb').innerHTML='✅ All three belts are labeled correctly! The labels are now on the globe. The ★ shows where the U.S. is.';
+    sels.forEach(s=>s.disabled=true);$('#m2check').disabled=true;showM2Names();
+    renderQs($('#m2q'),M2Q,'m2',()=>$('#m2next').disabled=false);}
+  else{$('#m2labelfb').className='fb bad';$('#m2labelfb').textContent='❌ '+right+' of 3 correct. Red boxes need another look. Check which way the arrows point FROM.';}
+};
+$('#m2next').onclick=()=>go('m3');
+
+/* ---------- MAP helpers (Missions 3 & 5) ---------- */
+const US=[[-124.5,48.4],[-123.9,46.2],[-124.2,42],[-122.4,37.6],[-120.6,34.6],[-117.2,32.6],[-114.8,32.6],[-111,31.3],[-108.2,31.3],[-106.5,31.8],[-104.5,29.6],[-103,29],[-101.4,29.8],[-99.5,27.5],[-97.4,25.9],[-97.3,27.8],[-95,29.3],[-93.8,29.7],[-91,29.2],[-89.4,29],[-88.8,30.4],[-87.5,30.3],[-85,29.6],[-83,29],[-82.6,27.5],[-81.7,25.2],[-80.2,25.6],[-80.1,27],[-81.2,29.9],[-81,31.9],[-79,33.6],[-76,35],[-75.5,35.8],[-76.4,37.4],[-75.2,38.8],[-74,40.5],[-72,41],[-70,41.6],[-70.6,42.6],[-70.2,43.7],[-67,44.8],[-67.8,47.1],[-69.2,47.4],[-71.5,45],[-75,45],[-79,43.3],[-79,42.8],[-82.5,41.7],[-83.5,46],[-84.6,46.5],[-89,48],[-95,49],[-123,49]];
+const CITIES={Seattle:[-122.3,47.6],Denver:[-105,39.7],Dallas:[-96.8,32.8],Chicago:[-87.6,41.9],Miami:[-80.2,25.8],'New York':[-74,40.7],Minneapolis:[-93.3,45],Phoenix:[-112,33.4],Atlanta:[-84.4,33.7]};
+const PX=lon=>40+(lon+125)/58*620, PY=lat=>60+(49-lat)/24*300;
+function baseMap(s){
+  s.innerHTML='';
+  S('rect',{x:0,y:0,width:700,height:420,fill:'#16467e'},s);
+  S('polygon',{points:US.map(([a,b])=>PX(a).toFixed(1)+','+PY(b).toFixed(1)).join(' '),fill:'#3c7a4d',stroke:'#cfe8c9','stroke-width':2},s);
+  T(s,40,395,'Pacific Ocean',{fill:'#9cc8ff','font-size':13,'font-style':'italic'});
+  T(s,600,330,'Atlantic',{fill:'#9cc8ff','font-size':13,'font-style':'italic'});
+  T(s,600,346,'Ocean',{fill:'#9cc8ff','font-size':13,'font-style':'italic'});
+  T(s,18,30,'W',{fill:'#fff','font-size':16});T(s,672,30,'E',{fill:'#fff','font-size':16});
+}
+
+/* ---------- MISSION 3 ---------- */
+let C=-100,D=4,chal=0;
+const g9=x=>Math.exp(-(x/9)*(x/9));
+const jetLat=lon=>44-D*g9(lon-C)+0.4*D*(g9(lon-C-22)+g9(lon-C+22));
+const isCold=name=>CITIES[name][1]>jetLat(CITIES[name][0]);
+const CH=[
+ {t:'Polar Plunge 🥶',d:'It\'s January. Bring freezing polar air down to <b>Dallas</b> while <b>Seattle</b> stays mild (warm side).',ok:()=>isCold('Dallas')&&!isCold('Seattle'),hint:'Move the dip to the middle of the country and make it DEEP. Notice how the jet bulges north on either side of a dip.'},
+ {t:'Mountain Snow, Southern Sun 🏔️',d:'Make <b>Denver</b> cold, but keep <b>Atlanta</b> and <b>New York</b> on the warm side.',ok:()=>isCold('Denver')&&!isCold('Atlanta')&&!isCold('New York'),hint:'Slide the dip west toward the Rocky Mountains.'},
+ {t:'Zonal Flow ➡️',d:'Flatten the jet stream so it runs almost straight from west to east (depth 2 or less). Notice that no big cold outbreaks reach the South.',ok:()=>D<=2,hint:'Turn the dip depth down to 0, 1, or 2.'}
+];
+const M3Q=[
+ {q:'What is the jet stream?',c:['A warm ocean current near Florida','A narrow band of very fast wind high in the atmosphere that flows west to east','A type of tornado','Wind that only blows at the equator'],a:1,why:'Jet streams are fast "rivers" of air about 9–12 km up. They flow generally west to east and steer weather systems.'},
+ {q:'In January, the jet stream dips far south over Texas. What will Texas most likely experience?',c:['A blast of cold polar air','A heat wave','A hurricane','No change in temperature'],a:0,why:'The jet stream acts like a boundary. When it dips south, cold polar air pours in behind it.'},
+ {q:'A city is located NORTH of the jet stream. What kind of air is it most likely in?',c:['Warm tropical air','Cold polar air','Air with no temperature','Only ocean air'],a:1,why:'North of the jet = cold polar air. South of the jet = warmer air.'}
+];
+function buildM3(){
+  $('#m3pos').oninput=e=>{C=+e.target.value;drawM3();};
+  $('#m3dep').oninput=e=>{D=+e.target.value;drawM3();};
+  drawM3();showChal();
+}
+function drawM3(){
+  const s=$('#m3svg');baseMap(s);
+  const pos=C<-108?'West':C<-92?'Central':'East';
+  $('#m3posv').textContent=pos+' U.S.';$('#m3depv').textContent=D===0?'Flat':(D<6?'Shallow':D<11?'Medium':'Deep')+' ('+D+')';
+  // shading
+  let ptsN='',ptsS='';
+  const line=[];for(let lon=-128;lon<=-64;lon+=0.5){line.push([PX(lon),PY(jetLat(lon))]);}
+  ptsN=line.map(p=>p.join(',')).join(' ')+' '+PX(-64)+',0 '+PX(-128)+',0';
+  ptsS=line.map(p=>p.join(',')).join(' ')+' '+PX(-64)+',420 '+PX(-128)+',420';
+  S('polygon',{points:ptsN,fill:'#5aa9ff',opacity:.22},s);
+  S('polygon',{points:ptsS,fill:'#ff8a3d',opacity:.16},s);
+  S('path',{d:'M'+line.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' L'),class:'jet'},s);
+  T(s,350,40,'❄️ COLD POLAR AIR (north of jet)',{'text-anchor':'middle',fill:'#bfe0ff','font-size':14});
+  T(s,350,412,'☀️ WARMER AIR (south of jet)',{'text-anchor':'middle',fill:'#ffd0a8','font-size':14});
+  T(s,PX(-70),PY(jetLat(-70))+24,'Jet stream →',{fill:'#fff','font-size':13,'text-anchor':'middle'});
+  for(const n in CITIES){
+    const [lon,lat]=CITIES[n],cold=isCold(n),jl=jetLat(lon);
+    const temp=cold?Math.max(5,Math.min(45,Math.round(48-(lat-jl)*4))):Math.max(55,Math.min(88,Math.round(60+(jl-lat)*1.4)));
+    const x=PX(lon),y=PY(lat);
+    S('circle',{cx:x,cy:y,r:7,fill:cold?'#5aa9ff':'#ff8a3d',stroke:'#fff','stroke-width':2},s);
+    const anchor=x>600?'end':'start',dx=x>600?-11:11;
+    S('rect',{x:anchor==='end'?x+dx-112:x+dx-3,y:y-11,width:115,height:20,rx:5,fill:'#0b1a33',opacity:.75},s);
+    T(s,x+dx,y+4,n+' '+temp+'°F '+(cold?'❄️':'☀️'),{'text-anchor':anchor,'font-size':12});
+  }
+  updateChalStatus();
+}
+function showChal(){
+  const box=$('#m3chal');
+  if(chal>=CH.length){box.innerHTML='<span class="tag">All challenges complete</span><div class="status" style="color:#bff5df">✅ Great steering, forecaster! Now answer the questions below.</div>';return;}
+  const c=CH[chal];
+  box.innerHTML='<span class="tag">Challenge '+(chal+1)+' of 3</span><h3 style="margin:8px 0 4px">'+c.t+'</h3><div>'+c.d+'</div><div class="controls"><button id="m3lock">🔒 Lock in my jet stream</button><button id="m3hint" class="ghost">💡 Hint</button></div><div id="m3stat" class="status"></div>';
+  $('#m3lock').onclick=()=>{
+    if(CH[chal].ok()){chal++;score.m3.e++;score.m3.p++;
+      if(chal>=CH.length){showChal();renderQs($('#m3q'),M3Q,'m3',()=>$('#m3next').disabled=false);}
+      else{showChal();$('#m3stat').innerHTML='<span style="color:#bff5df">✅ Challenge complete! Here\'s the next one.</span>';}}
+    else{$('#m3stat').innerHTML='<span style="color:#ffc2cb">❌ Not yet. Look at which side of the jet stream each city is on.</span>';}
+  };
+  $('#m3hint').onclick=()=>{$('#m3stat').innerHTML='<span style="color:#ffd166">💡 '+CH[chal].hint+'</span>';};
+}
+function updateChalStatus(){}
+$('#m3next').onclick=()=>go('m4');
+
+/* ---------- MISSION 4 ---------- */
+const SORT=[['Sinking air','H'],['Rising air','L'],['Air spirals OUT clockwise','H'],['Air spirals IN counterclockwise','L'],['Clear, sunny skies','H'],['Clouds and precipitation','L'],['Calm, dry weather','H'],['Can develop into storms','L']];
+const M4Q=[
+ {q:'Wind always blows from areas of ___ pressure toward areas of ___ pressure.',c:['low → high','high → low','low → low','Wind does not depend on pressure'],a:1,why:'Air moves from HIGH pressure to LOW pressure. The bigger the pressure difference, the stronger the wind.'},
+ {q:'Look at Symbol A on the map key. What does it show?',c:['Warm front','Cold front','High pressure','The jet stream'],a:1,why:'A blue line with triangles is a COLD front. The triangles point in the direction the front is moving.'},
+ {q:'As a cold front passes through a town, the town will most likely get…',c:['Thunderstorms, then cooler and drier air','Weeks of steady drizzle','Warmer, more humid air','Clear skies with no change'],a:0,why:'Dense cold air shoves warm air upward quickly, which causes storms. After the front passes, cooler and drier air moves in.'}
+];
+let seenHi=false,seenLo=false;
+function spiral(g,cx,cy,out,color,mk){
+  for(let k=0;k<4;k++){const pts=[];for(let t=0;t<=1.0001;t+=0.1){const ang=(k*90+(out?t*80:-t*80))*Math.PI/180;const r=out?30+t*70:100-t*70;pts.push((cx+r*Math.cos(ang)).toFixed(1)+','+(cy+r*Math.sin(ang)).toFixed(1));}
+    S('polyline',{points:pts.join(' '),fill:'none',stroke:color,'stroke-width':4,'stroke-linecap':'round','marker-end':'url(#'+mk+')'},g);}
+}
+function buildM4(){
+  const s=$('#m4svg');
+  s.innerHTML='<defs><marker id="mkB" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9fd0ff"/></marker><marker id="mkR" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ffb3bf"/></marker></defs>';
+  S('rect',{x:0,y:0,width:720,height:300,fill:'#0a1830'},s);
+  S('circle',{cx:180,cy:150,r:118,fill:'#123d70'},s);S('circle',{cx:540,cy:150,r:118,fill:'#4a1f35'},s);
+  const gh=S('g',{class:'spinCW',style:'transform-origin:180px 150px'},s);spiral(gh,180,150,true,'#9fd0ff','mkB');
+  const gl=S('g',{class:'spinCCW',style:'transform-origin:540px 150px'},s);spiral(gl,540,150,false,'#ffb3bf','mkR');
+  S('circle',{cx:180,cy:150,r:24,fill:'#2f6fd1',stroke:'#fff','stroke-width':3},s);T(s,180,159,'H',{'text-anchor':'middle','font-size':26,fill:'#fff'});
+  S('circle',{cx:540,cy:150,r:24,fill:'#d1334d',stroke:'#fff','stroke-width':3},s);T(s,540,159,'L',{'text-anchor':'middle','font-size':26,fill:'#fff'});
+  T(s,180,290,'HIGH pressure (map view)',{'text-anchor':'middle',fill:'#9fd0ff','font-size':13});
+  T(s,540,290,'LOW pressure (map view)',{'text-anchor':'middle',fill:'#ffb3bf','font-size':13});
+  // key
+  const k=$('#m4key');S('rect',{x:0,y:0,width:720,height:100,fill:'#0a1830'},k);
+  S('line',{x1:60,y1:52,x2:300,y2:52,stroke:'#4b8cff','stroke-width':5},k);
+  for(let x=80;x<=280;x+=40)S('polygon',{points:(x-9)+',52 '+(x+9)+',52 '+x+',36',fill:'#4b8cff'},k);
+  T(k,180,85,'Symbol A',{'text-anchor':'middle'});
+  S('line',{x1:420,y1:52,x2:660,y2:52,stroke:'#ff4d5e','stroke-width':5},k);
+  for(let x=440;x<=640;x+=40)S('path',{d:'M'+(x-9)+' 52 A 9 9 0 0 1 '+(x+9)+' 52 Z',fill:'#ff4d5e'},k);
+  T(k,540,85,'Symbol B',{'text-anchor':'middle'});
+}
+function checkM4Unlock(){if(seenHi&&seenLo&&$('#m4sort').classList.contains('hidden')){$('#m4sort').classList.remove('hidden');buildSort();}}
+$('#m4hi').onclick=()=>{seenHi=true;$('#m4hiNote').innerHTML='🔵 <b>HIGH pressure:</b> Air <b>sinks</b> from above. Sinking air warms and dries out, so clouds can\'t form, which means <b>clear, calm, dry</b> weather. At the surface, air flows <b>out</b> of the high, spiraling <b>clockwise</b> (Northern Hemisphere).';checkM4Unlock();};
+$('#m4lo').onclick=()=>{seenLo=true;$('#m4loNote').innerHTML='🔴 <b>LOW pressure:</b> Air flows <b>in</b>, spiraling <b>counterclockwise</b>, then <b>rises</b>. Rising air cools and its water vapor condenses into <b>clouds, rain, and storms</b>.';checkM4Unlock();};
+let selCard=null,sortFirst=true;
+function buildSort(){
+  const pool=$('#m4pool');pool.innerHTML='';
+  SORT.slice().sort(()=>Math.random()-.5).forEach(([t,b])=>{const c=document.createElement('span');c.className='sc';c.textContent=t;c.dataset.b=b;
+    c.onclick=ev=>{ev.stopPropagation();if(c.classList.contains('ok'))return;
+      if(c.parentElement.classList.contains('binbody')){pool.appendChild(c);c.classList.remove('sel');selCard=null;updSort();return;}
+      document.querySelectorAll('.sc.sel').forEach(x=>x.classList.remove('sel'));selCard=c;c.classList.add('sel');};
+    pool.appendChild(c);});
+  document.querySelectorAll('.bin').forEach(bin=>bin.onclick=()=>{if(!selCard)return;bin.querySelector('.binbody').appendChild(selCard);selCard.classList.remove('sel');selCard=null;updSort();});
+}
+function updSort(){$('#m4check').disabled=$('#m4pool').children.length>0;}
+$('#m4check').onclick=()=>{
+  let right=0;const wrong=[];
+  document.querySelectorAll('.bin').forEach(bin=>[...bin.querySelectorAll('.sc')].forEach(c=>{if(c.dataset.b===bin.dataset.bin){right++;c.classList.add('ok');}else wrong.push(c);}));
+  if(sortFirst){score.m4.e+=right;score.m4.p+=8;sortFirst=false;}
+  wrong.forEach(c=>{c.classList.add('no');setTimeout(()=>{c.classList.remove('no');$('#m4pool').appendChild(c);updSort();},450);});
+  if(wrong.length===0){$('#m4fb').className='fb good';$('#m4fb').innerHTML='✅ All 8 sorted correctly!';$('#m4check').disabled=true;
+    $('#m4fronts').classList.remove('hidden');renderQs($('#m4q'),M4Q,'m4',()=>$('#m4next').disabled=false);}
+  else{$('#m4fb').className='fb bad';$('#m4fb').textContent='❌ '+right+' of 8 correct. The wrong cards went back to the top. Re-read your notes and try again.';$('#m4check').disabled=true;}
+};
+$('#m4next').onclick=()=>go('m5');
+
+/* ---------- MISSION 5 ---------- */
+const SC=[
+ {title:'Storm on the Plains',feats:[['L',-106,40]],front:[[-106,40],[-108,35],[-110,30.5]],cities:['Chicago'],shift:18,
+  q:'A low-pressure system with a cold front is over Colorado, and the westerlies are blowing. What weather will <b>Chicago</b> most likely have in about 2 days?',c:['Clear, sunny skies','Clouds, rain, and possible thunderstorms','A hurricane','No change at all'],a:1,
+  why:'The westerlies push weather systems west → east, so the low travels toward Chicago. Low pressure means rising air, which brings clouds and precipitation.'},
+ {title:'Sunny Outlook',feats:[['H',-114,40]],front:null,cities:['Denver'],shift:9,
+  q:'A high-pressure system is over Nevada and Utah. What will <b>Denver\'s</b> weather most likely be tomorrow?',c:['Clear, dry, and calm','Heavy snow and strong wind','Severe thunderstorms','A tropical storm'],a:0,
+  why:'The high drifts east with the westerlies. High pressure means sinking air, which brings clear, dry, calm weather.'},
+ {title:'Front Line in Texas',feats:[['L',-97,42]],front:[[-97,42],[-101,36],[-103,30]],cities:['Dallas'],shift:6,
+  q:'A cold front is approaching <b>Dallas</b> from the west. What will Dallas most likely experience as the front passes?',c:['Steady temperatures and clear skies','Thunderstorms, followed by cooler and drier air','Warmer, more humid air for a week','Nothing. Fronts don\'t change the weather.'],a:1,
+  why:'The cold front lifts the warm, moist Texas air quickly, which triggers storms. Behind the front, cooler and drier air moves in.'},
+ {title:'Where Next?',feats:[['L',-112,45.5]],front:null,cities:['Seattle','Phoenix','Minneapolis','Miami'],shift:18,
+  q:'A low-pressure storm is over Montana. Which city will the storm most likely reach next?',c:['Seattle','Phoenix','Minneapolis','Miami'],a:2,
+  why:'Weather in the U.S. travels west → east with the prevailing westerlies. Minneapolis is directly EAST of Montana.'}
+];
+let sci=0;
+function buildM5(){showSC();}
+function showSC(){
+  const sc=SC[sci],s=$('#m5svg');baseMap(s);
+  $('#m5title').textContent='Forecast '+(sci+1)+': '+sc.title;$('#m5count').textContent=(sci+1)+' of '+SC.length;
+  // westerlies hint arrows
+  for(let i=0;i<3;i++){const y=95+i*110;S('line',{x1:20,y1:y,x2:70,y2:y,stroke:'#ffffff',opacity:.5,'stroke-width':3,'marker-end':''},s);S('polygon',{points:'70,'+(y-6)+' 80,'+y+' 70,'+(y+6),fill:'#fff',opacity:.5},s);}
+  T(s,12,80,'westerlies',{fill:'#fff',opacity:.7,'font-size':11});
+  sc.cities.forEach(n=>{const [lon,lat]=CITIES[n];const x=PX(lon),y=PY(lat);
+    S('polygon',{points:star(x,y,10,4.5),fill:'#ffd166',stroke:'#3a2f0b','stroke-width':1.5},s);
+    S('rect',{x:x+10,y:y-22,width:n.length*8+14,height:19,rx:5,fill:'#0b1a33',opacity:.8},s);T(s,x+16,y-8,n,{'font-size':13,fill:'#ffd166'});});
+  const mv=S('g',{class:'mover',id:'m5mv'},s);
+  if(sc.front){S('polyline',{points:sc.front.map(([a,b])=>PX(a)+','+PY(b)).join(' '),fill:'none',stroke:'#4b8cff','stroke-width':5},mv);
+    for(let i=0;i<sc.front.length-1;i++){const [a1,b1]=sc.front[i],[a2,b2]=sc.front[i+1];const x1=PX(a1),y1=PY(b1),x2=PX(a2),y2=PY(b2);const L=Math.hypot(x2-x1,y2-y1);
+      for(let d=14;d<L-6;d+=30){const t=d/L,px=x1+(x2-x1)*t,py=y1+(y2-y1)*t;S('polygon',{points:px+','+(py-8)+' '+px+','+(py+8)+' '+(px+12)+','+py,fill:'#4b8cff'},mv);}}}
+  sc.feats.forEach(([t,lon,lat])=>{const x=PX(lon),y=PY(lat);S('circle',{cx:x,cy:y,r:22,fill:t==='H'?'#2f6fd1':'#d1334d',stroke:'#fff','stroke-width':3},mv);T(mv,x,y+9,t,{'text-anchor':'middle','font-size':26,fill:'#fff'});});
+  const box=$('#m5q');box.innerHTML='';$('#m5go').classList.add('hidden');
+  renderQs(box,[{q:sc.q,c:sc.c,a:sc.a,why:sc.why}],'m5',()=>{
+    const dx=sc.shift/58*620;setTimeout(()=>{$('#m5mv').style.transform='translate('+dx+'px,0px)';},150);
+    const fb=box.querySelector('.fb');fb.innerHTML+='<br>⏩ <b>Fast-forwarding…</b> watch the system move east!';
+    setTimeout(()=>{if(sci<SC.length-1){$('#m5go').classList.remove('hidden');}else{$('#m5next').disabled=false;}},2700);
+  });
+  box.querySelector('.qn').textContent='Your Forecast';
+}
+function star(cx,cy,ro,ri){const p=[];for(let i=0;i<10;i++){const r=i%2?ri:ro,a=-Math.PI/2+i*Math.PI/5;p.push((cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1));}return p.join(' ');}
+$('#m5go').onclick=()=>{sci++;showSC();};
+$('#m5next').onclick=()=>go('exit');
+
+/* ---------- EXIT ---------- */
+const EXQ=[
+ {q:'Which statement BEST explains why air rises near the equator?',c:['The equator has the most mountains','Direct sunlight warms the air, making it less dense','The Coriolis effect pushes air upward','Ocean currents lift the air'],a:1,why:'Warm air is less dense than the cooler air around it, so it rises.'},
+ {q:'A student claims, "Most weather in Dallas arrives from the east." Which evidence shows this claim is INCORRECT?',c:['Texas is in the trade winds, which blow toward the equator','The U.S. lies in the prevailing westerlies, which move weather systems west to east','The jet stream flows east to west','High pressure always comes from the Atlantic Ocean'],a:1,why:'The prevailing westerlies carry U.S. weather systems from west to east.'},
+ {q:'A weather map shows a large H over Oklahoma. What weather should Oklahoma expect?',c:['Clear skies and calm conditions','Heavy rain and thunderstorms','A tornado outbreak','Blizzard conditions'],a:0,why:'High pressure means sinking air, which brings clear, calm weather.'},
+ {q:'Why do Earth\'s global wind belts curve instead of blowing straight north and south?',c:['Earth\'s rotation causes the Coriolis effect','The Sun moves across the sky','Clouds block the wind','Air is heavier at the poles'],a:0,why:'Earth\'s rotation deflects moving air. This is the Coriolis effect.'},
+ {q:'Many large deserts, like the Sahara, are found near 30° latitude. Which is the BEST explanation?',c:['Rising air at 30° creates low pressure','Sinking air at 30° creates high pressure and dry conditions','The jet stream always sits over deserts','There is no wind at 30°'],a:1,why:'Air sinks near 30°, which creates high pressure and dry air with few clouds.'},
+ {q:'In summer, the jet stream usually shifts north into Canada. How does this affect most of the U.S.?',c:['Cold polar air covers the U.S.','Warmer air stays over most of the U.S.','The westerlies stop blowing','Hurricanes form in Kansas'],a:1,why:'With the jet stream far north, most of the U.S. is on the warm side of the boundary.'}
+];
+let exDone=false;
+function buildExit(){renderQs($('#exq'),EXQ,'exit',()=>{exDone=true;checkFinish();},true);}
+$('#cer').oninput=checkFinish;
+function checkFinish(){const n=$('#cer').value.trim().split(/\s+/).filter(Boolean).length;
+  $('#cerMsg').textContent=n<25?('Word count: '+n+' (write at least 25 words)'):('Word count: '+n+' ✔');
+  $('#finish').disabled=!(exDone&&n>=25);}
+$('#finish').onclick=()=>{inProgress=false;go('results');};
+
+/* ---------- RESULTS ---------- */
+function buildResults(){
+  let te=0,tp=0,rows='<tr><th>Section</th><th>Score (first try)</th><th>%</th></tr>';
+  ['m1','m2','m3','m4','m5','exit'].forEach(k=>{const {e,p}=score[k];te+=e;tp+=p;rows+='<tr><td>'+NAMES[k]+'</td><td>'+e+' / '+p+'</td><td>'+(p?Math.round(e/p*100):0)+'%</td></tr>';});
+  const pct=tp?Math.round(te/tp*100):0;
+  rows+='<tr><th>TOTAL</th><th>'+te+' / '+tp+'</th><th>'+pct+'%</th></tr>';
+  $('#resTable').innerHTML=rows;
+  const esc=t=>t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  $('#resHead').innerHTML='<div><b>Name:</b> '+esc(student.name)+(student.period?' &nbsp; <b>Period:</b> '+esc(student.period):'')+'</div><div class="big">'+pct+'%</div><div style="color:var(--muted)">Lab score (counts only first-try answers) • Exit ticket: '+score.exit.e+' / '+score.exit.p+'</div>';
+  $('#resCer').textContent=$('#cer').value.trim();
+  $('#resTime').textContent='Completed: '+new Date().toLocaleString();
+}
+$('#printBtn').onclick=()=>window.print();
+$('#restart').onclick=()=>{if(confirm('Start the whole lab over? Your results will be erased.'))location.reload();};
+
+const BUILD={m1:buildM1,m2:buildM2,m3:buildM3,m4:buildM4,m5:buildM5,exit:buildExit,results:buildResults};
+chips();
+})();
+</script>
+</body>
+</html>
