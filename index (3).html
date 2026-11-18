@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STAAR Boss Battle: The Inertia Titan</title>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--phase:#38bdf8;--phase2:#0ea5e9;--bg1:#0b1026;--bg2:#1b1145;--card:#141b3d;--good:#22c55e;--bad:#ef4444;--gold:#facc15;--txt:#eef2ff}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:Nunito,system-ui,sans-serif;color:var(--txt);background:radial-gradient(ellipse at 30% 20%,var(--bg2),var(--bg1) 70%);overflow-x:hidden;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+h1,h2,.bungee{font-family:Bungee,Impact,sans-serif;letter-spacing:1px}
+button{font-family:inherit;cursor:pointer;border:none}
+.screen{display:none;min-height:100vh;padding:18px;position:relative;z-index:1}
+.screen.active{display:flex}
+/* Title */
+#title{flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
+#title h1{font-size:clamp(2rem,6vw,4.4rem);line-height:1.05;background:linear-gradient(180deg,#fff,var(--phase));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(56,189,248,.5))}
+.tag{display:inline-block;background:rgba(250,204,21,.15);color:var(--gold);border:2px solid var(--gold);padding:6px 14px;border-radius:999px;font-weight:900;font-size:.95rem}
+.howto{background:var(--card);border:2px solid rgba(255,255,255,.1);border-radius:18px;padding:18px 22px;max-width:720px;text-align:left;line-height:1.5;font-size:1.05rem}
+.howto ol{padding-left:22px}.howto li{margin:4px 0}
+.settings{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.opt{background:var(--card);border:2px solid rgba(255,255,255,.15);color:var(--txt);padding:10px 16px;border-radius:12px;font-weight:800;font-size:1rem}
+.opt.on{border-color:var(--phase);background:rgba(56,189,248,.18)}
+.big{background:linear-gradient(180deg,#fde047,#f59e0b);color:#3b1d00;font-family:Bungee,sans-serif;font-size:1.6rem;padding:16px 44px;border-radius:16px;box-shadow:0 6px 0 #92400e,0 0 30px rgba(250,204,21,.4);transition:transform .1s}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 #92400e}
+/* Battle */
+#battle{flex-direction:column;gap:12px}
+.hud{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.bossname{font-family:Bungee,sans-serif;font-size:clamp(1rem,2.4vw,1.5rem);color:var(--phase);white-space:nowrap}
+.phaselabel{font-size:.8rem;font-weight:900;background:var(--phase);color:#0b1026;padding:3px 10px;border-radius:999px;margin-left:6px;vertical-align:middle}
+.hpwrap{flex:1;min-width:220px;height:30px;background:#0006;border:3px solid #fff3;border-radius:999px;overflow:hidden;position:relative}
+.hpbar{height:100%;width:100%;background:linear-gradient(90deg,var(--phase2),var(--phase));transition:width .6s cubic-bezier(.3,1.4,.5,1);box-shadow:inset 0 -6px 0 #0003}
+.hptext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;text-shadow:0 2px 3px #000}
+.arena{display:grid;grid-template-columns:minmax(260px,1fr) 1.35fr;gap:16px;flex:1;align-items:stretch}
+@media (max-width:820px){.arena{grid-template-columns:1fr}}
+.bossbox{position:relative;display:flex;align-items:center;justify-content:center;min-height:260px}
+#bossSvg{width:100%;max-width:420px;filter:drop-shadow(0 0 30px var(--phase));animation:hover 3s ease-in-out infinite}
+@keyframes hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.hit #bossSvg{animation:hitshake .5s}
+@keyframes hitshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-18px) rotate(-4deg);filter:brightness(3) drop-shadow(0 0 30px #fff)}40%{transform:translateX(14px) rotate(3deg)}60%{transform:translateX(-8px)}80%{transform:translateX(5px)}}
+.dmg{position:absolute;font-family:Bungee,sans-serif;font-size:3rem;color:var(--gold);text-shadow:0 0 12px #f59e0b,0 4px 0 #000;pointer-events:none;animation:float 1.2s forwards;z-index:5}
+@keyframes float{0%{opacity:0;transform:translateY(20px) scale(.5)}20%{opacity:1;transform:translateY(0) scale(1.2)}100%{opacity:0;transform:translateY(-110px) scale(1)}}
+.qcard{background:var(--card);border:3px solid rgba(255,255,255,.12);border-radius:20px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 40px #0007}
+.qtop{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:900}
+.qnum{color:var(--phase);font-size:1.05rem}
+.teks{font-size:.8rem;background:#fff1;padding:3px 9px;border-radius:999px}
+.timer{font-family:Bungee,sans-serif;font-size:1.4rem;min-width:56px;text-align:center;padding:2px 10px;border-radius:10px;background:#0005}
+.timer.low{color:var(--bad);animation:pulse .5s infinite alternate}
+@keyframes pulse{to{transform:scale(1.15)}}
+.qtext{font-size:clamp(1.1rem,2.3vw,1.6rem);font-weight:800;line-height:1.35}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.choices{grid-template-columns:1fr}}
+.choice{display:flex;gap:12px;align-items:center;text-align:left;background:#1e2756;color:var(--txt);border:3px solid #fff2;border-radius:14px;padding:12px 14px;font-size:clamp(1rem,1.8vw,1.25rem);font-weight:800;transition:transform .1s,border-color .2s}
+.choice:hover:not(:disabled){border-color:var(--phase);transform:translateY(-2px)}
+.choice .L{flex:none;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:Bungee,sans-serif;background:var(--phase);color:#0b1026}
+.choice.correct{background:#14532d;border-color:var(--good)}
+.choice.correct .L{background:var(--good)}
+.choice.wrong{background:#5b1414;border-color:var(--bad)}
+.choice.wrong .L{background:var(--bad)}
+.choice:disabled{cursor:default}
+.prompt{font-size:.95rem;opacity:.8;font-weight:800;text-align:center}
+.explain{display:none;background:#0b1026;border-left:6px solid var(--good);border-radius:12px;padding:12px 14px;font-size:1.05rem;line-height:1.45}
+.explain.show{display:block;animation:pop .3s}
+.explain.bad{border-left-color:var(--bad)}
+@keyframes pop{from{opacity:0;transform:scale(.96)}}
+.next{align-self:flex-end;display:none;background:var(--phase);color:#0b1026;font-family:Bungee,sans-serif;font-size:1.1rem;padding:10px 24px;border-radius:12px}
+.next.show{display:block}
+.footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.shields{display:flex;gap:6px;align-items:center;font-weight:900}
+.shield{width:34px;height:38px;transition:transform .3s,opacity .3s}
+.shield.lost{opacity:.18;transform:scale(.8)}
+.streak{font-family:Bungee,sans-serif;font-size:1.1rem;color:var(--gold)}
+.small{background:#fff1;color:var(--txt);padding:8px 12px;border-radius:10px;font-weight:800}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:20;opacity:0}
+.flash.red{background:radial-gradient(circle,transparent 30%,rgba(239,68,68,.7));animation:fl .6s}
+.flash.white{background:rgba(255,255,255,.5);animation:fl .35s}
+@keyframes fl{0%{opacity:1}100%{opacity:0}}
+.shake{animation:scr .45s}
+@keyframes scr{0%,100%{transform:translate(0)}25%{transform:translate(-10px,6px)}50%{transform:translate(10px,-6px)}75%{transform:translate(-6px,3px)}}
+/* Overlay */
+.overlay{position:fixed;inset:0;background:#000c;z-index:30;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:16px;padding:20px}
+.overlay.show{display:flex;animation:pop .3s}
+.overlay h2{font-size:clamp(2rem,6vw,4rem);color:var(--phase);text-shadow:0 0 30px var(--phase)}
+.overlay p{font-size:clamp(1.1rem,2.4vw,1.5rem);font-weight:800;max-width:720px}
+.stats{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.stat{background:var(--card);border:2px solid #fff2;border-radius:14px;padding:12px 20px;min-width:130px}
+.stat b{display:block;font-family:Bungee,sans-serif;font-size:2rem;color:var(--gold)}
+.missed{max-width:760px;max-height:34vh;overflow:auto;text-align:left;background:var(--card);border-radius:14px;padding:12px 16px;font-size:1rem;line-height:1.4}
+.missed li{margin:6px 0 6px 18px}
+.credit{font-size:.85rem;opacity:.6;font-weight:800}
+</style>
+</head>
+<body>
+
+<!-- TITLE -->
+<section class="screen active" id="title">
+  <span class="tag">STAAR BOSS BATTLE · TEKS 8.7A &amp; 8.7B</span>
+  <h1>THE INERTIA<br>TITAN</h1>
+  <p style="font-size:1.2rem;font-weight:800;max-width:640px">A giant robot that refuses to change its motion has taken over the science lab. Only a class that truly understands <b>force and Newton's laws</b> can bring it down.</p>
+  <div class="howto">
+    <b>How to play (teacher projects, whole class plays):</b>
+    <ol>
+      <li>Project this screen. Students answer each question on mini whiteboards or scrap paper.</li>
+      <li>When time is up, students hold up their answers. <b>Click the answer most of the class chose</b> (or press A–D).</li>
+      <li>Correct = the class hits the Titan. 3 in a row = <b>COMBO</b> damage!</li>
+      <li>Wrong = the Titan smashes a class shield. Lose all 5 and the Titan recharges.</li>
+      <li>Read the explanation together, then click <b>Next</b> (or press Space). 24 questions · about 45 minutes.</li>
+    </ol>
+  </div>
+  <div class="settings">
+    <button class="opt" data-t="45">⏱ 45 sec</button>
+    <button class="opt on" data-t="60">⏱ 60 sec</button>
+    <button class="opt" data-t="90">⏱ 90 sec</button>
+    <button class="opt" data-t="0">⏱ No timer</button>
+    <button class="opt on" id="soundBtn">🔊 Sound on</button>
+  </div>
+  <button class="big" id="startBtn">START BATTLE</button>
+  <div class="credit">© Science with Mrs. Lennon</div>
+</section>
+
+<!-- BATTLE -->
+<section class="screen" id="battle">
+  <div class="hud">
+    <div class="bossname">INERTIA TITAN <span class="phaselabel" id="phaseLabel">PHASE 1</span></div>
+    <div class="hpwrap"><div class="hpbar" id="hpBar"></div><div class="hptext" id="hpText">2000 / 2000</div></div>
+  </div>
+  <div class="arena">
+    <div class="bossbox" id="bossBox">
+      <svg id="bossSvg" viewBox="0 0 300 320" xmlns="http://www.w3.org/2000/svg" aria-label="The Inertia Titan robot">
+        <defs>
+          <radialGradient id="core" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff"/><stop offset=".45" style="stop-color:var(--phase)"/><stop offset="1" style="stop-color:var(--phase2)" stop-opacity=".2"/></radialGradient>
+          <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#64748b"/><stop offset="1" stop-color="#1e293b"/></linearGradient>
+        </defs>
+        <!-- arms -->
+        <g id="armL"><rect x="18" y="128" width="46" height="104" rx="20" fill="url(#metal)" stroke="#0f172a" stroke-width="4"/><circle cx="41" cy="244" r="26" fill="#334155" style="stroke:var(--phase)" stroke-width="5"/></g>
+        <g id="armR"><rect x="236" y="128" width="46" height="104" rx="20" fill="url(#metal)" stroke="#0f172a" stroke-width="4"/><circle cx="259" cy="244" r="26" fill="#334155" style="stroke:var(--phase)" stroke-width="5"/></g>
+        <!-- legs -->
+        <rect x="88" y="240" width="44" height="62" rx="10" fill="url(#metal)" stroke="#0f172a" stroke-width="4"/>
+        <rect x="168" y="240" width="44" height="62" rx="10" fill="url(#metal)" stroke="#0f172a" stroke-width="4"/>
+        <rect x="78" y="292" width="64" height="20" rx="8" fill="#1e293b"/><rect x="158" y="292" width="64" height="20" rx="8" fill="#1e293b"/>
+        <!-- body -->
+        <path d="M60 120 Q150 90 240 120 L226 252 Q150 270 74 252 Z" fill="url(#metal)" stroke="#0f172a" stroke-width="5"/>
+        <circle cx="150" cy="182" r="40" fill="url(#core)"><animate attributeName="r" values="36;42;36" dur="1.6s" repeatCount="indefinite"/></circle>
+        <text x="150" y="190" text-anchor="middle" font-family="Bungee,sans-serif" font-size="22" fill="#0b1026">F=ma</text>
+        <path d="M92 140 h30 M178 140 h30" style="stroke:var(--phase)" stroke-width="5" stroke-linecap="round"/>
+        <!-- head -->
+        <rect x="96" y="30" width="108" height="82" rx="22" fill="url(#metal)" stroke="#0f172a" stroke-width="5"/>
+        <rect x="108" y="52" width="84" height="28" rx="12" fill="#0b1026"/>
+        <circle cx="130" cy="66" r="9" style="fill:var(--phase)"><animate attributeName="opacity" values="1;.4;1" dur="2.2s" repeatCount="indefinite"/></circle>
+        <circle cx="170" cy="66" r="9" style="fill:var(--phase)"><animate attributeName="opacity" values="1;.4;1" dur="2.2s" repeatCount="indefinite"/></circle>
+        <rect x="128" y="92" width="44" height="8" rx="4" fill="#0b1026"/>
+        <line x1="150" y1="30" x2="150" y2="10" stroke="#94a3b8" stroke-width="5"/><circle cx="150" cy="8" r="7" style="fill:var(--phase)"/>
+        <g id="cracks" opacity="0" stroke="#fde047" stroke-width="3" fill="none" stroke-linecap="round">
+          <path d="M100 150 l14 12 -6 14 12 10"/><path d="M210 210 l-12 6 4 14 -10 8"/><path d="M120 40 l8 12 -4 10"/>
+        </g>
+      </svg>
+    </div>
+    <div class="qcard">
+      <div class="qtop">
+        <span class="qnum" id="qNum">Question 1 / 24</span>
+        <span class="teks" id="qTeks">8.7B</span>
+        <span class="timer" id="timer">60</span>
+      </div>
+      <div class="qtext" id="qText"></div>
+      <div class="choices" id="choices"></div>
+      <div class="prompt" id="prompt">Students: write your answer! Teacher: click the class's answer.</div>
+      <div class="explain" id="explain"></div>
+      <button class="next" id="nextBtn">NEXT ▶</button>
+    </div>
+  </div>
+  <div class="footer">
+    <div class="shields"><span>CLASS SHIELDS</span><span id="shields"></span></div>
+    <div class="streak" id="streak">STREAK: 0</div>
+    <button class="small" id="restartBtn">↺ Restart</button>
+  </div>
+</section>
+
+<div class="overlay" id="overlay"></div>
+<div class="flash" id="flash"></div>
+
+<script>
+const QUESTIONS=[
+// Phase A: balanced/unbalanced forces & 1st law
+{t:"8.7A",q:"A book sits still on a desk. Gravity pulls it down and the desk pushes it up. What is true about the forces on the book?",c:["They are unbalanced, so the book stays still","They are balanced, so the net force is 0 N","Only gravity acts on the book","The desk's force is bigger than gravity"],a:1,e:"The book isn't moving and isn't changing its motion, so the forces are BALANCED. Equal and opposite forces add up to a net force of 0 N."},
+{t:"8.7B",q:"A bus stops suddenly and the passengers lurch forward. Which law explains this?",c:["Newton's 1st law (inertia)","Newton's 2nd law (F = ma)","Newton's 3rd law (action-reaction)","The law of conservation of mass"],a:0,e:"Newton's 1st law: objects in motion stay in motion. The bus stopped, but the passengers' bodies kept moving forward because of inertia."},
+{t:"8.7A",q:"In a tug-of-war, Team Blue pulls left with 300 N and Team Gold pulls right with 250 N. What is the net force?",c:["550 N to the left","50 N to the right","50 N to the left","0 N, because the forces are balanced"],a:2,e:"The forces point in opposite directions, so SUBTRACT: 300 N − 250 N = 50 N. The net force points toward the bigger force: LEFT."},
+{t:"8.7A",q:"Two students push a stalled car to the right. One pushes with 200 N and the other with 150 N. What is the net force?",c:["50 N right","350 N right","350 N left","175 N right"],a:1,e:"Forces in the SAME direction ADD: 200 N + 150 N = 350 N to the right."},
+{t:"8.7A",q:"A box slides across the floor at a steady speed. The push is 15 N right and friction is 15 N left. What will the box do?",c:["Speed up to the right","Slow down and stop","Keep moving at the same speed","Speed up to the left"],a:2,e:"15 N − 15 N = 0 N net force. With BALANCED forces, a moving object keeps moving at a constant speed in the same direction (1st law)."},
+{t:"8.7B",q:"A hockey puck slides across the ice and slowly comes to a stop. What caused the puck's motion to change?",c:["The puck ran out of force","An unbalanced force: friction","Inertia pulled the puck backward","Balanced forces acting on the puck"],a:1,e:"Objects don't 'run out' of force. Friction is an unbalanced force acting opposite the motion, and it slows the puck down. Less friction on ice = it slides a long way."},
+{t:"8.7B",q:"Which object has the MOST inertia?",c:["A 0.4 kg soccer ball","A 0.06 kg tennis ball","A 7 kg bowling ball","A 0.003 kg ping-pong ball"],a:2,e:"Inertia depends on MASS. The more mass, the harder it is to start, stop, or change the object's motion. The bowling ball has the most mass."},
+{t:"8.7B",q:"A space probe drifts far out in space with its engines off. No forces act on it. What will it do?",c:["Slowly come to a stop","Keep moving in a straight line at the same speed","Speed up forever","Start moving in a circle"],a:1,e:"Newton's 1st law: with no unbalanced force, a moving object keeps moving at the same speed in a straight line. Nothing in space is there to slow it down."},
+// Phase B: 2nd law
+{t:"8.7A",q:"A net force acts on a 2 kg cart and it accelerates at 6 m/s². What is the net force? (F = ma)",c:["3 N","8 N","4 N","12 N"],a:3,e:"F = m × a = 2 kg × 6 m/s² = 12 N."},
+{t:"8.7A",q:"A 50 N net force pushes a 10 kg wagon. What is its acceleration? (a = F ÷ m)",c:["5 m/s²","500 m/s²","40 m/s²","0.2 m/s²"],a:0,e:"a = F ÷ m = 50 N ÷ 10 kg = 5 m/s²."},
+{t:"8.7B",q:"You push an EMPTY shopping cart and a FULL shopping cart with the same force. Which accelerates more?",c:["The full cart, because it has more mass","The empty cart, because it has less mass","Both accelerate the same, because the force is the same","Neither cart will move"],a:1,e:"Newton's 2nd law: with the same force, LESS mass = MORE acceleration. The empty cart speeds up faster."},
+{t:"8.7A",q:"A 30 N net force gives an object an acceleration of 3 m/s². What is the object's mass? (m = F ÷ a)",c:["90 kg","10 kg","33 kg","0.1 kg"],a:1,e:"m = F ÷ a = 30 N ÷ 3 m/s² = 10 kg."},
+{t:"8.7B",q:"The net force on a skateboard is doubled, but its mass stays the same. What happens to its acceleration?",c:["It is cut in half","It stays the same","It doubles","It becomes zero"],a:2,e:"Force and acceleration are directly related (F = ma). If the mass stays the same, doubling the force doubles the acceleration."},
+{t:"8.7A",q:"A 4 kg cart is pushed right with 20 N. Friction pulls left with 8 N. What is the cart's acceleration?",c:["5 m/s² right","7 m/s² right","3 m/s² right","2 m/s² left"],a:2,e:"First find the NET force: 20 N − 8 N = 12 N right. Then a = F ÷ m = 12 N ÷ 4 kg = 3 m/s² right. STAAR loves this two-step problem!"},
+{t:"8.7A",q:"Which cart will have the GREATEST acceleration?",c:["10 N net force on a 2 kg cart","12 N net force on a 4 kg cart","20 N net force on a 10 kg cart","6 N net force on a 3 kg cart"],a:0,e:"Find a = F ÷ m for each one: A = 5 m/s², B = 3 m/s², C = 2 m/s², D = 2 m/s². Cart A wins."},
+{t:"8.7B",q:"A small car and a heavy truck get the same forward net force. Why does the car speed up faster?",c:["The car has more inertia","The car has less mass","The truck has less friction","The car's force is actually bigger"],a:1,e:"Same force ÷ smaller mass = bigger acceleration. That is Newton's 2nd law."},
+// Phase C: 3rd law & mixed
+{t:"8.7B",q:"A swimmer pushes the water backward with her arms. What moves her forward?",c:["Gravity pulling her","The water pushing her forward","Her inertia","Friction from her swimsuit"],a:1,e:"Newton's 3rd law: for every action there is an equal and opposite reaction. She pushes the water back, and the water pushes her forward."},
+{t:"8.7B",q:"During launch, a rocket pushes hot gases DOWN out of its engines. What happens?",c:["The gases push the rocket up","Gravity disappears","The rocket's mass increases","The forces cancel and nothing moves"],a:0,e:"Newton's 3rd law: the rocket pushes the gases down and the gases push the rocket UP with an equal force. Action-reaction forces act on DIFFERENT objects, so they don't cancel."},
+{t:"8.7B",q:"A bug hits a car's windshield. How does the force of the bug on the windshield compare to the force of the windshield on the bug?",c:["The windshield's force is much bigger","The bug's force is much bigger","The forces are equal in size and opposite in direction","The bug exerts no force at all"],a:2,e:"Trick question! Newton's 3rd law says action-reaction forces are ALWAYS equal in size and opposite in direction, even when one object is tiny."},
+{t:"8.7B",q:"If the forces are equal, why does the BUG splat while the car barely notices?",c:["The bug has much less mass, so it gets a much bigger acceleration","The car has no inertia","The bug's force is too small to count","Gravity pulls harder on the bug"],a:0,e:"This is the 2nd law! Same force, but the bug's mass is tiny, so its acceleration (change in motion) is HUGE. The car's large mass means almost no change."},
+{t:"8.7B",q:"A student on a skateboard throws a heavy medicine ball forward. What happens to the student?",c:["The student rolls forward with the ball","The student rolls backward","The student stays perfectly still","The student speeds up forward"],a:1,e:"Newton's 3rd law: the student pushes the ball forward, so the ball pushes the student BACKWARD."},
+{t:"8.7B",q:"Seat belts keep you from flying forward when a car crashes. Which law are seat belts designed for?",c:["Newton's 3rd law","Conservation of energy","Newton's 2nd law","Newton's 1st law"],a:3,e:"In a crash the car stops, but your body keeps moving because of inertia (1st law). The seat belt supplies the unbalanced force that stops YOU."},
+{t:"8.7B",q:"Kicking a soccer ball harder makes it speed up more. Which law does this show?",c:["Newton's 1st law","Newton's 2nd law","Newton's 3rd law","None of Newton's laws"],a:1,e:"More force on the same mass = more acceleration. That's Newton's 2nd law (F = ma)."},
+{t:"8.7B",q:"FINAL BLOW! You push on a wall with 40 N of force. What force does the wall exert on you?",c:["0 N, because walls can't push","20 N toward you","40 N toward you","80 N toward you"],a:2,e:"Newton's 3rd law: the wall pushes back on you with an EQUAL (40 N) and OPPOSITE (toward you) force. That's why you don't fall through it!"}
+];
+const MAXHP=2000, HEAL=200, LET="ABCD";
+let S, timeLimit=60, sound=true, tick=null, actx=null;
+
+const $=id=>document.getElementById(id);
+const shieldSVG='<svg class="shield" viewBox="0 0 40 44"><path d="M20 2 L37 9 V22 C37 33 29 40 20 42 C11 40 3 33 3 22 V9 Z" fill="#38bdf8" stroke="#e0f2fe" stroke-width="3"/><path d="M20 10 L29 14 V22 C29 28 25 32 20 34 Z" fill="#e0f2fe" opacity=".5"/></svg>';
+
+function beep(f,d,type="square",v=.08,slide){if(!sound||!actx)return;const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=f;if(slide)o.frequency.exponentialRampToValueAtTime(slide,actx.currentTime+d);g.gain.setValueAtTime(v,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d);o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+d)}
+const sfx={hit(){beep(220,.25,"sawtooth",.12,60);setTimeout(()=>beep(660,.15,"square",.07),80)},combo(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.12),i*70))},miss(){beep(160,.5,"sawtooth",.14,40)},tick(){beep(880,.05,"sine",.05)},win(){[523,659,784,1046,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.22,"triangle",.12),i*150))},phase(){beep(110,.9,"sawtooth",.13,440)}};
+
+document.querySelectorAll(".opt[data-t]").forEach(b=>b.onclick=()=>{document.querySelectorAll(".opt[data-t]").forEach(x=>x.classList.remove("on"));b.classList.add("on");timeLimit=+b.dataset.t});
+$("soundBtn").onclick=()=>{sound=!sound;$("soundBtn").classList.toggle("on",sound);$("soundBtn").textContent=sound?"🔊 Sound on":"🔇 Sound off"};
+$("startBtn").onclick=()=>{try{actx=actx||new (window.AudioContext||window.webkitAudioContext)()}catch(e){}start()};
+$("restartBtn").onclick=()=>showOverlay(`<h2>RESTART?</h2><p>The Titan will return to full health.</p><div class="settings"><button class="big" onclick="hideOverlay();start()">YES, RESTART</button><button class="opt" onclick="hideOverlay()">Keep playing</button></div>`);
+$("nextBtn").onclick=next;
+document.addEventListener("keydown",e=>{if(!$("battle").classList.contains("active")||$("overlay").classList.contains("show"))return;const k=e.key.toUpperCase();const map={A:0,B:1,C:2,D:3,"1":0,"2":1,"3":2,"4":3};if(k in map&&!S.answered)choose(map[k]);else if((e.key===" "||e.key==="Enter")&&S.answered){e.preventDefault();next()}});
+
+function start(){
+  S={i:0,hp:MAXHP,shields:5,streak:0,best:0,correct:0,missed:[],answered:false,defeated:false,stars:0,phase:1,heals:0};
+  setPhase(1,true);
+  $("title").classList.remove("active");$("battle").classList.add("active");
+  updateHUD();load();
+}
+function setPhase(p,silent){
+  S.phase=p;const r=document.documentElement.style;
+  const cols={1:["#38bdf8","#0ea5e9"],2:["#fb923c","#ea580c"],3:["#f43f5e","#be123c"]};
+  r.setProperty("--phase",cols[p][0]);r.setProperty("--phase2",cols[p][1]);
+  $("phaseLabel").textContent=S.defeated?"DEFEATED":"PHASE "+p;
+  $("cracks").setAttribute("opacity",p===1?0:p===2?.5:1);
+  if(!silent){sfx.phase();const n={2:["PHASE 2: OVERDRIVE","The Titan is overheating! Its core glows orange. Keep the hits coming!"],3:["PHASE 3: MELTDOWN","The Titan is cracking! One more push and it goes down!"]}[p];
+    showOverlay(`<h2>${n[0]}</h2><p>${n[1]}</p><button class="big" onclick="hideOverlay()">FIGHT ON!</button>`)}
+}
+function updateHUD(){
+  const pct=Math.max(0,S.hp)/MAXHP*100;$("hpBar").style.width=pct+"%";
+  $("hpText").textContent=S.defeated?`DEFEATED · ⭐ Bonus stars: ${S.stars}`:`${Math.max(0,S.hp)} / ${MAXHP}`;
+  $("shields").innerHTML=Array.from({length:5},(_,k)=>shieldSVG.replace('class="shield"',`class="shield${k>=S.shields?" lost":""}"`)).join("");
+  $("streak").textContent=S.streak>=3?`🔥 COMBO x${S.streak}`:`STREAK: ${S.streak}`;
+}
+function load(){
+  const Q=QUESTIONS[S.i];S.answered=false;
+  $("qNum").textContent=(S.defeated?"BONUS ":"")+`Question ${S.i+1} / ${QUESTIONS.length}`;
+  $("qTeks").textContent="TEKS "+Q.t;$("qText").textContent=Q.q;
+  $("choices").innerHTML=Q.c.map((c,k)=>`<button class="choice" data-k="${k}"><span class="L">${LET[k]}</span><span>${c}</span></button>`).join("");
+  $("choices").querySelectorAll(".choice").forEach(b=>b.onclick=()=>choose(+b.dataset.k));
+  $("explain").className="explain";$("nextBtn").classList.remove("show");$("prompt").style.display="";
+  startTimer();
+}
+function startTimer(){
+  clearInterval(tick);const el=$("timer");
+  if(!timeLimit){el.style.display="none";return}
+  el.style.display="";let t=timeLimit;el.textContent=t;el.classList.remove("low");
+  tick=setInterval(()=>{t--;el.textContent=t>0?t:"⏰";if(t<=10&&t>0){el.classList.add("low");sfx.tick()}if(t<=0){clearInterval(tick);el.classList.remove("low");$("prompt").textContent="⏰ TIME! Boards up! Teacher: click the class's answer.";beep(300,.4,"triangle",.1)}},1000);
+}
+function choose(k){
+  if(S.answered)return;S.answered=true;clearInterval(tick);
+  const Q=QUESTIONS[S.i],ok=k===Q.a,btns=$("choices").querySelectorAll(".choice");
+  btns.forEach((b,j)=>{b.disabled=true;if(j===Q.a)b.classList.add("correct");else if(j===k)b.classList.add("wrong")});
+  $("prompt").style.display="none";
+  const ex=$("explain");ex.innerHTML=(ok?"<b>✅ CORRECT!</b> ":`<b>❌ Not quite. The answer is ${LET[Q.a]}.</b> `)+Q.e;
+  ex.className="explain show"+(ok?"":" bad");
+  if(ok){
+    S.correct++;S.streak++;S.best=Math.max(S.best,S.streak);
+    if(S.defeated){S.stars++;floatText("⭐ +1");sfx.combo()}
+    else{
+      const dmg=S.streak>=5?150:S.streak>=3?125:100;S.hp-=dmg;
+      floatText(S.streak>=3?`-${dmg} COMBO!`:`-${dmg}`);
+      const box=$("bossBox");box.classList.remove("hit");void box.offsetWidth;box.classList.add("hit");
+      flash("white");S.streak>=3?sfx.combo():sfx.hit();
+    }
+  }else{
+    S.streak=0;S.missed.push(S.i);
+    if(!S.defeated){S.shields--;flash("red");document.body.classList.remove("shake");void document.body.offsetWidth;document.body.classList.add("shake");sfx.miss()}
+    else beep(200,.3,"triangle",.08);
+  }
+  updateHUD();
+  setTimeout(()=>{
+    if(!S.defeated&&S.hp<=0){S.defeated=true;S.hp=0;updateHUD();return victory(true)}
+    if(!S.defeated&&S.shields<=0){S.hp=Math.min(MAXHP,S.hp+HEAL);S.shields=5;S.heals++;updateHUD();
+      showOverlay(`<h2>SHIELDS DOWN!</h2><p>The Titan used the break to recharge <b>+${HEAL} HP</b>. Your shields are restored. Time to fight back!</p><button class="big" onclick="hideOverlay()">REBUILD &amp; FIGHT</button>`);}
+    else if(!S.defeated){const p=S.hp<=MAXHP/3?3:S.hp<=MAXHP*2/3?2:1;if(p>S.phase)setPhase(p)}
+    $("nextBtn").classList.add("show");
+  },700);
+}
+function next(){if(!S.answered)return;S.i++;if(S.i>=QUESTIONS.length)return finish();load()}
+function floatText(t){const d=document.createElement("div");d.className="dmg";d.textContent=t;d.style.left=(30+Math.random()*30)+"%";d.style.top="30%";$("bossBox").appendChild(d);setTimeout(()=>d.remove(),1300)}
+function flash(c){const f=$("flash");f.className="flash";void f.offsetWidth;f.className="flash "+c}
+function showOverlay(h){$("overlay").innerHTML=h;$("overlay").classList.add("show")}
+function hideOverlay(){$("overlay").classList.remove("show")}
+function statsHTML(){return `<div class="stats"><div class="stat"><b>${S.correct}/${S.i+ (S.i<QUESTIONS.length?1:0)}</b>Correct</div><div class="stat"><b>${S.best}</b>Best streak</div><div class="stat"><b>${S.heals}</b>Titan recharges</div></div>`}
+function victory(){
+  sfx.win();setPhase(S.phase,true);$("phaseLabel").textContent="DEFEATED";
+  const left=QUESTIONS.length-S.i-1;
+  showOverlay(`<h2 style="color:var(--gold);text-shadow:0 0 30px #f59e0b">TITAN DEFEATED!</h2><p>Your class broke the Inertia Titan's core! ${left>0?`There are <b>${left}</b> questions left. Keep going in the <b>BONUS ROUND</b> to earn ⭐ stars!`:""}</p>${statsHTML()}<button class="big" onclick="hideOverlay();${left>0?"$('nextBtn').classList.add('show')":"finish()"}">${left>0?"BONUS ROUND ▶":"SEE RESULTS"}</button>`);
+}
+function finish(){
+  clearInterval(tick);
+  const missed=S.missed.length?`<div class="missed"><b>Review these together:</b><ul>${S.missed.map(i=>`<li><b>Q${i+1} (${QUESTIONS[i].t}):</b> ${QUESTIONS[i].q} <i>Answer: ${LET[QUESTIONS[i].a]}. ${QUESTIONS[i].c[QUESTIONS[i].a]}</i></li>`).join("")}</ul></div>`:"<p>⭐ PERFECT GAME! No missed questions! ⭐</p>";
+  const title=S.defeated?`<h2 style="color:var(--gold)">VICTORY!</h2><p>The Inertia Titan is offline. ⭐ Bonus stars: ${S.stars}</p>`:`<h2>THE TITAN ESCAPED!</h2><p>It limped away with <b>${S.hp} HP</b> left. Review the questions below, then challenge it to a rematch!</p>`;
+  if(S.defeated)sfx.win();
+  showOverlay(`${title}<div class="stats"><div class="stat"><b>${S.correct}/${QUESTIONS.length}</b>Correct</div><div class="stat"><b>${S.best}</b>Best streak</div><div class="stat"><b>${S.heals}</b>Titan recharges</div></div>${missed}<div class="settings"><button class="big" onclick="hideOverlay();start()">${S.defeated?"PLAY AGAIN":"REMATCH!"}</button><button class="opt" onclick="hideOverlay();$('battle').classList.remove('active');$('title').classList.add('active')">Main menu</button></div><div class="credit">© Science with Mrs. Lennon</div>`);
+}
+</script>
+</body>
+</html>
