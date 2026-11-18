@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Storm Quest: Fury of the Storm Tyrant</title>
+<style>
+:root{--ink:#fff6e8;--muted:#d9c6ad;--accent:#ff7a3d;--good:#2fd47a;--bad:#ff4d5e;--gold:#ffd166;--panel:#211915;--line:#5a3b2c}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(circle at 50% -10%,#3a2016,#0b0605 70%);color:var(--ink);font-family:"Trebuchet MS",Verdana,system-ui,sans-serif;min-height:100vh}
+#app{max-width:1000px;margin:0 auto;padding:10px}
+#hud{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#1c1411;border:3px solid #3e2a20;border-radius:14px;padding:8px 12px;margin-bottom:8px}
+#hud .reg{flex:1 1 200px;min-width:180px}
+#hud .reg b{font-size:18px;display:block;letter-spacing:.5px}
+#hud .reg span{font-size:12px;color:var(--muted)}
+.bar{width:130px;height:14px;background:#000;border:2px solid #555;border-radius:8px;overflow:hidden}
+.bar>i{display:block;height:100%;background:linear-gradient(#5dff9d,#1fae5a);transition:width .3s}
+.bar.xp>i{background:linear-gradient(#ffe38a,#e0a100)}
+.stat{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.stat b{color:var(--ink)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12px;padding:4px 8px;border-radius:20px;background:#2e221d;border:2px solid #4a3529;color:var(--muted);white-space:nowrap}
+.chip.done{background:#163b26;border-color:#2fd47a;color:#c9ffe0}
+.crys{display:flex;gap:3px}
+.crys i{width:14px;height:18px;clip-path:polygon(50% 0,100% 35%,50% 100%,0 35%);background:#3a2c26;display:block}
+.hbtn{background:#2e221d;border:2px solid #5a3b2c;color:var(--ink);border-radius:10px;padding:6px 10px;font-size:15px;cursor:pointer}
+.hbtn:hover{background:#3d2c25}
+#stage{position:relative;border:4px solid #3e2a20;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 10px 40px #000}
+canvas{display:block;width:100%;height:auto}
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(20,12,9,.92);border:2px solid var(--gold);color:var(--ink);padding:8px 16px;border-radius:12px;font-size:15px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
+#toast.show{opacity:1}
+#dpad{display:none;justify-content:center;gap:40px;margin-top:10px;user-select:none;-webkit-user-select:none;touch-action:none}
+#dpad .pad{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(3,58px);gap:4px}
+#dpad button{background:#2e221d;border:3px solid #5a3b2c;color:#fff;border-radius:12px;font-size:24px;touch-action:none}
+#dpad button:active{background:#5a3b2c}
+#tip{font-size:13px;color:var(--muted);text-align:center;margin-top:8px}
+#overlay{position:fixed;inset:0;background:rgba(6,3,2,.8);display:flex;align-items:flex-start;justify-content:center;overflow:auto;z-index:50;padding:14px}
+#overlay.hidden{display:none}
+#panel{background:linear-gradient(#2a1f1a,#1a1210);border:4px solid var(--line);border-radius:18px;max-width:900px;width:100%;padding:20px 22px;box-shadow:0 20px 60px #000;margin:auto;animation:pop .25s ease-out}
+@keyframes pop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
+h2{margin:0 0 8px;font-size:24px;color:var(--gold)}
+h3{margin:6px 0;font-size:19px}
+p{line-height:1.5}
+.btn{background:linear-gradient(#ff9a52,#e2571c);border:none;border-bottom:5px solid #9b3510;color:#fff;font-weight:bold;font-size:18px;padding:11px 22px;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:.5px}
+.btn:hover{filter:brightness(1.1)}
+.btn:active{transform:translateY(3px);border-bottom-width:2px}
+.btn.alt{background:linear-gradient(#5f7cff,#3550d6);border-bottom-color:#1f2f8a}
+.btn.green{background:linear-gradient(#41e08b,#16a457);border-bottom-color:#0b6a36}
+.btn:disabled{filter:grayscale(1) brightness(.6);cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.center{text-align:center}
+/* title */
+.logo{font-size:52px;font-weight:900;letter-spacing:3px;background:linear-gradient(#ffe08a,#ff7a3d 55%,#c8261b);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #3a0f06);line-height:1.05}
+.subt{font-size:22px;color:#ffb38a;font-weight:bold;letter-spacing:2px}
+.teks{display:inline-block;margin:10px 0;padding:5px 12px;border:2px solid var(--gold);border-radius:20px;color:var(--gold);font-size:14px}
+input[type=text]{font-size:20px;padding:10px 14px;border-radius:10px;border:3px solid var(--line);background:#120c0a;color:#fff;width:280px;font-family:inherit}
+.howto{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:16px;text-align:left}
+.howto div{background:#1a1310;border:2px solid #3e2a20;border-radius:12px;padding:10px;font-size:14px;color:var(--muted)}
+.howto b{color:var(--ink)}
+/* dialogue */
+.dlg{display:flex;gap:16px;align-items:flex-start}
+.portrait{flex:0 0 120px;text-align:center;font-size:13px;color:var(--gold);font-weight:bold}
+.bubble{flex:1;background:#fff8ec;color:#2a1a12;border-radius:16px;padding:14px 18px;position:relative;font-size:17px;line-height:1.55}
+.bubble h3{color:#b8401a;margin-top:0}
+.bubble b{color:#7a2408}
+.bubble table{border-collapse:collapse;width:100%;font-size:14px;margin-top:6px}
+.bubble td,.bubble th{border:1px solid #c9a98a;padding:5px 7px;text-align:left;vertical-align:top}
+.bubble th{background:#f3d9bd}
+.tipbox{background:#fff0c2;border-left:6px solid #e0a100;padding:8px 12px;border-radius:8px;margin-top:8px;font-size:15px}
+.dots{display:flex;gap:6px;justify-content:center;margin:12px 0}
+.dots i{width:10px;height:10px;border-radius:50%;background:#4a3529}
+.dots i.on{background:var(--gold)}
+/* battle */
+.arena{border-radius:14px;padding:12px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;min-height:200px;position:relative;overflow:hidden}
+.fighter{font-size:14px}
+.fighter b{font-size:17px;display:block;margin-bottom:4px}
+.foe{text-align:right}
+.foe .bar{margin-left:auto}
+.bar.foehp>i{background:linear-gradient(#ff8a8a,#d62839)}
+.mon{animation:bob 1.6s ease-in-out infinite;filter:drop-shadow(0 8px 8px rgba(0,0,0,.5))}
+@keyframes bob{50%{transform:translateY(-8px)}}
+.mon.hit{animation:hit .45s}
+@keyframes hit{0%,100%{transform:none;filter:none}20%{transform:translateX(-14px) rotate(-6deg);filter:brightness(3)}50%{transform:translateX(12px) rotate(5deg)}70%{transform:translateX(-6px)}}
+.shake{animation:shk .4s}
+@keyframes shk{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.dmg{position:absolute;font-weight:900;font-size:34px;color:#ffe066;text-shadow:0 3px 0 #000;animation:fly 1s forwards;pointer-events:none}
+@keyframes fly{to{transform:translateY(-60px);opacity:0}}
+.flash{position:absolute;inset:0;background:#ff2e2e;opacity:0;pointer-events:none;animation:fl .5s}
+@keyframes fl{30%{opacity:.45}}
+.qcard{background:#fffaf1;color:#24170f;border-radius:14px;padding:14px 16px;margin-top:12px}
+.qmeta{display:flex;justify-content:space-between;font-size:13px;font-weight:bold;color:#9a4a1e;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;gap:8px;flex-wrap:wrap}
+.qtext{font-size:18px;line-height:1.5}
+.qtext table{border-collapse:collapse;margin:8px 0;font-size:15px}
+.qtext td,.qtext th{border:1.5px solid #9c7b5c;padding:5px 10px;text-align:center}
+.qtext th{background:#f1dcc3}
+.diag{margin:8px 0;text-align:center}
+.diag svg{max-width:100%;height:auto;border-radius:10px;border:2px solid #9c7b5c}
+.choices{display:grid;gap:8px;margin-top:10px}
+.choice{display:flex;gap:10px;align-items:flex-start;text-align:left;background:#fff;border:3px solid #d8c2a8;border-radius:12px;padding:10px 12px;font-size:16px;cursor:pointer;color:#24170f;font-family:inherit;line-height:1.4}
+.choice:hover:not(:disabled){border-color:#ff7a3d;background:#fff4e8}
+.choice .lt{flex:0 0 28px;height:28px;border-radius:50%;background:#3b2a22;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.choice.picked{border-color:#3550d6;background:#eef1ff}
+.choice.correct{border-color:#16a457;background:#dcffe9}
+.choice.wrong{border-color:#d62839;background:#ffe1e4}
+.choice.gone{opacity:.25;text-decoration:line-through}
+.choice:disabled{cursor:default}
+.fb{margin-top:10px;padding:12px 14px;border-radius:12px;font-size:16px;line-height:1.5;display:none}
+.fb.good{display:block;background:#dcffe9;border:2px solid #16a457}
+.fb.bad{display:block;background:#ffe9eb;border:2px solid #d62839}
+.fb b.h{font-size:19px;display:block;margin-bottom:3px}
+.qact{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap}
+.scan{background:#2b3a66;color:#fff;border:none;border-radius:10px;padding:8px 12px;font-size:14px;cursor:pointer;font-family:inherit}
+.scan:disabled{opacity:.4;cursor:default}
+.streak{font-size:14px;font-weight:bold;color:#ff7a3d}
+/* stations */
+.ins{color:var(--muted);margin:2px 0 10px}
+.bins{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.bin{background:#14100e;border:3px dashed #6b4a37;border-radius:14px;min-height:120px;padding:8px;cursor:pointer;transition:background .2s}
+.bin:hover{background:#21170f}
+.binh{font-weight:bold;color:var(--gold);text-align:center;margin-bottom:6px;font-size:16px}
+.binc{display:flex;flex-wrap:wrap;gap:6px}
+.cards{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-content:center}
+.card{background:#fff6e6;color:#2a1a12;border:3px solid #d8b994;border-radius:10px;padding:8px 10px;font-size:15px;cursor:pointer;font-family:inherit;max-width:260px}
+.card.sel{border-color:#ff7a3d;box-shadow:0 0 0 4px rgba(255,122,61,.4);transform:translateY(-3px)}
+.card.placed{font-size:13px;padding:5px 8px;cursor:default;background:#dcffe9;border-color:#16a457}
+.msg{min-height:26px;text-align:center;margin-top:10px;font-weight:bold;color:var(--gold)}
+.slots{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.slot{background:#14100e;border:2px dashed #6b4a37;border-radius:10px;padding:8px 12px;min-height:44px;display:flex;gap:10px;align-items:center}
+.slot .n{flex:0 0 30px;height:30px;border-radius:50%;background:#5a3b2c;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.slot.fill{border-style:solid;border-color:#16a457;background:#123122}
+.ocards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+.ocard{background:#fff6e6;color:#2a1a12;border:3px solid #d8b994;border-radius:12px;padding:8px;font-size:14px;cursor:pointer;font-family:inherit;text-align:center}
+.ocard svg{width:100%;height:auto;display:block;margin-bottom:4px;border-radius:8px}
+.ocard.used{visibility:hidden}
+.labctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:10px 0}
+.labctl div{background:#14100e;border:2px solid #4a3529;border-radius:12px;padding:8px}
+.labctl b{display:block;color:var(--gold);margin-bottom:6px;font-size:14px}
+.tog{display:inline-block;margin:3px;padding:7px 10px;border-radius:10px;border:2px solid #6b4a37;background:#2a1f1a;color:#fff;cursor:pointer;font-family:inherit;font-size:14px}
+.tog.on{background:#ff7a3d;border-color:#ffb38a}
+.labview{background:#0e0a09;border-radius:14px;padding:6px;text-align:center}
+.labview svg{max-width:100%;height:auto}
+.result{background:#fff8ec;color:#2a1a12;border-radius:12px;padding:10px 14px;margin-top:8px;font-size:15px;line-height:1.5;min-height:60px}
+.disc{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.disc span{font-size:13px;padding:5px 9px;border-radius:20px;border:2px solid #4a3529;color:var(--muted)}
+.disc span.got{border-color:#2fd47a;color:#c9ffe0;background:#163b26}
+.slideL{animation:slL 1.1s ease-out both}
+.slideR{animation:slR 1.1s ease-out both}
+.apartL{animation:apL 1.1s ease-out both}
+.apartR{animation:apR 1.1s ease-out both}
+.upS{animation:upS 1.1s ease-out both}
+.dnS{animation:dnS 1.1s ease-out both}
+@keyframes slL{from{transform:translateX(-45px)}}
+@keyframes slR{from{transform:translateX(45px)}}
+@keyframes apL{from{transform:translateX(30px)}}
+@keyframes apR{from{transform:translateX(-30px)}}
+@keyframes upS{from{transform:translateY(40px)}}
+@keyframes dnS{from{transform:translateY(-40px)}}
+.popin{animation:popin .6s 1s both}
+@keyframes popin{from{opacity:0;transform:scale(.6)}}
+.glow{animation:glw 1.2s ease-in-out infinite}
+@keyframes glw{50%{opacity:.55}}
+input[type=range]{width:100%;accent-color:#ff7a3d;height:30px}
+.journal .reg{border:2px solid #3e2a20;border-radius:14px;padding:10px 14px;margin:10px 0;background:#1a1310}
+.journal .page{background:#fff8ec;color:#2a1a12;border-radius:12px;padding:10px 14px;margin:8px 0;font-size:15px;line-height:1.5}
+.journal .page h4{margin:0 0 4px;color:#b8401a;font-size:17px}
+.journal .page table{border-collapse:collapse;width:100%;font-size:13px}
+.journal .page td,.journal .page th{border:1px solid #c9a98a;padding:4px 6px;text-align:left}
+.locked{color:var(--muted);font-style:italic}
+.cert{background:linear-gradient(#fff8e6,#ffe9c4);color:#2a1a12;border:8px double #b8401a;border-radius:16px;padding:22px;text-align:center}
+.cert h1{margin:4px 0;color:#b8401a;font-size:34px}
+.cert .nm{font-size:36px;font-weight:900;border-bottom:3px solid #b8401a;display:inline-block;padding:0 20px;margin:8px 0}
+.cert table{margin:10px auto;border-collapse:collapse;font-size:16px}
+.cert td{padding:5px 14px;border-bottom:1px solid #d9b98f;text-align:left}
+.codes{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+.codes span{background:#2a1a12;color:#ffd166;font-weight:bold;letter-spacing:2px;padding:6px 10px;border-radius:8px;font-family:monospace;font-size:16px}
+.bigcode{font-family:monospace;font-size:40px;letter-spacing:6px;color:var(--gold);background:#120c0a;border:3px solid var(--gold);display:inline-block;padding:8px 22px;border-radius:12px;margin:10px 0}
+@media (max-width:640px){.logo{font-size:34px}.dlg{flex-direction:column;align-items:center}.portrait{flex:0 0 auto}.arena{grid-template-columns:1fr 1fr}.arena .mid{grid-column:1/3;grid-row:1;text-align:center}}
+@media print{body{background:#fff}#app{display:none}#overlay{position:static;background:none}#panel{border:none;box-shadow:none}.noprint{display:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <div class="reg"><b id="hName">Storm Quest</b><span id="hSub">TEKS 8.10A</span></div>
+    <div class="stat">HP <div class="bar"><i id="hHp" style="width:100%"></i></div></div>
+    <div class="stat"><span>LVL <b id="hLvl">1</b></span><div class="bar xp"><i id="hXp" style="width:0%"></i></div></div>
+    <div class="chips" id="hChips"></div>
+    <div class="crys" id="hCrys" title="Sky Crystals"></div>
+    <button class="hbtn" id="bJournal" title="Weather Journal">📓 Journal</button>
+    <button class="hbtn" id="bSound" title="Sound">🔊</button>
+    <button class="hbtn" id="bHelp" title="How to play">❓</button>
+  </div>
+  <div id="stage"><canvas id="cv" width="960" height="560"></canvas><div id="toast"></div></div>
+  <div id="dpad">
+    <div class="pad">
+      <span></span><button data-k="u">▲</button><span></span>
+      <button data-k="l">◀</button><span></span><button data-k="r">▶</button>
+      <span></span><button data-k="d">▼</button><span></span>
+    </div>
+  </div>
+  <div id="tip">Move with <b>Arrow keys</b> or <b>WASD</b>. Walk into people 🧑‍🔬, lab stations 🖥️, chests 🎁 and monsters 👾.</div>
+</div>
+<div id="overlay" class="hidden"><div id="panel"></div></div>
+
+<script>
+"use strict";
+/* ================= CONTENT ================= */
+const TILE=40, COLS=24, ROWS=14;
+
+const ROOMS=[
+{ key:"solar", name:"Solar Summit", sub:"The Sun’s energy · uneven heating · heat transfer", code:"SOLAR", crystal:"#ffb703",
+  theme:{floor:"#d9b26f",floor2:"#d2aa66",speck:"#c09450",wall:"#5a3d1e",wallTop:"#a8743a",deco:"spike",decoC:"#9c6b3a",mtn:"#8a6a4a",cap:"#ffd166",hz:"heat",arena:"linear-gradient(#ffb703,#7a3b00)"},
+  guide:{name:"Dr. Sol",coat:"#f5f5f5",shirt:"#ff9f1c",hair:"#3a2a1a",skin:"#c98b5e"},
+  foes:[["Sunspot Sprite","#ffb703"],["Heat Wisp","#fb8500"],["Solar Flare Fox","#ff5d3d"]],
+  map:[
+"########################",
+"#......#.......ll......#",
+"#..G...#...E...ll...C..#",
+"#......#.......ll......#",
+"#......#...............#",
+"#..t.......t......t....#",
+"#P......lll.........S..>",
+"#.......lll............>",
+"#..t...............t...#",
+"#......E....##.........#",
+"#...........##...ll..E.#",
+"#..ll.....t......ll....#",
+"#..ll..................#",
+"########################"],
+  lesson:[
+   {h:"Welcome, Sky Ranger!",b:"I’m <b>Dr. Sol</b>. The <b>Storm Tyrant</b> stole the 5 Sky Crystals and is throwing the weather out of control! To stop him, you must master <b>how the Sun, water, and air work together to make weather and climate</b>.<div class='tipbox'>📓 Every page I show you is saved in your <b>Weather Journal</b>. Open it anytime with the Journal button — it is your secret weapon in battles!</div>"},
+   {h:"The Sun Powers It All",b:"The <b>Sun</b> is the main source of energy for Earth’s weather, winds, ocean currents, and water cycle.<br>• Sunlight travels through space as <b>radiation</b>.<br>• Earth’s surface <b>absorbs</b> it and warms up.<br>• The warm surface then heats the air above it."},
+   {h:"Uneven Heating",b:"Sunlight does not heat Earth evenly.<br>• Near the <b>equator</b>, sunlight hits <b>directly</b> (high angle), so its energy is concentrated in a small area → <b>warmer</b>.<br>• Near the <b>poles</b>, sunlight hits at a <b>low angle</b> and spreads over a larger area → <b>colder</b>.<br>• <b>Land heats up and cools down faster than water.</b> Water needs more energy to change temperature.<div class='tipbox'>⭐ <b>STAAR Tip:</b> Uneven heating is the root cause of <b>wind</b> and <b>ocean currents</b>. They move heat from the equator toward the poles.</div>"},
+   {h:"Heat Transfer in the Atmosphere",b:"<table><tr><th>Type</th><th>How it moves energy</th><th>Weather example</th></tr><tr><td><b>Radiation</b></td><td>Waves through space — no matter needed</td><td>Sunlight warming the ground</td></tr><tr><td><b>Conduction</b></td><td>Direct contact</td><td>Hot ground warming the air touching it</td></tr><tr><td><b>Convection</b></td><td>Warm, less dense fluid rises; cool, denser fluid sinks</td><td>Warm air rising to form clouds and storms</td></tr></table>"}
+  ],
+  qs:[
+   {q:"Why are areas near the equator generally warmer than areas near the poles?",c:["Sunlight strikes the equator more directly, so energy is concentrated in a smaller area","The equator is much closer to the Sun than the poles are","The equator has more ocean water to trap heat","The poles receive no sunlight at any time of year"],a:0,e:"Direct sunlight at the equator puts more energy on each square meter. At the poles the same sunlight is <b>spread over a larger area</b>. Distance to the Sun is basically the same."},
+   {q:"The diagram shows two flashlights with the same brightness. Which conclusion is best supported?",d:"sunangle",c:["Area A receives more energy per square meter than Area B","Area B receives more energy per square meter than Area A","Both areas receive the same energy per square meter","Area B is warmer because its light covers more ground"],a:0,e:"The straight-down beam (A) concentrates the same energy in a <b>smaller area</b>. This models sunlight at the <b>equator (A)</b> vs. near the <b>poles (B)</b>."},
+   {q:"On a sunny morning, the hot ground warms the layer of air touching it. This is an example of —",c:["conduction","radiation","convection","condensation"],a:0,e:"Energy moving by <b>direct contact</b> between the ground and the air is <b>conduction</b>."},
+   {q:"Warm air rises above a heated parking lot while cooler air sinks nearby, forming a loop. This is an example of —",c:["convection","conduction","radiation","evaporation"],a:0,e:"Warm, less dense air rising and cool, denser air sinking is a <b>convection current</b>."},
+   {q:"How does energy from the Sun travel through space to reach Earth?",c:["By radiation","By conduction","By convection","By ocean currents"],a:0,e:"Space has almost no matter, so energy must travel as <b>radiation</b> (electromagnetic waves)."},
+   {q:"A student measured the temperature of beach sand and ocean water during one day.<table><tr><th>Time</th><th>Sand (°C)</th><th>Ocean water (°C)</th></tr><tr><td>6 a.m.</td><td>21</td><td>24</td></tr><tr><td>2 p.m.</td><td>38</td><td>26</td></tr><tr><td>10 p.m.</td><td>19</td><td>24</td></tr></table>Which conclusion is best supported by the data?",c:["Land heats up and cools down faster than water","Water heats up faster than land","Sand and water change temperature at the same rate","The ocean was warmer than the sand all day"],a:0,e:"The sand changed by about 19°C, but the water changed only about 2°C. <b>Land heats and cools faster than water.</b>"},
+   {q:"Which TWO are driven mainly by energy from the Sun?",c:["Evaporation of ocean water","Winds caused by uneven heating","Earthquakes along faults","Ocean tides","Earth’s magnetic field"],a:[0,1],multi:true,e:"The Sun powers <b>evaporation</b> and causes <b>uneven heating</b>, which creates wind. Tides are caused mainly by the Moon; earthquakes come from Earth’s interior."},
+   {q:"Two cities are at the same latitude. City A is on the coast and City B is far inland. Which city most likely has milder summers and winters?",c:["City A, because nearby water heats and cools slowly","City B, because land holds heat longer than water","City B, because it is farther from ocean storms","Both, because they are at the same latitude"],a:0,e:"Water heats and cools <b>slowly</b>, so it keeps nearby air from getting very hot or very cold. Coastal climates are <b>milder</b>."},
+   {q:"If the Sun heated Earth’s surface perfectly evenly, which change would most likely happen?",c:["There would be much less wind and weather movement","There would be more hurricanes","Ocean currents would move faster","The water cycle would speed up"],a:0,e:"Wind and currents come from <b>temperature and pressure differences</b> caused by uneven heating. With even heating, air would hardly move."},
+   {q:"On a sunny day, the air above a dark asphalt parking lot is warmer than the air above a grassy field. What is the best explanation?",c:["The dark asphalt absorbs more of the Sun’s radiation and heats the air above it","The grass gives off heat at night","The parking lot is closer to the Sun","The air over the field contains more energy"],a:0,e:"Dark surfaces <b>absorb more radiation</b>, get hotter, and warm the air above them more (by conduction and convection)."}
+  ]},
+{ key:"cloud", name:"Cloud Cascade", sub:"The water cycle · humidity · how clouds form", code:"CLOUD",crystal:"#8ecae6",
+  theme:{floor:"#cfd8e3",floor2:"#c7d1dd",speck:"#b6c2d0",wall:"#4d5b6d",wallTop:"#8d9fb4",deco:"tree",decoC:"#4f8f6a",mtn:"#7a8796",cap:"#ffffff",hz:"storm",arena:"linear-gradient(#5fa8d3,#1b3a5a)"},
+  guide:{name:"Nimbus Nora",coat:"#5fa8d3",shirt:"#ffffff",hair:"#5a3a22",skin:"#e2b48c"},
+  foes:[["Drizzle Drake","#5fa8d3"],["Fog Phantom","#9aa5b1"],["Vapor Viper","#6bc1e0"]],
+  map:[
+"########################",
+"#..........l...........#",
+"#..G.......l.....E..C..#",
+"#..........l...........#",
+"#....t.....l.....ww....#",
+"#.....................w#",
+"#P........E.......S....>",
+"#......................>",
+"#....ww....l...........#",
+"#....ww....l......t....#",
+"#..........l...E.......#",
+"#..t.......l...........#",
+"#..........l......t....#",
+"########################"],
+  lesson:[
+   {h:"The Sun Runs the Water Cycle",b:"The <b>hydrosphere</b> is all of Earth’s water. The Sun’s energy keeps it moving:<br>1️⃣ <b>Evaporation</b> — the Sun heats water and it becomes water vapor.<br>2️⃣ <b>Condensation</b> — water vapor cools and turns into tiny droplets → <b>clouds</b>.<br>3️⃣ <b>Precipitation</b> — droplets join, get heavy, and fall as rain, snow, sleet, or hail (gravity).<br>4️⃣ <b>Collection</b> — water gathers in oceans, lakes, rivers, and groundwater."},
+   {h:"Humidity & Dew Point",b:"• <b>Humidity</b> = the amount of water vapor in the air.<br>• <b>Warm air can hold more water vapor than cold air.</b><br>• <b>Dew point</b> = the temperature at which air becomes saturated and water vapor starts to <b>condense</b>.<br>When the air cools to its dew point → <b>clouds, fog, or dew</b> form."},
+   {h:"How Clouds Form",b:"Air rises → it <b>expands and cools</b> → it reaches its <b>dew point</b> → water vapor <b>condenses</b> → a cloud forms.<br>Air can be forced up by: heating from the ground, mountains, or fronts.<br>• <b>Rising air</b> = clouds and rain.<br>• <b>Sinking air</b> warms up = clear skies."},
+   {h:"STAAR Tip",b:"<div class='tipbox'>⭐ <b>Evaporation</b> takes in heat energy from the Sun.<br>⭐ <b>Condensation releases</b> that heat energy into the air — this released heat powers <b>thunderstorms and hurricanes</b>.<br>⭐ So the Sun, the hydrosphere, and the atmosphere are all connected!</div>"}
+  ],
+  qs:[
+   {q:"Which water cycle process is driven MOST directly by energy from the Sun?",c:["Evaporation","Precipitation","Runoff","Infiltration"],a:0,e:"The Sun’s energy turns liquid water into water vapor — <b>evaporation</b>. Precipitation and runoff are driven by gravity."},
+   {q:"Water droplets form on the outside of a glass of ice-cold lemonade on a humid day. Why?",c:["Water vapor in the air cools to its dew point and condenses on the glass","Lemonade leaks through the glass","The ice melts and moves through the glass","Warm air pulls water out of the lemonade"],a:0,e:"The cold glass cools nearby air to its <b>dew point</b>, so water vapor <b>condenses</b> into droplets — the same thing that makes clouds and dew."},
+   {q:"At noon, the air temperature is 30°C and the dew point is 18°C. Overnight, the air temperature drops to 18°C. What will most likely form?",c:["Dew or fog, because the air reached its dew point","Nothing, because the dew point is too low","Hail, because the air is cold","A drought, because the air dried out"],a:0,e:"When the air temperature drops to the <b>dew point</b>, the air is saturated and water vapor condenses into <b>dew or fog</b>."},
+   {q:"What happens to a pocket of warm, moist air as it rises higher in the atmosphere?",c:["It expands and cools, and clouds can form if it reaches its dew point","It shrinks and warms up","It gains more water vapor and becomes heavier","It stays the same temperature"],a:0,e:"Rising air <b>expands and cools</b>. If it cools to its dew point, water vapor condenses and a <b>cloud</b> forms."},
+   {q:"Which TWO conditions make clouds most likely to form?",c:["Warm, moist air rising","Air cooling to its dew point","Dry air sinking","A strong high-pressure system overhead","Air temperature far above the dew point"],a:[0,1],multi:true,e:"Clouds need <b>rising air</b> that <b>cools to its dew point</b>. Sinking air and high pressure warm the air and keep skies clear."},
+   {q:"Hot, humid summer afternoons in Texas often end with thunderstorms. Which explanation is best?",c:["The Sun heats the ground, warm moist air rises, cools, and condenses into tall storm clouds","Cold air from the ocean rises in the afternoon","The Moon pulls water vapor up into the sky","Humid air is heavier, so it sinks and makes rain"],a:0,e:"The Sun heats the ground → warm, moist air rises (convection) → it cools and condenses, <b>releasing heat</b> that makes the cloud grow into a thunderstorm."},
+   {q:"When water vapor condenses into cloud droplets, what happens to energy?",c:["Heat energy is released into the surrounding air","Heat energy is absorbed from the air","No energy change happens","The energy is sent back to the Sun"],a:0,e:"Condensation <b>releases</b> the heat that was absorbed during evaporation. That heat fuels storms."},
+   {q:"The amount of water vapor in the air stays the same, but the temperature drops from 25°C in the afternoon to 15°C at night. What happens to the relative humidity?",c:["It increases, because cooler air can hold less water vapor","It decreases, because there is less water vapor","It stays exactly the same","It drops to zero"],a:0,e:"Cold air can hold <b>less</b> water vapor, so the same amount of vapor makes the air <b>closer to saturated</b> — relative humidity goes up."},
+   {q:"Which sequence correctly shows how rain forms from ocean water?",c:["Sun heats ocean → evaporation → vapor rises and cools → condensation → droplets combine → precipitation","Precipitation → evaporation → condensation → Sun heats ocean","Condensation → Sun heats ocean → precipitation → evaporation","Sun heats ocean → precipitation → condensation → evaporation"],a:0,e:"Energy from the Sun starts it: <b>evaporation → rising & cooling → condensation → droplets grow → precipitation</b>."},
+   {q:"A region has air slowly sinking from high in the atmosphere. What weather is most likely?",c:["Clear, dry skies, because sinking air warms and clouds cannot form","Heavy rain, because sinking air cools","Thunderstorms, because the air is rising quickly","Fog, because sinking air reaches the dew point"],a:0,e:"Sinking air is compressed and <b>warms</b>, moving it away from its dew point — so clouds <b>evaporate</b> and skies are clear."}
+  ]},
+{ key:"press", name:"Pressure Plains", sub:"Air pressure · wind · sea and land breezes", code:"BREEZE",crystal:"#90be6d",
+  theme:{floor:"#c9b27c",floor2:"#c2aa73",speck:"#b39a63",wall:"#4a4038",wallTop:"#7a6a5a",deco:"palm",decoC:"#2f9e4f",mtn:"#6f7b5c",cap:"#e9e9e9",hz:"heat",arena:"linear-gradient(#43aa8b,#14342b)"},
+  guide:{name:"Captain Gale",coat:"#1f4f8a",shirt:"#ffffff",hair:"#b5651d",skin:"#f0c09a"},
+  foes:[["Gust Goblin","#90be6d"],["Breeze Beast","#43aa8b"],["Low-Pressure Lurker","#577590"]],
+  map:[
+"########################",
+"#mm....m......mm....mm.#",
+"#......m..E...m.....C..#",
+"#..G...................#",
+"#..............t.......#",
+"#.......t..............#",
+"#P...........S.........>",
+"#......................>",
+"#......E..........E....#",
+"#wwww......wwww........#",
+"#wwwwww...wwwwwww....ww#",
+"#wwwwwwwwwwwwwwwwwwwwww#",
+"#wwwwwwwwwwwwwwwwwwwwww#",
+"########################"],
+  lesson:[
+   {h:"Air Pressure",b:"<b>Air pressure</b> = the weight of the air pushing down on Earth’s surface.<br>• <b>Warm air</b> is less dense → it <b>rises</b> → <b>LOW pressure</b> at the surface → clouds, rain, storms.<br>• <b>Cool air</b> is denser → it <b>sinks</b> → <b>HIGH pressure</b> → clear, calm, dry weather.<div class='tipbox'>🗺️ On a weather map: <b style='color:#1f4f8a'>H</b> = high pressure (fair weather). <b style='color:#c0392b'>L</b> = low pressure (stormy weather). A <b>falling barometer</b> means a storm may be coming.</div>"},
+   {h:"What Makes Wind?",b:"<b>Wind</b> is air moving from <b>HIGH pressure</b> toward <b>LOW pressure</b>.<br>• The bigger the pressure difference, the <b>stronger</b> the wind.<br>• Pressure differences come from <b>uneven heating</b> by the Sun.<br>So the Sun → uneven heating → pressure differences → wind!"},
+   {h:"Sea Breeze & Land Breeze",b:"<b>Daytime — Sea Breeze:</b> Land heats faster than water. Warm air over the land rises (low pressure). Cooler, higher-pressure air over the water flows <b>from the sea to the land</b>.<br><br><b>Nighttime — Land Breeze:</b> Land cools faster than water. Now the air over the land is cooler (higher pressure), so the breeze blows <b>from the land to the sea</b>.<div class='tipbox'>⭐ A sea breeze is a perfect STAAR example of the <b>Sun, hydrosphere, and atmosphere interacting</b>!</div>"}
+  ],
+  qs:[
+   {q:"The diagram shows a beach on a sunny afternoon. In which direction will the wind most likely blow near the ground?",d:"breeze",c:["From the ocean toward the land","From the land toward the ocean","Straight up from the ocean","There will be no wind"],a:0,e:"The hot land heats the air above it, which rises (<b>low pressure</b>). Cooler, higher-pressure air over the ocean moves in: a <b>sea breeze</b>."},
+   {q:"Why does a land breeze usually blow at night?",c:["The land cools faster than the water, so the cooler air over land flows toward the sea","The water cools faster than the land","The Moon pulls the air toward the ocean","Warm air over the land sinks at night"],a:0,e:"At night, land <b>cools faster</b>. Cooler, denser air over the land has higher pressure, so air flows from the land toward the warmer sea."},
+   {q:"Wind always blows —",c:["from areas of high pressure to areas of low pressure","from areas of low pressure to areas of high pressure","from cold oceans to warm oceans only","from the poles to the Moon"],a:0,e:"Air moves from <b>high pressure to low pressure</b>, just like air rushing out of a balloon."},
+   {q:"A weather map shows a large red L over Dallas. What weather should Dallas most likely expect?",c:["Clouds and rain, because air is rising","Clear skies, because air is sinking","Calm, dry weather all week","Freezing temperatures, because L means low temperature"],a:0,e:"<b>L</b> means <b>low pressure</b> — air is rising, cooling, and forming clouds and precipitation. (It means low pressure, not low temperature!)"},
+   {q:"Why do high-pressure systems usually bring clear skies?",c:["Sinking air warms and prevents clouds from forming","Rising air cools and forms clouds","High pressure pushes clouds into space","High pressure only forms over oceans"],a:0,e:"In a high, air <b>sinks and warms</b>, moving away from its dew point, so clouds don’t form."},
+   {q:"A barometer at a weather station recorded these readings.<table><tr><th>Time</th><th>Air pressure (mb)</th></tr><tr><td>9 a.m.</td><td>1018</td></tr><tr><td>12 p.m.</td><td>1010</td></tr><tr><td>3 p.m.</td><td>1002</td></tr><tr><td>6 p.m.</td><td>995</td></tr></table>What is the best prediction?",c:["Stormy weather is approaching","Clear, calm weather is approaching","The temperature will stay exactly the same","A high-pressure system is moving in"],a:0,e:"Steadily <b>falling pressure</b> means a <b>low-pressure system</b> is moving in — clouds, wind, and storms are likely."},
+   {q:"When air near the ground is heated by the Sun, which TWO things happen?",c:["The air becomes less dense","The air rises, lowering the pressure at the surface","The air sinks toward the ground","The air pressure at the surface increases","The air becomes denser"],a:[0,1],multi:true,e:"Heated air becomes <b>less dense</b> and <b>rises</b>, leaving <b>lower pressure</b> at the surface."},
+   {q:"The table shows air pressure in four pairs of cities that are each 200 km apart.<table><tr><th>Pair</th><th>City 1 (mb)</th><th>City 2 (mb)</th></tr><tr><td>A</td><td>1030</td><td>990</td></tr><tr><td>B</td><td>1012</td><td>1008</td></tr><tr><td>C</td><td>1015</td><td>1005</td></tr><tr><td>D</td><td>1020</td><td>1018</td></tr></table>Between which pair will the wind most likely be strongest?",c:["Pair A","Pair B","Pair C","Pair D"],a:0,e:"Pair A has the <b>biggest pressure difference</b> (40 mb), so air rushes between them fastest."},
+   {q:"What is the root cause of almost all wind on Earth?",c:["Uneven heating of Earth’s surface by the Sun","The rotation of the Moon","Ocean waves pushing air","Volcanic eruptions"],a:0,e:"Uneven heating → temperature differences → <b>pressure differences</b> → wind."},
+   {q:"On a hot afternoon, a large parking lot sits next to a lake. Over which area is the air pressure most likely lower, and why?",c:["Over the parking lot, because the warmer air there rises","Over the lake, because water makes air heavier","Over the lake, because the air there is cooler","The pressure is equal everywhere"],a:0,e:"The parking lot heats up faster, warming the air above it. Warm air <b>rises</b>, creating <b>lower pressure</b>. A breeze will blow from the lake toward the lot."}
+  ]},
+{ key:"front", name:"Front Line", sub:"Air masses · cold, warm, stationary & occluded fronts", code:"FRONT",crystal:"#a2d2ff",
+  theme:{floor:"#e3edf5",floor2:"#dbe7f1",speck:"#c8d8e6",wall:"#3d4a5c",wallTop:"#8796ab",deco:"pine",decoC:"#2f5d3a",mtn:"#7d8a9c",cap:"#ffffff",hz:"ice",arena:"linear-gradient(#6a4c93,#1d1630)"},
+  guide:{name:"Forecaster Frank",coat:"#8a3d3d",shirt:"#e8e0c8",hair:"#d0d0d0",skin:"#e2b48c"},
+  foes:[["Frost Golem","#7fb7e6"],["Thunder Toad","#6a4c93"],["Sleet Serpent","#4ea8de"]],
+  map:[
+"########################",
+"#mmm.....mmmm.....mmm..#",
+"#mm..G....mm......C....#",
+"#..........f...........#",
+"#.....E.....f.......mm.#",
+"#............f.........#",
+"#P.....mm.....f..S.....>",
+"#......mm......f.......>",
+"#...............f..E...#",
+"#..m.............f.....#",
+"#.......E.........f....#",
+"#mm................f.mm#",
+"#mmm....mmm.........fmm#",
+"########################"],
+  lesson:[
+   {h:"Air Masses",b:"An <b>air mass</b> is a huge body of air with about the same <b>temperature and humidity</b>. It takes on the traits of where it forms.<br><table><tr><th>Letter</th><th>Means</th><th>Traits</th></tr><tr><td>m (maritime)</td><td>forms over water</td><td>humid</td></tr><tr><td>c (continental)</td><td>forms over land</td><td>dry</td></tr><tr><td>T (tropical)</td><td>forms near the equator</td><td>warm</td></tr><tr><td>P (polar)</td><td>forms near the poles</td><td>cold</td></tr></table><b>mT</b> from the Gulf of Mexico brings Texas its warm, humid air. <b>cP</b> from Canada brings cold, dry “blue northers.”"},
+   {h:"Cold Fronts",b:"A <b>front</b> is the boundary where two air masses meet.<br><b>Cold front</b> (blue triangles ▲): dense cold air pushes <b>under</b> warm air and forces it up <b>quickly</b>.<br>• Tall cumulonimbus clouds, <b>thunderstorms</b>, heavy rain, gusty winds<br>• Afterward: <b>cooler, drier, clearer</b> weather"},
+   {h:"Warm, Stationary & Occluded Fronts",b:"<b>Warm front</b> (red half-circles ◗): warm air slides <b>gently up over</b> cold air.<br>• Layered stratus clouds, <b>light, steady rain</b> for a long time<br>• Afterward: <b>warmer and more humid</b><br><br><b>Stationary front</b>: neither air mass moves → <b>days</b> of clouds and rain in one place.<br><b>Occluded front</b>: a fast cold front <b>catches up</b> to a warm front and lifts the warm air off the ground → clouds and precipitation."},
+   {h:"STAAR Tip",b:"<div class='tipbox'>⭐ <b>Cold front = quick & violent</b> (storms, then cooler).<br>⭐ <b>Warm front = slow & steady</b> (drizzle, then warmer).<br>⭐ Fronts are where warm, moist air is <b>forced to rise</b> — and rising air makes clouds and rain!</div>"}
+  ],
+  qs:[
+   {q:"The diagram shows two air masses meeting. What type of front is shown, and what weather will it most likely bring?",d:"coldfront",c:["A cold front — thunderstorms, then cooler and drier air","A warm front — light drizzle, then warmer air","A stationary front — clear skies for a week","An occluded front — no clouds at all"],a:0,e:"Cold, dense air is <b>wedging under</b> warm air and forcing it up steeply. That makes tall storm clouds — a <b>cold front</b>."},
+   {q:"An air mass that forms over the Gulf of Mexico in summer will most likely be —",c:["warm and humid","cold and dry","warm and dry","cold and humid"],a:0,e:"Over warm <b>water</b> near the tropics = <b>maritime tropical (mT)</b>: warm and humid."},
+   {q:"An air mass that forms over northern Canada in winter will most likely be —",c:["cold and dry","warm and humid","cold and humid","warm and dry"],a:0,e:"Over cold <b>land</b> near the pole = <b>continental polar (cP)</b>: cold and dry."},
+   {q:"In one hour, a town’s temperature drops 15°F, strong gusty winds blow, and a heavy thunderstorm passes. Then skies clear and the air feels cool and dry. What most likely passed through?",c:["A cold front","A warm front","A stationary front","A high-pressure system with no front"],a:0,e:"A sudden temperature drop, storms, then clear cool air is the signature of a <b>cold front</b>."},
+   {q:"A city has several days of light, steady drizzle and gray layered clouds. Afterward, the weather becomes warmer and more humid. What most likely passed through?",c:["A warm front","A cold front","An occluded front","A continental polar air mass"],a:0,e:"Slow, steady precipitation followed by <b>warmer, more humid</b> air is the signature of a <b>warm front</b>."},
+   {q:"Why do cold fronts often cause thunderstorms?",c:["Dense cold air forces warm, moist air to rise quickly, cool, and condense into tall clouds","Warm air sinks rapidly over cold air","Cold air contains more water vapor than warm air","Cold fronts move too slowly for clouds to form"],a:0,e:"The cold air acts like a <b>wedge</b>, shoving warm, moist air <b>up fast</b>. It cools and condenses into tall cumulonimbus clouds."},
+   {q:"Which TWO statements about a stationary front are true?",c:["Neither air mass is moving much","It can bring several days of clouds and precipitation to one area","It always produces tornadoes","It quickly clears the skies","It can only form over oceans"],a:[0,1],multi:true,e:"At a <b>stationary front</b>, the air masses stall, so clouds and rain can sit over one area for <b>days</b>."},
+   {q:"A weather map shows a line of blue triangles moving east toward Austin. What should people in Austin expect soon?",c:["Storms as the front arrives, then cooler temperatures","A long period of light drizzle, then warmer air","Days of unchanging weather","Hotter, more humid weather with no storms"],a:0,e:"Blue triangles = a <b>cold front</b>. Expect a line of storms, then <b>cooler, drier</b> air behind it."},
+   {q:"Texas summers are often hot and humid. Which air mass is most responsible?",c:["Maritime tropical (mT) air from the Gulf of Mexico","Continental polar (cP) air from Canada","Maritime polar (mP) air from the North Pacific","Continental tropical (cT) air only"],a:0,e:"<b>mT air</b> forms over the warm Gulf of Mexico and carries <b>warm, moist</b> air into Texas."},
+   {q:"How does an occluded front form?",c:["A faster cold front catches up to a warm front and lifts the warm air off the ground","A warm front stops moving for several days","Two warm air masses collide over the ocean","Cold air rises over warm air"],a:0,e:"Cold fronts move faster than warm fronts. When one <b>catches up</b>, the warm air between them is lifted completely off the ground — an <b>occluded front</b>."}
+  ]},
+{ key:"climate", name:"Climate Coast", sub:"Weather vs. climate · ocean currents · climate factors", code:"CURRENT",crystal:"#219ebc",
+  theme:{floor:"#3b7a4e",floor2:"#3f8052",speck:"#4d9460",wall:"#24402c",wallTop:"#5f8a5a",deco:"palm",decoC:"#2f9e4f",mtn:"#5b4a3f",cap:"#ffffff",hz:"storm",arena:"linear-gradient(#219ebc,#0b2a3a)"},
+  guide:{name:"Coral the Climatologist",coat:"#d9d9d9",shirt:"#219ebc",hair:"#111111",skin:"#b07850"},
+  foes:[["Current Crab","#219ebc"],["Rain Shadow Raptor","#c08552"],["Gulf Stream Gremlin","#2a9d8f"]],
+  map:[
+"########################",
+"#wwwwwwwwwwwwwwwwwwwwww#",
+"#ww....www.....ww...C.w#",
+"#w..G...ww..E......ll.w#",
+"#w.......w.........ll.w#",
+"#w..t...........t.....w#",
+"#P...........S.........>",
+"#w.....................>",
+"#w...E.....ww......E..w#",
+"#ww.......wwww.......ww#",
+"#www....t..ww...t...www#",
+"#wwww............wwwwww#",
+"#wwwwwwwwwwwwwwwwwwwwww#",
+"########################"],
+  lesson:[
+   {h:"Weather vs. Climate",b:"• <b>Weather</b> = the conditions of the atmosphere at one place and time (today’s rain, this week’s cold front). It changes day to day.<br>• <b>Climate</b> = the <b>average</b> weather of a place over a <b>long time</b> (30+ years).<div class='tipbox'>“It snowed in Dallas yesterday” = weather. “Dallas has hot summers and mild winters” = climate.</div>"},
+   {h:"Oceans Store and Move Heat",b:"Water absorbs a lot of the Sun’s energy and releases it slowly.<br>• <b>Ocean currents</b> carry <b>warm water from the equator toward the poles</b> and cold water back toward the equator.<br>• The warm <b>Gulf Stream</b> keeps Western Europe much milder than places at the same latitude in Canada.<br>• The cold <b>California Current</b> keeps the California coast cool in summer."},
+   {h:"Climate Factors",b:"<table><tr><th>Factor</th><th>Effect</th></tr><tr><td><b>Latitude</b></td><td>Closer to the equator = more direct sunlight = warmer</td></tr><tr><td><b>Nearby water</b></td><td>Milder temperatures, smaller temperature range</td></tr><tr><td><b>Elevation</b></td><td>Higher = colder</td></tr><tr><td><b>Ocean currents</b></td><td>Warm currents warm coasts; cold currents cool them</td></tr><tr><td><b>Mountains</b></td><td>Rain shadow: wet windward side, dry leeward side</td></tr></table>"},
+   {h:"The Rain Shadow",b:"Moist air from the ocean hits a mountain → it is forced <b>up</b> the <b>windward</b> side → it cools, condenses, and <b>rains</b>.<br>The now-dry air <b>sinks</b> down the <b>leeward</b> side and warms → a <b>dry rain shadow</b> (often a desert).<div class='tipbox'>⭐ <b>Big idea of 8.10A:</b> The Sun heats unevenly → air moves (wind) and water moves (currents and the water cycle) → heat and moisture are carried around the planet → <b>weather and climate</b>.</div>"}
+  ],
+  qs:[
+   {q:"Which statement describes CLIMATE rather than weather?",c:["Houston’s average January temperature over the past 30 years is about 54°F","It is raining in Houston this afternoon","A cold front will reach Houston tonight","The wind in Houston is blowing from the south today"],a:0,e:"Climate is the <b>long-term average</b>. The other choices describe conditions at one time — <b>weather</b>."},
+   {q:"London, England, is farther north than New York City, yet London has milder winters. What is the best explanation?",c:["A warm ocean current (the Gulf Stream) carries heat from the tropics toward Western Europe","London is at a higher elevation","London receives more direct sunlight in winter","New York is closer to the North Pole"],a:0,e:"The <b>Gulf Stream</b> and North Atlantic Current carry warm tropical water northeast, warming the air over Western Europe."},
+   {q:"The diagram shows moist ocean air moving over a mountain range. Which side of the mountains will most likely have a dry, desert climate, and why?",d:"rainshadow",c:["Side B, because the air sinks and warms after losing its moisture","Side A, because the air rises and cools","Side A, because it is closer to the ocean","Side B, because it is at a higher elevation"],a:0,e:"Air drops its rain rising up side A (<b>windward</b>). It then <b>sinks and warms</b> on side B (<b>leeward</b>), creating a dry <b>rain shadow</b>."},
+   {q:"Two cities are at the same latitude and elevation.<table><tr><th>City</th><th>Location</th><th>Avg. Jan temp (°F)</th><th>Avg. July temp (°F)</th></tr><tr><td>A</td><td>on the coast</td><td>50</td><td>72</td></tr><tr><td>B</td><td>far inland</td><td>28</td><td>92</td></tr></table>Which explanation best accounts for the difference?",c:["The ocean heats and cools slowly, so it keeps City A’s temperatures moderate","City B receives less sunlight than City A","City A is closer to the equator","City B is at a higher elevation"],a:0,e:"Large bodies of water <b>moderate</b> nearby temperatures, so City A has a much <b>smaller temperature range</b>."},
+   {q:"Why does the windward side of a mountain range usually get more rain than the leeward side?",c:["Air is forced up the windward side, cools to its dew point, and forms clouds and rain","The windward side is closer to the Sun","Air sinks on the windward side and dries out","The leeward side has more trees that block rain"],a:0,e:"Rising air <b>cools</b>, reaches its <b>dew point</b>, and condenses — so the windward side gets the precipitation."},
+   {q:"Which TWO factors would make a city’s climate COLDER?",c:["A higher elevation","A higher latitude","A nearby warm ocean current","A location closer to the equator","A location at sea level"],a:[0,1],multi:true,e:"Temperatures drop at <b>higher elevations</b> and <b>higher latitudes</b> (less direct sunlight)."},
+   {q:"Two coastal cities are at the same latitude. One is next to a COLD ocean current. Compared to the other city, it will most likely have —",c:["cooler summers","hotter summers","more direct sunlight","a higher elevation"],a:0,e:"A <b>cold current</b> cools the air above it, giving nearby coasts <b>cooler summers</b>."},
+   {q:"How do ocean currents affect Earth’s climate?",c:["They move heat from the equator toward the poles","They move heat from the poles toward the equator only","They block sunlight from reaching the ocean","They have no effect on air temperature"],a:0,e:"Currents act like a conveyor belt, carrying <b>warm water poleward</b> and cold water toward the equator, spreading heat around the planet."},
+   {q:"Which statement best describes how the Sun, the hydrosphere, and the atmosphere interact to produce a sea breeze?",c:["The Sun heats the land faster than the ocean, warm air rises over land, and cooler air from over the ocean moves in","The ocean heats faster than the land, so air sinks over the land","The Sun heats the ocean, which pushes waves onto the land","The atmosphere cools the land, so air moves out to sea"],a:0,e:"All three interact: the <b>Sun</b> heats land faster than <b>water</b>, warm <b>air</b> rises over the land, and cooler ocean air flows in."},
+   {q:"Why do places near the equator have warm climates all year long?",c:["They receive direct sunlight all year","They are surrounded by cold ocean currents","They are at high elevations","They have long winters with no sunlight"],a:0,e:"The equator receives <b>direct, concentrated sunlight</b> every season, so it stays warm year-round."}
+  ]},
+{ key:"lair", name:"Storm Tyrant’s Eye", sub:"FINAL BOSS · all of TEKS 8.10A", code:"",crystal:"#ffffff", final:true,
+  theme:{floor:"#2b3240",floor2:"#2f3646",speck:"#3a4254",wall:"#10131a",wallTop:"#3e4a5e",deco:"obsidian",decoC:"#1b1b24",mtn:"#333",cap:"#ffd166",hz:"storm",arena:"linear-gradient(#3e2a6b,#0b0b1a)"},
+  map:[
+"########################",
+"#llll.......llll...llll#",
+"#ll...............l..ll#",
+"#l.......ll............#",
+"#.....t..ll......t.....#",
+"#......................#",
+"#P..................B..#",
+"#......................#",
+"#.....t.........ll.....#",
+"#........ll.....ll.....#",
+"#l.......ll............#",
+"#ll..................ll#",
+"#llll......llll....llll#",
+"########################"],
+  qs:[
+   {q:"Which sequence correctly shows how energy from the Sun can end up powering a thunderstorm?",c:["Sun heats ocean → water evaporates → moist air rises and cools → condensation releases heat → storm grows","Thunderstorm → condensation → evaporation → Sun","Sun heats ocean → precipitation → evaporation → storm stops","Wind → Sun → ocean → evaporation"],a:0,e:"Energy flows from the <b>Sun</b> into <b>evaporating water</b>, then is <b>released by condensation</b> high in the air, fueling the storm."},
+   {q:"A weather station recorded these observations.<table><tr><th>Time</th><th>Temp (°F)</th><th>Pressure (mb)</th><th>Wind from</th><th>Sky</th></tr><tr><td>1 p.m.</td><td>84</td><td>1006</td><td>south</td><td>humid, building clouds</td></tr><tr><td>3 p.m.</td><td>80</td><td>1002</td><td>south</td><td>thunderstorm</td></tr><tr><td>5 p.m.</td><td>64</td><td>1012</td><td>north</td><td>clearing</td></tr></table>What most likely passed the station?",c:["A cold front","A warm front","A stationary front","A sea breeze"],a:0,e:"Pressure dropped, storms hit, then the <b>temperature fell 16°F, pressure rose, and the wind shifted north</b> — a classic <b>cold front</b>."},
+   {q:"Which TWO are examples of the hydrosphere influencing weather or climate?",c:["Ocean water evaporating to form clouds","A warm ocean current warming the air over a coast","An earthquake shaking a city","The Sun’s radiation crossing space","A mountain range being pushed up by plates"],a:[0,1],multi:true,e:"The <b>hydrosphere</b> (water) affects weather through <b>evaporation</b> and through <b>ocean currents</b> that move heat."},
+   {q:"At a beach, the wind blows from the ocean at 3 p.m. but from the land at 3 a.m. Which statement best explains this?",c:["Land heats and cools faster than water, so the area with lower pressure switches between day and night","Water heats and cools faster than land","The Moon’s gravity reverses the wind each night","Ocean currents change direction twice a day"],a:0,e:"By day the land is warmer (low pressure over land → <b>sea breeze</b>). At night the land is cooler (higher pressure over land → <b>land breeze</b>)."},
+   {q:"A town on the west side of a mountain range gets 120 cm of rain per year. A town on the east side gets only 25 cm. Winds blow from the west. Which explanation is best?",c:["Air rises and drops its moisture on the west side, then sinks and warms on the east side","The east side is closer to the ocean","The west side receives less sunlight","Air sinks on the west side and rises on the east side"],a:0,e:"The west (<b>windward</b>) side gets rain from rising, cooling air. The east (<b>leeward</b>) side is in the dry <b>rain shadow</b>."},
+   {q:"A fast-moving continental polar air mass pushes south into warm, humid maritime tropical air over Texas. What will most likely happen along the boundary?",c:["A line of thunderstorms will form as warm air is forced upward","The sky will stay clear because both air masses sink","A warm front will bring days of drizzle","Nothing, because air masses cannot meet"],a:0,e:"Cold air pushing into warm, moist air forms a <b>cold front</b> that lifts the warm air quickly → <b>thunderstorms</b>."},
+   {q:"The air temperature is 25°C and the dew point is also 25°C. What is the relative humidity, and what is likely?",c:["100% — fog, clouds, or rain are likely","0% — the air is completely dry","50% — clear skies are likely","25% — the air is about to warm up"],a:0,e:"When temperature = dew point, the air is <b>saturated (100% humidity)</b> and water vapor condenses."},
+   {q:"What is the original source of the energy that drives winds, ocean currents, and the water cycle?",c:["The Sun","Earth’s core","The Moon","Lightning"],a:0,e:"The <b>Sun</b> heats Earth unevenly, driving winds and currents, and evaporates water to power the water cycle."},
+   {q:"A student says, “It snowed in Dallas yesterday, so Dallas has a cold climate.” Which response is most accurate?",c:["One snowy day is weather; climate is the average weather over many years","The student is correct, because snow means a cold climate","Climate and weather mean the same thing","Climate only describes rainfall, not temperature"],a:0,e:"A single day is <b>weather</b>. <b>Climate</b> is the pattern over decades — Dallas’s climate has hot summers and mild winters."},
+   {q:"If winds and ocean currents suddenly stopped moving heat around the planet, what would most likely happen?",c:["The equator would get hotter and the poles would get colder","The whole planet would become the same temperature","The poles would warm up quickly","There would be no change"],a:0,e:"Winds and currents carry heat from the equator toward the poles. Without them, the <b>temperature difference would grow</b>."},
+   {q:"A high-pressure system sits over West Texas and a low-pressure system sits over Louisiana. Which way will surface winds generally move between them?",c:["From West Texas toward Louisiana","From Louisiana toward West Texas","Straight up from West Texas","There will be no wind between them"],a:0,e:"Air moves from <b>high pressure (West Texas)</b> toward <b>low pressure (Louisiana)</b>."},
+   {q:"A city has gray, layered clouds and light, steady rain for two days, and temperatures slowly rise. Which explanation is best?",c:["A warm front: warm air is sliding gradually up over colder air","A cold front: cold air is forcing warm air up quickly","A high-pressure system: air is sinking","A land breeze: air is moving out to sea"],a:0,e:"Gentle lifting of warm air over cold air gives <b>layered clouds and long, steady rain</b> — then warmer air: a <b>warm front</b>."}
+  ]}
+];
+
+/* ================= STATE ================= */
+const $=s=>document.querySelector(s);
+const cv=$("#cv"),ctx=cv.getContext("2d");
+const S={room:0,name:"",hp:100,maxhp:100,xp:0,lvl:1,shield:0,correct:0,attempts:0,missed:[],start:Date.now(),elapsedBefore:0,codes:[],paused:true,streak:0,bumpCD:0,inv:0,best:0};
+let R=null,B=null,frame=0;
+const P={x:0,y:0,w:24,h:26,dir:1,anim:0,moving:false};
+const keys={},touch={};
+let battleKeys=null;
+const SAVE="stormQuest810a_v1";
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function shade(hex,amt){let c=hex.replace("#","");if(c.length===3)c=c.split("").map(x=>x+x).join("");const n=parseInt(c,16);let r=(n>>16)+amt,g=((n>>8)&255)+amt,b=(n&255)+amt;r=Math.max(0,Math.min(255,r));g=Math.max(0,Math.min(255,g));b=Math.max(0,Math.min(255,b));return "#"+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}
+
+/* ================= SOUND ================= */
+let AC=null,soundOn=true;
+function tone(f,d,type,v,when){if(!soundOn)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=type||"square";o.frequency.value=f;const t=AC.currentTime+(when||0);g.gain.setValueAtTime(v||.05,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+const SFX={
+ tap:()=>tone(660,.05,"square",.04),
+ good:()=>{tone(523,.1);tone(659,.1,"square",.05,.08);tone(784,.18,"square",.05,.16)},
+ bad:()=>{tone(180,.18,"sawtooth",.06);tone(130,.3,"sawtooth",.06,.12)},
+ hit:()=>{tone(220,.08,"square",.07);tone(110,.2,"triangle",.09,.05)},
+ crit:()=>{tone(880,.08);tone(1175,.08,"square",.05,.07);tone(1568,.2,"square",.05,.14)},
+ lvl:()=>{[523,659,784,1047].forEach((f,i)=>tone(f,.15,"square",.05,i*.1))},
+ gate:()=>{[392,523,659,784,1047].forEach((f,i)=>tone(f,.18,"triangle",.07,i*.09))},
+ chest:()=>{tone(784,.08);tone(988,.08,"square",.05,.07);tone(1319,.2,"square",.05,.14)},
+ battle:()=>{[196,262,196,330].forEach((f,i)=>tone(f,.12,"sawtooth",.05,i*.09))},
+ win:()=>{[523,523,523,659,784].forEach((f,i)=>tone(f,.14,"square",.05,i*.12))},
+ lose:()=>{[392,330,262,196].forEach((f,i)=>tone(f,.22,"triangle",.07,i*.18))},
+ rumble:()=>{tone(60,.6,"sawtooth",.09);tone(45,.8,"sawtooth",.08,.2)}
+};
+function sfx(n){SFX[n]&&SFX[n]()}
+
+/* ================= SVG ART ================= */
+function monsterSVG(c,k,size){
+ const d=shade(c,-45),l=shade(c,40);
+ const top=[`<path d="M38 70 L52 22 L66 62 L85 12 L104 62 L118 22 L132 70Z" fill="${d}"/>`,
+  `<path d="M52 62 Q30 14 64 34 M118 62 Q140 14 106 34" stroke="${d}" stroke-width="11" fill="none" stroke-linecap="round"/>`,
+  `<circle cx="58" cy="52" r="12" fill="${d}"/><circle cx="112" cy="48" r="14" fill="${d}"/><circle cx="85" cy="40" r="10" fill="${d}"/>`][k%3];
+ return `<svg viewBox="0 0 170 175" width="${size}" height="${size}">${top}
+ <ellipse cx="85" cy="108" rx="62" ry="54" fill="${c}"/>
+ <ellipse cx="85" cy="128" rx="38" ry="24" fill="${l}" opacity=".45"/>
+ <path d="M50 82 L78 92 M120 82 L92 92" stroke="#1a0d08" stroke-width="7" stroke-linecap="round"/>
+ <circle cx="66" cy="100" r="13" fill="#fff"/><circle cx="104" cy="100" r="13" fill="#fff"/>
+ <circle cx="69" cy="103" r="6.5" fill="#111"/><circle cx="101" cy="103" r="6.5" fill="#111"/>
+ <path d="M60 128 Q85 146 110 128" stroke="#1a0d08" stroke-width="5" fill="#5a0d0d"/>
+ <path d="M68 131 l5 8 l5 -6 M93 131 l5 7 l5 -8" fill="#fff"/>
+ <ellipse cx="52" cy="160" rx="17" ry="9" fill="${d}"/><ellipse cx="118" cy="160" rx="17" ry="9" fill="${d}"/></svg>`;
+}
+function bossSVG(size){
+ return `<svg viewBox="0 0 240 240" width="${size}" height="${size}">
+ <defs><radialGradient id="bg1" cx="50%" cy="40%"><stop offset="0" stop-color="#8d99ae"/><stop offset=".6" stop-color="#4a4e69"/><stop offset="1" stop-color="#22223b"/></radialGradient></defs>
+ <path d="M70 46 L80 6 L98 34 L120 0 L142 34 L160 6 L170 46Z" fill="#ffd166" stroke="#a86b00" stroke-width="4"/>
+ <circle cx="98" cy="30" r="6" fill="#ff2e63"/><circle cx="142" cy="30" r="6" fill="#3aa0ff"/><circle cx="120" cy="18" r="7" fill="#3ddc84"/>
+ <path d="M30 170 Q4 160 14 128 Q8 96 44 92 Q50 56 92 62 Q112 38 148 54 Q190 46 198 86 Q236 92 228 128 Q240 160 210 170Z" fill="url(#bg1)"/>
+ <path d="M60 170 L48 196 L64 196 L52 226 M120 170 L110 200 L126 200 L116 232 M182 170 L170 194 L186 194 L176 222" stroke="#ffd166" stroke-width="6" fill="none" class="glow"/>
+ <path d="M70 100 L108 114 M170 100 L132 114" stroke="#0b0b1a" stroke-width="10" stroke-linecap="round"/>
+ <ellipse cx="92" cy="124" rx="15" ry="11" fill="#fff6a8"/><ellipse cx="148" cy="124" rx="15" ry="11" fill="#fff6a8"/>
+ <circle cx="95" cy="126" r="6" fill="#0b0b1a"/><circle cx="145" cy="126" r="6" fill="#0b0b1a"/>
+ <path d="M86 150 Q120 172 154 150 Q120 162 86 150Z" fill="#0b0b1a"/>
+ <path d="M98 153 l6 9 l6 -7 M130 155 l6 7 l6 -9" fill="#fff"/></svg>`;
+}
+function personSVG(g,size){
+ return `<svg viewBox="0 0 100 120" width="${size}" height="${size*1.2}"><rect x="22" y="58" width="56" height="58" rx="14" fill="${g.coat}"/><rect x="40" y="58" width="20" height="40" fill="${g.shirt}"/>
+ <circle cx="50" cy="36" r="24" fill="${g.skin}"/><path d="M26 34 Q30 6 50 10 Q72 6 75 34 Q66 22 50 22 Q34 22 26 34Z" fill="${g.hair}"/>
+ <circle cx="41" cy="38" r="3.5" fill="#222"/><circle cx="59" cy="38" r="3.5" fill="#222"/><path d="M40 48 Q50 56 60 48" stroke="#222" stroke-width="3" fill="none"/>
+ <rect x="33" y="31" width="14" height="11" rx="4" fill="none" stroke="#333" stroke-width="2"/><rect x="53" y="31" width="14" height="11" rx="4" fill="none" stroke="#333" stroke-width="2"/></svg>`;
+}
+function crystalSVG(c,size){return `<svg viewBox="0 0 100 130" width="${size}" height="${size*1.3}"><polygon points="50,4 92,42 50,126 8,42" fill="${c}" stroke="#fff" stroke-width="3"/><polygon points="50,4 92,42 50,52 8,42" fill="#fff" opacity=".35"/><polygon points="50,52 92,42 50,126" fill="#000" opacity=".15"/></svg>`}
+
+/* ================= ROOMS ================= */
+function loadRoom(i){
+ S.room=i;const reg=ROOMS[i];
+ const grid=reg.map.map(r=>(r+"#".repeat(COLS)).slice(0,COLS).split(""));
+ R={reg,grid,enemies:[],guideDone:!!reg.final,stationDone:!!reg.final,killed:0,total:0,gateOpen:false,pool:shuffle(reg.qs.slice()),boss:null};
+ let fi=0;
+ for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
+  const ch=grid[y][x];
+  if(ch==="P"){P.x=x*TILE+TILE/2;P.y=y*TILE+TILE/2;grid[y][x]="."}
+  if(ch==="E"){const f=reg.foes[fi%reg.foes.length];R.enemies.push({x:x*TILE+TILE/2,y:y*TILE+TILE/2,w:26,h:26,vx:0,vy:0,t:0,name:f[0],color:f[1],k:fi,hp:3,max:3,ph:Math.random()*6});fi++;grid[y][x]="."}
+  if(ch==="B"){R.boss={x:x*TILE+TILE/2,y:y*TILE+TILE/2,hp:10,max:10}}
+ }
+ R.total=R.enemies.length;
+ S.inv=60;
+ updateHUD();
+ if(!reg.final) toast(`📍 ${reg.name}: Talk to ${reg.guide.name}, finish the lab, and defeat ${R.total} monsters to open the gate!`,4200);
+ else {toast("⚠️ The Storm Tyrant awaits… Walk up to him when you’re ready!",4000);sfx("rumble")}
+}
+function isSolid(tx,ty,isP){
+ if(ty<0||ty>=ROWS)return true;
+ if(tx>=COLS)return !(isP&&R.gateOpen);
+ if(tx<0)return true;
+ const ch=R.grid[ty][tx];
+ if(ch===">")return !(isP&&R.gateOpen);
+ return "#wlmtGSCcB".includes(ch);
+}
+function moveEnt(e,mx,my,isP){
+ const nx=e.x+mx,ny=e.y+my,hw=e.w/2,hh=e.h/2;
+ const pts=[[nx-hw,ny-hh],[nx+hw,ny-hh],[nx-hw,ny+hh],[nx+hw,ny+hh]];
+ for(const [px,py] of pts){const tx=Math.floor(px/TILE),ty=Math.floor(py/TILE);
+  if(isSolid(tx,ty,isP)){if(isP)bump(tx,ty);return false}}
+ e.x=nx;e.y=ny;return true;
+}
+function bump(tx,ty){
+ if(S.bumpCD>0||S.paused)return;
+ const ch=(R.grid[ty]||[])[tx];
+ if(ch==="G"){S.bumpCD=30;openGuide()}
+ else if(ch==="S"){S.bumpCD=30;if(R.stationDone)toast("✅ Lab complete! "+(R.killed<R.total?"Now defeat the monsters.":""));else openStation()}
+ else if(ch==="C"){S.bumpCD=30;openChest(tx,ty)}
+ else if(ch==="B"){S.bumpCD=30;openBoss()}
+ else if(ch===">"&&!R.gateOpen){S.bumpCD=90;const need=[];if(!R.guideDone)need.push("talk to "+R.reg.guide.name);if(!R.stationDone)need.push("finish the lab station");if(R.killed<R.total)need.push(`defeat ${R.total-R.killed} more monster${R.total-R.killed>1?"s":""}`);toast("🔒 Gate locked! You still need to: "+need.join(", "),3500);sfx("bad")}
+}
+function checkGate(){
+ if(R.gateOpen||R.reg.final)return;
+ if(R.guideDone&&R.stationDone&&R.killed>=R.total){
+  R.gateOpen=true;sfx("gate");
+  if(!S.codes.includes(R.reg.code))S.codes.push(R.reg.code);
+  updateHUD();
+  setTimeout(()=>showPanel(`<div class="center"><h2>✨ Sky Crystal Recovered! ✨</h2>${crystalSVG(R.reg.crystal,110)}
+  <p style="font-size:18px">You mastered <b>${R.reg.name}</b>!<br>Write this <b>Mission Code</b> on your recording sheet:</p>
+  <div class="bigcode">${R.reg.code}</div><p class="ins">The gate on the right side of the map is now open. Head east ➡️</p>
+  <button class="btn green" id="ok">Continue</button></div>`,()=>{$("#ok").onclick=()=>{save(S.room+1);closePanel()}}),350);
+ }
+}
+
+/* ================= HUD / TOAST ================= */
+let toastT=0;
+function toast(msg,ms){const t=$("#toast");t.innerHTML=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),ms||2600)}
+function updateHUD(){
+ const reg=R?R.reg:ROOMS[0];
+ $("#hName").textContent=reg.name;$("#hSub").textContent=reg.sub;
+ $("#hHp").style.width=Math.max(0,S.hp/S.maxhp*100)+"%";
+ $("#hLvl").textContent=S.lvl;$("#hXp").style.width=(S.xp%100)+"%";
+ let chips="";
+ if(R&&!reg.final){chips=`<span class="chip ${R.guideDone?"done":""}">📜 Guide</span><span class="chip ${R.stationDone?"done":""}">🔬 Lab</span><span class="chip ${R.killed>=R.total?"done":""}">👾 ${R.killed}/${R.total}</span>`}
+ else if(R&&R.boss)chips=`<span class="chip">👑 Boss HP ${R.boss.hp}/${R.boss.max}</span>`;
+ if(S.shield)chips+=`<span class="chip done">🛡️ Shield</span>`;
+ $("#hChips").innerHTML=chips;
+ $("#hCrys").innerHTML=ROOMS.slice(0,5).map(r=>`<i style="background:${S.codes.includes(r.code)?r.crystal:"#3a2c26"}"></i>`).join("");
+}
+function gainXP(n){const before=Math.floor(S.xp/100);S.xp+=n;if(Math.floor(S.xp/100)>before){S.lvl++;S.maxhp+=10;S.hp=S.maxhp;sfx("lvl");toast(`⬆️ LEVEL UP! You are now Level ${S.lvl}. Max HP +10 and fully healed!`,3000)}updateHUD()}
+
+/* ================= OVERLAY ================= */
+function showPanel(html,after){$("#panel").innerHTML=html;$("#overlay").classList.remove("hidden");S.paused=true;for(const k in keys)keys[k]=false;for(const k in touch)touch[k]=false;$("#overlay").scrollTop=0;if(after)after()}
+function closePanel(){$("#overlay").classList.add("hidden");S.paused=false;S.bumpCD=40;battleKeys=null}
+
+/* ================= GUIDE ================= */
+function openGuide(){
+ const reg=R.reg,pages=reg.lesson;let i=0;
+ const render=()=>{const pg=pages[i];
+  $("#panel").innerHTML=`<div class="dlg"><div class="portrait">${personSVG(reg.guide,110)}<div>${reg.guide.name}</div></div>
+  <div class="bubble"><h3>${pg.h}</h3>${pg.b}</div></div>
+  <div class="dots">${pages.map((_,j)=>`<i class="${j<=i?"on":""}"></i>`).join("")}</div>
+  <div class="row" style="justify-content:space-between"><button class="btn alt" id="pv" ${i===0?"disabled":""}>◀ Back</button>
+  <button class="btn ${i===pages.length-1?"green":""}" id="nx">${i===pages.length-1?(R.guideDone?"Close":"Save to Journal ✓"):"Next ▶"}</button></div>`;
+  $("#pv").onclick=()=>{if(i>0){i--;sfx("tap");render()}};
+  $("#nx").onclick=()=>{sfx("tap");if(i<pages.length-1){i++;render()}else{const first=!R.guideDone;R.guideDone=true;closePanel();updateHUD();if(first){gainXP(20);toast("📓 Field notes saved to your Journal! +20 XP",2800)}checkGate()}};
+ };
+ showPanel("",render);
+}
+
+/* ================= CHEST ================= */
+function openChest(tx,ty){
+ R.grid[ty][tx]="c";sfx("chest");
+ if(S.hp<S.maxhp*0.7){S.hp=Math.min(S.maxhp,S.hp+40);toast("🎁 Sunshine Medkit! +40 HP",2500)}
+ else{S.shield=1;toast("🎁 Cloud Shield! It blocks the damage from your next wrong answer.",3000)}
+ gainXP(10);updateHUD();
+}
+
+/* ================= STATIONS ================= */
+function stationShell(title,sub){return `<h2>🔬 ${title}</h2><p class="ins">${sub}</p><div id="task"></div>`}
+function stationDone(){R.stationDone=true;sfx("gate");gainXP(30);
+ $("#task").innerHTML=`<div class="center"><h3>✅ Lab Station Complete! +30 XP</h3><p>Your findings were added to your Weather Journal knowledge. ${R.killed<R.total?"Now go defeat the monsters!":""}</p><button class="btn green" id="ok">Back to the map</button></div>`;
+ $("#ok").onclick=()=>{closePanel();updateHUD();checkGate()};
+}
+function sortTask(el,cfg,next){
+ let sel=null,placed=0;
+ const cards=shuffle(cfg.cards.map((c,i)=>Object.assign({i},c)));
+ el.innerHTML=`<h3>${cfg.title}</h3><p class="ins">${cfg.ins}</p><div class="bins">${cfg.bins.map((b,bi)=>`<div class="bin" data-b="${bi}"><div class="binh">${b}</div><div class="binc"></div></div>`).join("")}</div>
+ <div class="cards">${cards.map(c=>`<button class="card" data-i="${c.i}">${c.t}</button>`).join("")}</div><div class="msg"></div>`;
+ const msg=t=>el.querySelector(".msg").innerHTML=t;
+ el.querySelectorAll(".card").forEach(b=>b.onclick=()=>{if(b.classList.contains("placed"))return;sfx("tap");el.querySelectorAll(".card").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");sel=b;msg("Now tap the box where it belongs.")});
+ el.querySelectorAll(".bin").forEach(bin=>bin.onclick=()=>{
+  if(!sel){msg("Tap a card first!");return}
+  const b=sel,c=cfg.cards[+b.dataset.i];
+  if(c.bin===+bin.dataset.b){sfx("good");b.classList.remove("sel");b.classList.add("placed");bin.querySelector(".binc").appendChild(b);sel=null;placed++;msg("✅ Correct!");
+   if(placed===cfg.cards.length){msg("🎉 All sorted!");setTimeout(next,800)}}
+  else{sfx("bad");b.classList.add("shake");setTimeout(()=>b.classList.remove("shake"),420);msg("❌ "+(c.hint||"Not quite — try again!"))}
+ });
+}
+function orderTask(el,cfg,next){
+ let n=0;const order=cfg.steps.map((s,i)=>Object.assign({i},s));const shuf=shuffle(order.slice());
+ el.innerHTML=`<h3>${cfg.title}</h3><p class="ins">${cfg.ins}</p><div class="slots">${cfg.steps.map((_,i)=>`<div class="slot" id="sl${i}"><span class="n">${i+1}</span><span class="tx">?</span></div>`).join("")}</div>
+ <div class="ocards">${shuf.map(s=>`<button class="ocard" data-i="${s.i}">${s.svg||""}${s.t}</button>`).join("")}</div><div class="msg"></div>`;
+ const msg=t=>el.querySelector(".msg").innerHTML=t;
+ el.querySelectorAll(".ocard").forEach(b=>b.onclick=()=>{
+  const i=+b.dataset.i;
+  if(i===n){sfx("good");const sl=$("#sl"+n);sl.classList.add("fill");sl.querySelector(".tx").innerHTML=cfg.steps[i].t;b.classList.add("used");n++;msg("✅ Yes!");
+   if(n===cfg.steps.length){msg("🎉 Perfect order!");setTimeout(next,900)}}
+  else{sfx("bad");b.classList.add("shake");setTimeout(()=>b.classList.remove("shake"),420);msg("❌ "+(cfg.hint||"That’s not the next step. What has to happen first?"))}
+ });
+}
+function mcTask(el,cfg,next){
+ const order=shuffle(cfg.c.map((t,i)=>({t,i})));
+ el.innerHTML=`<h3>${cfg.title||"Checkpoint"}</h3><div class="qcard"><div class="qtext">${cfg.q}</div><div class="choices">${order.map((o,j)=>`<button class="choice" data-i="${o.i}"><span class="lt">${"ABCDE"[j]}</span><span>${o.t}</span></button>`).join("")}</div><div class="fb"></div></div>`;
+ el.querySelectorAll(".choice").forEach(b=>b.onclick=()=>{
+  const fb=el.querySelector(".fb");
+  if(+b.dataset.i===cfg.a){sfx("good");b.classList.add("correct");el.querySelectorAll(".choice").forEach(x=>x.disabled=true);fb.className="fb good";fb.innerHTML=`<b class="h">✅ Correct!</b>${cfg.e}<div style="margin-top:8px"><button class="btn green" id="mcn">Next ▶</button></div>`;$("#mcn").onclick=next}
+  else{sfx("bad");b.classList.add("wrong");b.disabled=true;fb.className="fb bad";fb.innerHTML=`<b class="h">❌ Try again!</b>Use what you saw in the lab.`}
+ });
+}
+function chain(el,tasks,done){let i=0;const go=()=>{if(i>=tasks.length){done();return}const t=tasks[i++];t(el,go)};go()}
+
+/* question diagrams */
+const TX=(x,y,s,c,sz,w)=>`<text x="${x}" y="${y}" font-size="${sz||14}" fill="${c||"#111"}" font-family="Verdana" font-weight="${w||"normal"}">${s}</text>`;
+function diagSunAngle(){
+ return `<svg viewBox="0 0 440 220" width="440"><rect width="440" height="220" fill="#eaf4ff"/>
+ <rect x="70" y="18" width="40" height="22" rx="4" fill="#444"/><polygon points="78,40 102,40 116,170 64,170" fill="#ffd166" opacity=".75"/>
+ <g transform="rotate(-50 330 30)"><rect x="310" y="18" width="40" height="22" rx="4" fill="#444"/></g>
+ <polygon points="300,52 322,30 410,170 252,170" fill="#ffd166" opacity=".55"/>
+ <rect y="170" width="440" height="50" fill="#8a6a4a"/>
+ <line x1="64" y1="174" x2="116" y2="174" stroke="#c0392b" stroke-width="5"/><line x1="252" y1="174" x2="410" y2="174" stroke="#c0392b" stroke-width="5"/>
+ ${TX(80,200,"Area A","#fff",15,"bold")}${TX(300,200,"Area B","#fff",15,"bold")}
+ ${TX(20,110,"straight down","#333",12)}${TX(330,90,"at a low angle","#333",12)}</svg>`;
+}
+function diagBreeze(night,arrows){
+ const land=night?"#5c4a33":"#c8a165",sky=night?"#1b2a4a":"#bfe3ff";
+ return `<svg viewBox="0 0 440 230" width="440"><rect width="440" height="230" fill="${sky}"/>
+ ${night?`<circle cx="380" cy="34" r="16" fill="#f4f1de"/><circle cx="388" cy="28" r="14" fill="${sky}"/>`:`<circle cx="380" cy="36" r="20" fill="#ffd166"/>`}
+ <rect x="0" y="150" width="220" height="80" fill="${land}"/><rect x="220" y="160" width="220" height="70" fill="#2f7fd0"/>
+ ${TX(60,190,night?"Land 18°C":"Land 35°C","#fff",15,"bold")}${TX(270,200,night?"Ocean 24°C":"Ocean 24°C","#fff",15,"bold")}
+ ${TX(170,24,night?"NIGHT":"SUNNY AFTERNOON",night?"#fff":"#333",13,"bold")}
+ ${arrows?(night?`<g stroke="#ff7b1c" stroke-width="4" fill="none"><path d="M120 135 H300"/><path d="M290 125 L304 135 L290 145"/><path d="M330 120 V60"/><path d="M320 72 L330 58 L340 72"/><path d="M300 50 H130"/><path d="M142 40 L128 50 L142 60"/><path d="M100 60 V120"/><path d="M90 108 L100 122 L110 108"/></g>${TX(348,100,"L","#ff7b1c",22,"bold")}${TX(70,100,"H","#7fd8e0",22,"bold")}`
+  :`<g stroke="#c0392b" stroke-width="4" fill="none"><path d="M330 140 H140"/><path d="M152 130 L138 140 L152 150"/><path d="M110 125 V60"/><path d="M100 72 L110 58 L120 72"/><path d="M140 50 H310"/><path d="M298 40 L312 50 L298 60"/><path d="M340 60 V120"/><path d="M330 108 L340 122 L350 108"/></g>${TX(80,100,"L","#c0392b",22,"bold")}${TX(358,100,"H","#1f4f8a",22,"bold")}`):""}
+ </svg>`;
+}
+function diagColdFront(){
+ return `<svg viewBox="0 0 440 220" width="440"><rect width="440" height="220" fill="#ffe3c9"/>
+ <path d="M0 220 V90 Q120 95 200 180 L230 220Z" fill="#7fb7e6"/>
+ ${TX(30,170,"Cold air","#0b2a4a",15,"bold")}${TX(300,190,"Warm, moist air","#7a3b00",15,"bold")}
+ <path d="M110 120 H170" stroke="#0b2a4a" stroke-width="4"/><path d="M160 112 L174 120 L160 128" stroke="#0b2a4a" stroke-width="4" fill="none"/>
+ <path d="M250 200 C240 170 230 140 228 100" stroke="#c0392b" stroke-width="4" fill="none"/><path d="M220 112 L228 96 L236 112" stroke="#c0392b" stroke-width="4" fill="none"/>
+ <path d="M190 90 Q180 60 205 50 Q210 20 240 25 Q265 10 285 30 Q310 30 305 55 Q325 70 305 90Z" fill="#fff" stroke="#9aa5b1" stroke-width="2"/>
+ <path d="M248 92 L238 112 L248 112 L240 132" stroke="#ffd166" stroke-width="4" fill="none"/>
+ <g stroke="#2f7fd0" stroke-width="2">${[205,220,265,280,295].map(x=>`<line x1="${x}" y1="96" x2="${x-6}" y2="114"/>`).join("")}</g></svg>`;
+}
+function diagRainShadow(){
+ return `<svg viewBox="0 0 440 220" width="440"><rect width="440" height="220" fill="#bfe3ff"/>
+ <rect y="180" width="90" height="40" fill="#2f7fd0"/><rect x="90" y="180" width="350" height="40" fill="#6b8f45"/><rect x="290" y="180" width="150" height="40" fill="#d9b26f"/>
+ <path d="M110 180 L220 50 L330 180Z" fill="#7d6f63"/><path d="M200 74 L220 50 L240 74 L228 70 L220 78 L210 70Z" fill="#fff"/>
+ <path d="M20 160 H90 Q140 140 175 80" stroke="#1f4f8a" stroke-width="4" fill="none"/><path d="M165 86 L177 76 L180 92" stroke="#1f4f8a" stroke-width="4" fill="none"/>
+ <path d="M150 64 Q140 44 162 40 Q170 22 192 30 Q210 24 210 46 Q222 58 205 66Z" fill="#fff" stroke="#9aa5b1" stroke-width="2"/>
+ <path d="M265 80 Q300 140 360 165 H420" stroke="#c0392b" stroke-width="4" fill="none" stroke-dasharray="8 6"/><path d="M408 157 L422 165 L408 173" stroke="#c0392b" stroke-width="4" fill="none"/>
+ ${TX(14,150,"Moist ocean air →","#0b2a4a",12,"bold")}${TX(120,205,"Side A","#fff",15,"bold")}${TX(310,205,"Side B","#5a3d1e",15,"bold")}${TX(16,210,"Ocean","#fff",12)}</svg>`;
+}
+const DIAG={sunangle:diagSunAngle,breeze:()=>diagBreeze(false,false),coldfront:diagColdFront,rainshadow:diagRainShadow};
+
+function sunTask(el,next){
+ let lat=0,seen={eq:false,pole:false};
+ el.innerHTML=`<h3>Part 2 · Sun Angle Simulator</h3><p class="ins">Drag the slider from the <b>equator</b> to the <b>poles</b>. Watch how the same beam of sunlight spreads out.</p>
+ <div class="labview"><svg viewBox="0 0 460 230" width="460" id="sa"></svg></div>
+ <input type="range" id="lat" min="0" max="80" step="1" value="0"><div class="row" style="justify-content:space-between"><b>Equator (0°)</b><b id="latl"></b><b>Near the pole (80°)</b></div>
+ <div class="result" id="sres">Try both ends of the slider to unlock the checkpoint.</div><div id="sq"></div>`;
+ const draw=()=>{const ang=(90-lat)*Math.PI/180;const beam=60;const foot=beam/Math.sin(ang);const pct=Math.round(Math.sin(ang)*100);
+  const cx=230,gy=180,dx=Math.cos(ang)*150,dy=Math.sin(ang)*150;
+  const g=`<rect width="460" height="230" fill="#eaf4ff"/><rect y="${gy}" width="460" height="50" fill="#8a6a4a"/>
+  <polygon points="${cx-foot/2-dx},${gy-dy} ${cx+foot/2-dx},${gy-dy} ${cx+foot/2},${gy} ${cx-foot/2},${gy}" fill="#ffd166" opacity=".7"/>
+  <circle cx="${cx-dx}" cy="${gy-dy}" r="16" fill="#ffb703"/>
+  <line x1="${cx-foot/2}" y1="${gy+4}" x2="${cx+foot/2}" y2="${gy+4}" stroke="#c0392b" stroke-width="6"/>
+  <rect x="320" y="20" width="132" height="110" rx="10" fill="#fff" stroke="#9aa5b1"/>${TX(330,40,"Energy per m²","#333",13,"bold")}<rect x="330" y="50" width="110" height="20" fill="#ddd" stroke="#999"/><rect x="330" y="50" width="${110*pct/100}" height="20" fill="#ff7b1c"/>${TX(330,92,pct+"%","#c0392b",18,"bold")}
+  ${TX(330,118,"Area lit: "+(foot/beam).toFixed(1)+"×","#333",13,"bold")}`;
+  $("#sa").innerHTML=g;$("#latl").textContent="Latitude "+lat+"°";
+  if(lat<=5)seen.eq=true;if(lat>=60)seen.pole=true;
+  if(seen.eq&&seen.pole&&!$("#sq").innerHTML){sfx("good");$("#sres").innerHTML="🔍 <b>Observe:</b> The beam carries the same energy, but near the poles it spreads over a <b>much larger area</b>, so each square meter gets <b>less energy</b>. That is why the poles are cold!";
+   chain($("#sq"),[(e,n)=>mcTask(e,{title:"Checkpoint",q:"As you moved the slider from the equator toward the pole, what happened to the sunlight?",c:["The same energy spread over a larger area, so each square meter got less energy","The Sun got farther away and dimmer","The beam got smaller and more concentrated","Nothing changed"],a:0,e:"Low-angle sunlight is <b>spread out</b>. This <b>uneven heating</b> is what drives wind and ocean currents."},n)],next)}
+ };
+ $("#lat").oninput=e=>{lat=+e.target.value;draw()};draw();
+}
+function cloudTask(el,next){
+ let alt=0,done=false;
+ el.innerHTML=`<h3>Part 2 · Cloud Maker</h3><p class="ins">A bubble of warm, moist air rises from the ground. Drag the slider to lift it higher. Watch its temperature and dew point.</p>
+ <div class="labview"><svg viewBox="0 0 460 250" width="460" id="cm"></svg></div>
+ <input type="range" id="alt" min="0" max="3" step="0.05" value="0"><div class="result" id="cres">Lift the air until something happens!</div><div id="cq"></div>`;
+ const draw=()=>{const D=14-2*alt,T=Math.max(30-10*alt,D),cloud=T<=D+0.01;const y=220-alt*65;
+  let g=`<rect width="460" height="250" fill="#bfe3ff"/><rect y="226" width="460" height="24" fill="#6b8f45"/>
+  ${[0,1,2,3].map(k=>`<line x1="40" y1="${220-k*65}" x2="300" y2="${220-k*65}" stroke="#9fb0c3" stroke-dasharray="4 4"/>${TX(4,224-k*65,k+" km","#334",11)}`).join("")}
+  <line x1="170" y1="${220}" x2="170" y2="${y}" stroke="#ff7b1c" stroke-width="2" stroke-dasharray="3 4"/>`;
+  g+=cloud?`<path d="M120 ${y+18} Q110 ${y-6} 140 ${y-10} Q150 ${y-32} 178 ${y-24} Q200 ${y-36} 214 ${y-14} Q236 ${y-10} 226 ${y+18}Z" fill="#fff" stroke="#9aa5b1" stroke-width="2"/>`:`<circle cx="170" cy="${y}" r="20" fill="rgba(255,123,28,.35)" stroke="#ff7b1c" stroke-width="3"/>`;
+  g+=`<rect x="320" y="20" width="130" height="110" rx="10" fill="#fff" stroke="#9aa5b1"/>${TX(332,44,"Altitude: "+alt.toFixed(1)+" km","#333",12,"bold")}${TX(332,72,"Air temp: "+T.toFixed(0)+"°C","#c0392b",14,"bold")}${TX(332,98,"Dew point: "+D.toFixed(0)+"°C","#1f4f8a",14,"bold")}${TX(332,120,cloud?"SATURATED!":"not saturated",cloud?"#16a457":"#777",12,"bold")}`;
+  $("#cm").innerHTML=g;
+  if(cloud&&!done){done=true;sfx("good");$("#cres").innerHTML="☁️ <b>A cloud formed!</b> The rising air <b>expanded and cooled</b> until its temperature reached the <b>dew point</b>. Water vapor condensed into droplets.";
+   chain($("#cq"),[(e,n)=>mcTask(e,{title:"Checkpoint",q:"At about what height did the cloud form, and why?",c:["About 2 km, because the air cooled to its dew point there","At the ground, because the air was warm","About 0.5 km, because the air started rising","At 3 km, because clouds only form at the top of the sky"],a:0,e:"At about <b>2 km</b> the air temperature (10°C) matched the dew point (10°C), so the air was <b>saturated</b> and condensation began."},n)],next)}
+ };
+ $("#alt").oninput=e=>{alt=+e.target.value;draw()};draw();
+}
+function breezeTask(el,done){
+ const seen={};let mode="day";
+ const render=()=>{
+  el.innerHTML=`<div class="center"><button class="tog ${mode==="day"?"on":""}" id="bd">☀️ Daytime</button><button class="tog ${mode==="night"?"on":""}" id="bn">🌙 Nighttime</button></div>
+  <div class="labview" style="margin-top:8px">${diagBreeze(mode==="night",true)}</div>
+  <div class="result">${mode==="day"?"<b>Sea Breeze (day):</b> The land heats up <b>faster</b> than the water. Warm air over the land <b>rises</b>, creating <b>low pressure (L)</b>. Cooler air over the ocean has <b>higher pressure (H)</b>, so near the ground the wind blows <b>from the sea toward the land</b>.":"<b>Land Breeze (night):</b> The land cools <b>faster</b> than the water. Now the air over the ocean is warmer and rises (<b>L</b>), and the cooler air over the land has <b>higher pressure (H)</b>, so the wind blows <b>from the land toward the sea</b>."}</div>
+  <div class="disc"><span class="${seen.day?"got":""}">${seen.day?"✅":"⬜"} Sea breeze</span><span class="${seen.night?"got":""}">${seen.night?"✅":"⬜"} Land breeze</span></div><div id="bq"></div>`;
+  $("#bd").onclick=()=>{mode="day";seen.day=true;sfx("tap");render()};
+  $("#bn").onclick=()=>{mode="night";seen.night=true;sfx("tap");render()};
+  if(seen.day&&seen.night)chain($("#bq"),[
+   (e,n)=>mcTask(e,{title:"Checkpoint 1",q:"Why does the wind switch direction between day and night?",c:["Land heats and cools faster than water, so which side has lower pressure switches","Water heats and cools faster than land","The Moon pulls the air at night","Ocean currents reverse every night"],a:0,e:"Land changes temperature faster than water. The warmer side always gets the <b>rising air and low pressure</b>, and wind blows toward it."},n),
+   (e,n)=>mcTask(e,{title:"Checkpoint 2",q:"Which three parts of the Earth system work together to make a sea breeze?",c:["The Sun, the hydrosphere (ocean), and the atmosphere (air)","The core, the mantle, and the crust","The Moon, the tides, and the crust","Plants, animals, and soil"],a:0,e:"The <b>Sun</b> heats land faster than the <b>ocean</b>, and the <b>air</b> moves from high to low pressure — exactly what TEKS 8.10A asks about."},n)
+  ],done);
+ };
+ seen.day=true;render();
+}
+function frontLab(el,done){
+ const need={COLD:"Cold front",WARM:"Warm front",STAT:"Stationary front",OCC:"Occluded front"};const got={};let M="COLD";
+ const info={COLD:"<b>Cold front!</b> Dense cold air plows <b>under</b> the warm air and shoves it up <b>steeply and fast</b>. Tall cumulonimbus clouds form → <b>thunderstorms, heavy rain, gusty winds</b>. Afterward: <b>cooler and drier</b>. Map symbol: blue triangles ▲.",
+  WARM:"<b>Warm front!</b> Warm air slides <b>gently up and over</b> the retreating cold air. Long sheets of layered stratus clouds → <b>light, steady rain or drizzle</b> for a long time. Afterward: <b>warmer and more humid</b>. Map symbol: red half-circles.",
+  STAT:"<b>Stationary front!</b> Neither air mass is strong enough to push the other. The boundary <b>stalls</b>, so clouds and rain can sit over the same place for <b>days</b>. Map symbol: alternating blue triangles and red half-circles.",
+  OCC:"<b>Occluded front!</b> A fast cold front <b>catches up</b> to a warm front. The warm air is <b>lifted completely off the ground</b>, producing clouds and precipitation. Map symbol: purple triangles and half-circles."};
+ const render=(show)=>{
+  el.innerHTML=`<div class="labctl"><div style="grid-column:1/-1"><b>What is the air doing?</b>
+  <button class="tog ${M==="COLD"?"on":""}" data-m="COLD">❄️➡️ Cold air advancing</button><button class="tog ${M==="WARM"?"on":""}" data-m="WARM">🔥➡️ Warm air advancing</button><button class="tog ${M==="STAT"?"on":""}" data-m="STAT">⏸️ Neither moving</button><button class="tog ${M==="OCC"?"on":""}" data-m="OCC">❄️💨 Cold front catches warm front</button></div></div>
+  <div class="center"><button class="btn" id="run">▶ Run Simulation</button></div>
+  <div class="labview" id="lv" style="margin-top:10px">${show?frontSVG(M):`<svg viewBox="0 0 420 220" width="420"><rect width="420" height="220" fill="#1a1210"/>${TX(100,115,"Choose the air motion, then press Run","#d9c6ad",15)}</svg>`}</div>
+  <div class="result">${show?info[M]:"Discover all 4 front types to finish the lab."}</div>
+  <div class="disc">${Object.keys(need).map(k=>`<span class="${got[k]?"got":""}">${got[k]?"✅":"⬜"} ${need[k]}</span>`).join("")}</div>
+  ${Object.keys(need).every(k=>got[k])?`<div class="center" style="margin-top:10px"><button class="btn green" id="fin">All 4 discovered! Finish lab ✓</button></div>`:""}`;
+  el.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{M=b.dataset.m;sfx("tap");render(false)});
+  $("#run").onclick=()=>{const isNew=!got[M];got[M]=true;sfx(isNew?"good":"tap");render(true)};
+  if($("#fin"))$("#fin").onclick=()=>chain(el,[(e,n)=>mcTask(e,{title:"Lab Checkpoint",q:"Which front in your simulation lifted warm air the most steeply and made thunderstorms?",c:["Cold front","Warm front","Stationary front","None of them"],a:0,e:"At a <b>cold front</b>, dense cold air wedges under warm air and forces it up <b>fast</b> → tall storm clouds."},n)],done);
+ };
+ render(false);
+}
+function frontSVG(t){
+ const bg=`<rect width="420" height="220" fill="#ffe3c9"/>`;
+ const cloudTall=`<g class="popin"><path d="M170 92 Q160 62 185 52 Q190 22 220 27 Q245 12 265 32 Q290 32 285 57 Q305 72 285 92Z" fill="#fff" stroke="#9aa5b1" stroke-width="2"/><path d="M228 94 L218 114 L228 114 L220 134" stroke="#ffd166" stroke-width="4" fill="none"/><g stroke="#2f7fd0" stroke-width="2">${[185,200,245,260,275].map(x=>`<line x1="${x}" y1="98" x2="${x-6}" y2="116"/>`).join("")}</g></g>`;
+ const lab=(x,y,s,c)=>TX(x,y,s,c||"#111",13,"bold");
+ if(t==="COLD")return `<svg viewBox="0 0 420 220" width="420">${bg}<g class="slideL"><path d="M0 220 V90 Q120 95 190 180 L215 220Z" fill="#7fb7e6"/></g><path d="M235 200 C225 170 215 140 212 100" stroke="#c0392b" stroke-width="4" fill="none" class="popin"/>${cloudTall}${lab(20,170,"Cold air ➡️","#0b2a4a")}${lab(280,195,"Warm, moist air","#7a3b00")}${lab(240,150,"warm air forced up fast","#c0392b")}</svg>`;
+ if(t==="WARM")return `<svg viewBox="0 0 420 220" width="420">${bg}<path d="M420 220 V110 L60 220Z" fill="#7fb7e6"/>
+ <g class="slideL"><path d="M40 200 L370 100" stroke="#c0392b" stroke-width="4" fill="none" stroke-dasharray="10 7"/><path d="M356 96 L372 99 L362 112" stroke="#c0392b" stroke-width="4" fill="none"/></g>
+ <g class="popin"><rect x="150" y="40" width="250" height="22" rx="11" fill="#fff" stroke="#9aa5b1"/><rect x="100" y="68" width="240" height="20" rx="10" fill="#e9eef3" stroke="#9aa5b1"/><g stroke="#2f7fd0" stroke-width="2">${[120,150,180,210,240,270,300].map(x=>`<line x1="${x}" y1="92" x2="${x-4}" y2="106"/>`).join("")}</g></g>
+ ${lab(20,40,"Warm air ➡️","#7a3b00")}${lab(270,200,"Cold air (retreating)","#0b2a4a")}${lab(60,150,"warm air slides gently up","#c0392b")}</svg>`;
+ if(t==="STAT")return `<svg viewBox="0 0 420 220" width="420">${bg}<path d="M0 220 V100 Q120 110 200 220Z" fill="#7fb7e6"/>
+ <g class="popin"><path d="M110 92 Q100 70 125 62 Q135 40 160 46 Q185 36 195 56 Q220 58 212 82 Q228 92 210 100Z" fill="#e9eef3" stroke="#9aa5b1" stroke-width="2"/><g stroke="#2f7fd0" stroke-width="2">${[130,150,170,190].map(x=>`<line x1="${x}" y1="104" x2="${x-4}" y2="120"/>`).join("")}</g></g>
+ ${lab(20,180,"Cold air ⏸️","#0b2a4a")}${lab(260,180,"Warm air ⏸️","#7a3b00")}${lab(230,50,"Stalled for days","#c0392b")}</svg>`;
+ if(t==="OCC")return `<svg viewBox="0 0 420 220" width="420">${bg}<g class="slideL"><path d="M0 220 V110 Q110 120 190 220Z" fill="#7fb7e6"/></g><path d="M420 220 V120 Q290 150 170 220Z" fill="#a9cdee"/>
+ <g class="upS"><path d="M120 110 Q200 40 300 110 Q210 70 120 110Z" fill="#ffb38a"/></g>
+ <g class="popin"><path d="M150 52 Q140 32 165 26 Q175 8 200 14 Q225 4 240 24 Q262 26 255 46 Q270 56 252 62Z" fill="#fff" stroke="#9aa5b1" stroke-width="2"/></g>
+ ${lab(14,180,"Cold air ➡️","#0b2a4a")}${lab(300,200,"Cool air","#0b2a4a")}${lab(250,90,"warm air lifted off the ground","#c0392b")}</svg>`;
+ return "";
+}
+
+const STATIONS={
+ solar(){showPanel(stationShell("Lab Station: Solar Energy","Sort the ways heat moves, then test how the Sun’s angle changes heating."),()=>{
+  chain($("#task"),[
+   (el,n)=>sortTask(el,{title:"Part 1 · Heat Transfer Sorter",ins:"Tap a card, then tap the way energy is moving.",bins:["☀️ Radiation","✋ Conduction","🔄 Convection"],cards:[
+    {t:"Energy traveling through space from the Sun",bin:0,hint:"Space has no matter to touch or flow, so it must be waves."},{t:"Sunlight warming a beach",bin:0,hint:"Light energy traveling as waves is…"},{t:"A heat lamp warming a lizard",bin:0,hint:"The lamp isn’t touching the lizard."},
+    {t:"Hot sand burning your feet",bin:1,hint:"Your feet are touching the sand directly."},{t:"The ground warming the air touching it",bin:1,hint:"Direct contact between ground and air."},{t:"A metal slide heating your legs",bin:1,hint:"Touching = which type?"},
+    {t:"Warm air rising above a parking lot",bin:2,hint:"Warm, less dense air rising is a current."},{t:"Warm air rising and cool air sinking in a loop",bin:2,hint:"A loop of rising and sinking fluid."},{t:"Rising warm air building a storm cloud",bin:2,hint:"Air moving up as a current."}]},n),
+   (el,n)=>sunTask(el,n)
+  ],stationDone)})},
+ cloud(){showPanel(stationShell("Lab Station: Water Cycle & Clouds","Put the water cycle in order, then make a cloud form."),()=>{
+  chain($("#task"),[
+   (el,n)=>orderTask(el,{title:"Part 1 · How Rain Forms",ins:"Tap the steps from FIRST to LAST.",hint:"It all starts with energy from the Sun.",steps:[
+    {t:"☀️ The Sun heats ocean water"},{t:"💨 Water evaporates into water vapor"},{t:"⬆️ The moist air rises, expands, and cools"},{t:"☁️ Water vapor condenses into cloud droplets"},{t:"🌧️ Droplets combine, get heavy, and fall as precipitation"}]},n),
+   (el,n)=>cloudTask(el,n)
+  ],stationDone)})},
+ press(){showPanel(stationShell("Sea Breeze Simulator","Switch between day and night and watch how the wind changes."),()=>breezeTask($("#task"),stationDone))},
+ front(){showPanel(stationShell("Front Collision Lab","Choose what the air is doing. Run the simulation and discover all 4 types of fronts!"),()=>frontLab($("#task"),stationDone))},
+ climate(){showPanel(stationShell("Lab Station: Climate Detective","Sort weather vs. climate, then build a rain shadow."),()=>{
+  chain($("#task"),[
+   (el,n)=>sortTask(el,{title:"Part 1 · Weather or Climate?",ins:"Tap a card, then tap Weather or Climate.",bins:["🌦️ Weather","📊 Climate"],cards:[
+    {t:"It is raining in Austin right now",bin:0,hint:"Right now = one moment in time."},{t:"A cold front arrives tonight",bin:0,hint:"Tonight = short-term."},{t:"Today’s high temperature is 95°F",bin:0,hint:"One day only."},{t:"Strong winds are blowing this afternoon",bin:0,hint:"This afternoon = short-term."},
+    {t:"Phoenix averages 8 inches of rain per year",bin:1,hint:"An average over many years."},{t:"Houston has hot, humid summers",bin:1,hint:"A long-term pattern."},{t:"Alaska’s average January temperature is below freezing",bin:1,hint:"Average = long-term."},{t:"The Amazon rainforest is wet all year",bin:1,hint:"A pattern every year."}]},n),
+   (el,n)=>orderTask(el,{title:"Part 2 · Build a Rain Shadow",ins:"Tap the steps in order as moist ocean air crosses a mountain range.",hint:"Follow the air: from the ocean, up the mountain, then down the other side.",steps:[
+    {t:"🌊 Moist air blows in from the ocean"},{t:"⛰️ The air is forced up the windward side of the mountain"},{t:"❄️ The rising air cools to its dew point"},{t:"🌧️ Clouds form and rain falls on the windward side"},{t:"🏜️ The dry air sinks and warms on the leeward side, making a desert"}]},n),
+   (el,n)=>mcTask(el,{title:"Detective Checkpoint",q:"Seattle and Spokane are on opposite sides of the Cascade Mountains. Winds blow from the Pacific Ocean toward Seattle first. Which city is most likely drier?",c:["Spokane, because it is in the rain shadow on the leeward side","Seattle, because it is closer to the ocean","Both get the same rain","Seattle, because air sinks there"],a:0,e:"Air drops its moisture rising over the mountains near Seattle (<b>windward</b>). Spokane is on the <b>leeward</b> side — the dry rain shadow."},n)
+  ],stationDone)})}
+};
+
+function openStation(){STATIONS[R.reg.key]()}
+
+/* ================= BATTLE ================= */
+function startBattle(en,isBoss){
+ S.paused=true;sfx("battle");
+ B={en,isBoss,scan:isBoss?2:1,q:null,order:null,picked:[],answered:false};
+ nextQ();
+}
+function nextQ(){
+ if(!R.pool.length)R.pool=shuffle(R.reg.qs.slice());
+ B.q=R.pool.shift();B.order=shuffle(B.q.c.map((t,i)=>({t,i})));B.picked=[];B.answered=false;
+ renderBattle();
+}
+function renderBattle(){
+ const en=B.en,q=B.q,isB=B.isBoss;const multi=!!q.multi;const need=multi?q.a.length:1;
+ const foeName=isB?"👑 THE STORM TYRANT":en.name;const art=isB?bossSVG(200):monsterSVG(en.color,en.k,150);
+ const html=`<div class="arena" id="arena" style="background:${R.reg.theme.arena}">
+  <div class="fighter"><b>🧑‍🚀 ${esc(S.name||"Sky Ranger")}</b>HP <span id="php">${S.hp}/${S.maxhp}</span><div class="bar"><i id="phb" style="width:${S.hp/S.maxhp*100}%"></i></div>${S.shield?"<div>🛡️ Cloud Shield ready</div>":""}<div class="streak">${S.streak>=1?"🔥 Streak: "+S.streak+(S.streak%3===2?" — next hit is CRITICAL!":""):""}</div></div>
+  <div class="mid"><div class="mon" id="mon">${art}</div></div>
+  <div class="fighter foe"><b>${foeName}</b>HP <span id="ehp">${en.hp}/${en.max}</span><div class="bar foehp"><i id="ehb" style="width:${en.hp/en.max*100}%"></i></div><div style="font-size:12px;margin-top:4px;color:#ffd9c7">${isB?"Final Boss · STAAR Level":"Level "+(S.room+1)+" monster"}</div></div>
+ </div>
+ <div class="qcard"><div class="qmeta"><span>${isB?"⚔️ Boss Question":"⚡ STAAR Challenge"}</span><span>${multi?"Select TWO answers":"Select ONE answer"}</span></div>
+  <div class="qtext">${q.q}</div>${q.d?`<div class="diag">${DIAG[q.d]()}</div>`:""}
+  <div class="choices">${B.order.map((o,j)=>`<button class="choice" data-i="${o.i}" data-j="${j}"><span class="lt">${"ABCDE"[j]}</span><span>${o.t}</span></button>`).join("")}</div>
+  <div class="qact"><button class="scan" id="scan" ${B.scan<1||multi?"disabled":""} title="Removes one wrong answer">📡 Radar Scan (${B.scan} left)</button>${multi?`<button class="btn" id="sub" disabled>Submit (0/${need})</button>`:""}<span style="font-size:13px;color:#7a5a3a">Keys: A–E to pick${multi?", Enter to submit":""}</span></div>
+  <div class="fb" id="fb"></div></div>`;
+ showPanel(html);
+ const pick=b=>{if(B.answered||b.disabled)return;const i=+b.dataset.i;
+  if(!multi){B.picked=[i];answer();return}
+  if(B.picked.includes(i)){B.picked=B.picked.filter(x=>x!==i);b.classList.remove("picked")}
+  else{if(B.picked.length>=need)return;B.picked.push(i);b.classList.add("picked")}
+  sfx("tap");const sb=$("#sub");sb.disabled=B.picked.length!==need;sb.textContent=`Submit (${B.picked.length}/${need})`};
+ document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>pick(b));
+ if(multi)$("#sub").onclick=()=>{if(B.picked.length===need)answer()};
+ $("#scan").onclick=()=>{if(B.scan<1||B.answered)return;const wrong=[...document.querySelectorAll(".choice")].filter(b=>!b.disabled&&+b.dataset.i!==q.a);if(!wrong.length)return;const w=wrong[Math.floor(Math.random()*wrong.length)];w.disabled=true;w.classList.add("gone");B.scan--;sfx("tap");$("#scan").textContent=`📡 Radar Scan (${B.scan} left)`;if(B.scan<1)$("#scan").disabled=true};
+ battleKeys=k=>{if(B.answered){if(k==="enter"||k===" ")$("#cont")&&$("#cont").click();return}
+  const idx="abcde".indexOf(k);if(idx>=0){const b=document.querySelector(`.choice[data-j="${idx}"]`);if(b)pick(b)}
+  if(k==="enter"&&multi&&B.picked.length===need)answer()};
+}
+function answer(){
+ B.answered=true;const q=B.q,multi=!!q.multi;S.attempts++;
+ const correctSet=multi?q.a.slice().sort().join():String(q.a);
+ const ok=B.picked.slice().sort().join()===correctSet;
+ document.querySelectorAll(".choice").forEach(b=>{b.disabled=true;const i=+b.dataset.i;const isC=multi?q.a.includes(i):i===q.a;if(isC)b.classList.add("correct");else if(B.picked.includes(i))b.classList.add("wrong")});
+ const sb=$("#sub");if(sb)sb.style.display="none";
+ const arena=$("#arena"),fb=$("#fb");
+ let head="",after="";
+ if(ok){S.correct++;S.streak++;S.best=Math.max(S.best,S.streak);const crit=S.streak%3===0;const dmg=crit?2:1;B.en.hp=Math.max(0,B.en.hp-dmg);
+  sfx(crit?"crit":"hit");setTimeout(()=>sfx("good"),120);$("#mon").classList.add("hit");
+  const d=document.createElement("div");d.className="dmg";d.style.left="50%";d.style.top="30%";d.textContent=crit?"CRITICAL -2!":"-1";arena.appendChild(d);
+  head=crit?"💥 CRITICAL HIT! 3 in a row!":["🎯 Direct hit!","✅ Correct!","⚡ Nailed it!","🔥 Great science!"][Math.floor(Math.random()*4)];
+  gainXP(crit?20:10);
+ }else{S.streak=0;S.missed.push(q.q.replace(/<[^>]+>/g," ").replace(/\s+/g," ").slice(0,110));R.pool.push(q);
+  arena.insertAdjacentHTML("beforeend",`<div class="flash"></div>`);arena.classList.add("shake");
+  if(S.shield){S.shield=0;head="🛡️ Your Cloud Shield blocked the damage!";sfx("hit")}
+  else{const dmg=B.isBoss?25:20;S.hp=Math.max(0,S.hp-dmg);head=`💢 Ouch! −${dmg} HP`;sfx("bad")}
+  after=`<div style="margin-top:6px;font-size:14px">📓 Tip: check your Weather Journal for this topic. You’ll see this question again later!</div>`;
+ }
+ updateHUD();
+ $("#php").textContent=S.hp+"/"+S.maxhp;$("#phb").style.width=(S.hp/S.maxhp*100)+"%";$("#ehp").textContent=B.en.hp+"/"+B.en.max;$("#ehb").style.width=(B.en.hp/B.en.max*100)+"%";
+ const done=B.en.hp<=0,dead=S.hp<=0;
+ fb.className="fb "+(ok?"good":"bad");
+ fb.innerHTML=`<b class="h">${head}</b>${ok?"":"<b>Correct answer shown in green.</b> "}${q.e}${after}<div style="margin-top:10px"><button class="btn ${ok?"green":""}" id="cont">${done?"Finish them! ▶":dead?"Continue":"Next question ▶"}</button></div>`;
+ $("#cont").onclick=()=>{
+  if(done){winBattle()}
+  else if(dead){loseBattle()}
+  else nextQ();
+ };
+ fb.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function winBattle(){
+ const en=B.en;
+ if(B.isBoss){sfx("win");finale();return}
+ R.enemies=R.enemies.filter(e=>e!==en);R.killed++;gainXP(25);sfx("win");
+ const heal=Math.min(S.maxhp-S.hp,15);S.hp+=heal;updateHUD();
+ showPanel(`<div class="center"><h2>🏆 ${en.name} defeated!</h2><div style="opacity:.5;transform:rotate(15deg);display:inline-block">${monsterSVG(en.color,en.k,110)}</div><p style="font-size:18px">+25 XP ${heal>0?"· +"+heal+" HP":""}<br>Monsters left in this region: <b>${R.total-R.killed}</b></p><button class="btn green" id="ok">Back to exploring</button></div>`,()=>{$("#ok").onclick=()=>{closePanel();S.inv=90;checkGate()}});
+}
+function loseBattle(){
+ sfx("lose");B.en.hp=B.en.max;
+ showPanel(`<div class="center"><h2>😵 Knocked out!</h2><p style="font-size:18px">The ${B.isBoss?"Storm Tyrant":B.en.name} was too strong this time.<br>You’ve been sent back to the start of <b>${R.reg.name}</b> with full HP.</p><div class="tipbox" style="color:#2a1a12;text-align:left">💡 Open your <b>📓 Weather Journal</b> and review before you battle again. Read every answer choice carefully — STAAR loves tricky distractors!</div><br><button class="btn" id="ok">Try again</button></div>`,()=>{$("#ok").onclick=()=>{S.hp=S.maxhp;const reg=R.reg;for(let y=0;y<ROWS;y++){const x=reg.map[y].indexOf("P");if(x>=0){P.x=x*TILE+TILE/2;P.y=y*TILE+TILE/2}}if(R.boss)R.boss.hp=R.boss.max;closePanel();S.inv=120;updateHUD()}});
+}
+function openBoss(){
+ showPanel(`<div class="dlg"><div class="portrait">${bossSVG(130)}<div>The Storm Tyrant</div></div><div class="bubble"><h3>“So… you collected all 5 crystals.”</h3>Foolish Sky Ranger! I am the <b>Storm Tyrant</b>, ruler of thunder, fronts, and hurricanes. My questions are as hard as the <b>STAAR</b> itself. Answer <b>10</b> correctly to shatter my crown… if you can!<div class="tipbox">⚔️ Boss rules: wrong answers do <b>25 damage</b>. You get <b>2 Radar Scans</b>. Three correct in a row = <b>CRITICAL HIT</b>.</div></div></div><div class="center" style="margin-top:12px"><button class="btn" id="go">⚔️ Battle the Storm Tyrant!</button></div>`,()=>{$("#go").onclick=()=>{sfx("rumble");startBattle(R.boss,true)}});
+}
+function finale(){
+ const secs=Math.round((Date.now()-S.start)/1000)+S.elapsedBefore;const acc=S.attempts?Math.round(S.correct/S.attempts*100):0;
+ const rank=acc>=90?"🏅 Master Meteorologist":acc>=75?"🥈 Senior Meteorologist":acc>=60?"🥉 Field Meteorologist":"🔰 Sky Ranger";
+ try{localStorage.removeItem(SAVE)}catch(e){}
+ const miss=[...new Set(S.missed)];
+ showPanel(`<div class="cert"><div style="font-size:15px;letter-spacing:3px">STORM QUEST · TEKS 8.10A</div><h1>Certificate of Victory</h1><div>The Storm Tyrant has been defeated by</div><div class="nm">${esc(S.name||"Sky Ranger")}</div>
+ <div style="font-size:22px;font-weight:bold;margin:6px 0">${rank}</div>
+ <div style="display:inline-block;background:#2a1a12;color:#ffd166;font-weight:bold;padding:6px 14px;border-radius:10px;font-size:16px;margin:4px 0">📅 Completed ${new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"})} at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div>
+ <table><tr><td>Questions correct</td><td><b>${S.correct} / ${S.attempts}</b></td></tr><tr><td>Accuracy</td><td><b>${acc}%</b></td></tr><tr><td>Best streak</td><td><b>${S.best}</b></td></tr><tr><td>Level reached</td><td><b>${S.lvl}</b></td></tr><tr><td>Time</td><td><b>${Math.floor(secs/60)} min ${secs%60} sec</b></td></tr></table>
+ <div>Mission Codes</div><div class="codes">${ROOMS.slice(0,5).map(r=>`<span>${r.code}</span>`).join("")}<span>CLEARSKY</span></div>
+ ${miss.length?`<details style="text-align:left;margin-top:10px"><summary><b>Questions to review (${miss.length})</b></summary><ul style="font-size:14px">${miss.map(m=>`<li>${esc(m)}…</li>`).join("")}</ul></details>`:"<p><b>Flawless — no missed questions!</b></p>"}
+ <p style="font-size:14px">📸 <b>Take a screenshot of this certificate and upload it to Google Classroom.</b> Make sure your name and the date are showing!</p></div>
+ <div class="row noprint" style="justify-content:center;margin-top:14px"><button class="btn alt" id="pr">🖨️ Print</button><button class="btn" id="again">Play again</button></div>`,()=>{$("#pr").onclick=()=>{try{window.print()}catch(e){}};$("#again").onclick=()=>location.reload()});
+ S.codes.push("CLEARSKY");updateHUD();
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+/* ================= JOURNAL / HELP ================= */
+function openJournal(){
+ if(!R)return;
+ const unlocked=i=>i<S.room||(i===S.room&&R.guideDone);
+ showPanel(`<div class="journal"><h2>📓 Weather Journal</h2><p class="ins">Everything you need to know for TEKS 8.10A. New pages unlock when you talk to each region’s guide.</p>
+ ${ROOMS.slice(0,5).map((r,i)=>`<div class="reg"><h3 style="color:${r.crystal}">${r.name}</h3>${unlocked(i)?r.lesson.map(p=>`<div class="page"><h4>${p.h}</h4>${p.b}</div>`).join(""):`<div class="locked">🔒 Locked — talk to ${r.guide.name} in ${r.name} to unlock.</div>`}</div>`).join("")}
+ <div class="center"><button class="btn" id="cl">Close journal</button></div></div>`,()=>{$("#cl").onclick=closePanel});
+}
+function openHelp(){
+ showPanel(`<h2>❓ How to Play</h2><div class="howto">
+ <div><b>🕹️ Move</b><br>Arrow keys or WASD. On a tablet, use the on-screen arrows.</div>
+ <div><b>🧑‍🔬 Guides</b><br>Walk into the scientist in each region. Their lessons save to your 📓 Journal.</div>
+ <div><b>🖥️ Lab Stations</b><br>Walk into the glowing console to do a hands-on simulation.</div>
+ <div><b>👾 Monsters</b><br>Touch a monster to battle. Answer STAAR questions to attack. 3 correct in a row = CRITICAL HIT.</div>
+ <div><b>📡 Radar Scan</b><br>Removes one wrong answer. One per battle (two vs. the boss).</div>
+ <div><b>🎁 Chests</b><br>Heal you or give a Cloud Shield that blocks one wrong answer.</div>
+ <div><b>🔒 Gates</b><br>Open when you finish the guide, lab, and all monsters. Write down each Mission Code!</div>
+ <div><b>👑 Goal</b><br>Recover all 5 crystals and defeat the Storm Tyrant.</div></div>
+ <div class="center" style="margin-top:14px"><button class="btn" id="cl">Got it!</button></div>`,()=>{$("#cl").onclick=closePanel});
+}
+
+/* ================= SAVE ================= */
+function save(room){try{localStorage.setItem(SAVE,JSON.stringify({name:S.name,room,xp:S.xp,lvl:S.lvl,maxhp:S.maxhp,correct:S.correct,attempts:S.attempts,missed:S.missed,codes:S.codes,best:S.best,elapsed:Math.round((Date.now()-S.start)/1000)+S.elapsedBefore}))}catch(e){}}
+function loadSave(){try{return JSON.parse(localStorage.getItem(SAVE)||"null")}catch(e){return null}}
+
+/* ================= INPUT ================= */
+addEventListener("keydown",e=>{
+ const k=e.key.toLowerCase();
+ if(e.target&&e.target.tagName==="INPUT")return;
+ if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(k)&&!S.paused)e.preventDefault();
+ if(battleKeys&&!$("#overlay").classList.contains("hidden")){battleKeys(k);return}
+ keys[k]=true;
+});
+addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false});
+addEventListener("blur",()=>{for(const k in keys)keys[k]=false});
+document.querySelectorAll("#dpad button").forEach(b=>{const k=b.dataset.k;
+ const on=e=>{e.preventDefault();touch[k]=true},off=e=>{e.preventDefault();touch[k]=false};
+ b.addEventListener("pointerdown",on);b.addEventListener("pointerup",off);b.addEventListener("pointerleave",off);b.addEventListener("pointercancel",off)});
+if(("ontouchstart" in window)||matchMedia("(pointer:coarse)").matches)$("#dpad").style.display="flex";
+$("#bJournal").onclick=()=>{if(!S.paused)openJournal()};
+$("#bHelp").onclick=()=>{if(!S.paused)openHelp()};
+$("#bSound").onclick=()=>{soundOn=!soundOn;$("#bSound").textContent=soundOn?"🔊":"🔇"};
+
+/* ================= UPDATE ================= */
+function update(dt){
+ frame++;
+ if(S.bumpCD>0)S.bumpCD-=dt;
+ if(S.paused||!R)return;
+ if(S.inv>0)S.inv-=dt;
+ let dx=0,dy=0;
+ if(keys.arrowleft||keys.a||touch.l)dx--;if(keys.arrowright||keys.d||touch.r)dx++;
+ if(keys.arrowup||keys.w||touch.u)dy--;if(keys.arrowdown||keys.s||touch.d)dy++;
+ if(dx&&dy){dx*=.707;dy*=.707}
+ const sp=3.3*dt;P.moving=!!(dx||dy);
+ if(dx)P.dir=dx>0?1:-1;
+ if(P.moving)P.anim+=dt*.25;
+ moveEnt(P,dx*sp,0,true);moveEnt(P,0,dy*sp,true);
+ if(R.gateOpen&&P.x>COLS*TILE-6){if(S.room<ROOMS.length-1){loadRoom(S.room+1)}return}
+ for(const e of R.enemies){
+  e.t-=dt;e.ph+=dt*.08;
+  if(e.t<=0){const r=Math.random();const dirs=[[1,0],[-1,0],[0,1],[0,-1],[0,0]];const d=dirs[Math.floor(r*5)];
+   const tx=P.x-e.x,ty=P.y-e.y,dist=Math.hypot(tx,ty);
+   if(dist<160&&Math.random()<.5){e.vx=Math.sign(tx)*(Math.abs(tx)>Math.abs(ty)?1:0);e.vy=Math.sign(ty)*(Math.abs(ty)>=Math.abs(tx)?1:0)}else{e.vx=d[0];e.vy=d[1]}
+   e.t=40+Math.random()*60}
+  const es=1.1*dt;if(!moveEnt(e,e.vx*es,0,false))e.vx*=-1;if(!moveEnt(e,0,e.vy*es,false))e.vy*=-1;
+  if(S.inv<=0&&Math.hypot(P.x-e.x,P.y-e.y)<28){startBattle(e,false);break}
+ }
+}
+
+/* ================= DRAW ================= */
+function hash(x,y){let h=(x*374761393+y*668265263)^0x5bd1e995;h=(h^(h>>>13))*1274126177;return ((h^(h>>>16))>>>0)/4294967295}
+function drawFloor(x,y,th){const px=x*TILE,py=y*TILE;ctx.fillStyle=(x+y)%2?th.floor:th.floor2;ctx.fillRect(px,py,TILE,TILE);ctx.fillStyle=th.speck;
+ for(let i=0;i<3;i++){const hx=hash(x*3+i,y),hy=hash(y*5+i,x);ctx.fillRect(px+hx*36,py+hy*36,3,3)}}
+function drawTile(ch,x,y,t,th){
+ const px=x*TILE,py=y*TILE;
+ if(ch==="#"){ctx.fillStyle=th.wall;ctx.fillRect(px,py,TILE,TILE);ctx.fillStyle=th.wallTop;ctx.fillRect(px,py,TILE,8);ctx.fillStyle="rgba(0,0,0,.25)";ctx.fillRect(px+(y%2?0:20),py+20,2,20);ctx.fillRect(px,py+20,TILE,2);return}
+ if(ch==="w"){ctx.fillStyle="#1f6fb5";ctx.fillRect(px,py,TILE,TILE);ctx.strokeStyle="rgba(255,255,255,.28)";ctx.lineWidth=2;const o=Math.sin(t/30+x+y)*4;ctx.beginPath();ctx.moveTo(px+6,py+14+o);ctx.quadraticCurveTo(px+14,py+8+o,px+22,py+14+o);ctx.moveTo(px+18,py+30-o);ctx.quadraticCurveTo(px+26,py+24-o,px+34,py+30-o);ctx.stroke();return}
+ if(ch==="l"){const hz=th.hz||"lava";
+  if(hz==="storm"){drawFloor(x,y,th);ctx.fillStyle="#5c6474";ctx.beginPath();ctx.arc(px+12,py+20,11,0,7);ctx.arc(px+26,py+18,13,0,7);ctx.arc(px+20,py+10,10,0,7);ctx.fill();if((Math.floor(t/5)+x*3+y*7)%23===0){ctx.strokeStyle="#ffd166";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(px+20,py+26);ctx.lineTo(px+15,py+34);ctx.lineTo(px+22,py+34);ctx.lineTo(px+17,py+42);ctx.stroke()}else{ctx.strokeStyle="#5fa8d3";ctx.lineWidth=2;ctx.beginPath();const o=(t/2+x*5)%8;ctx.moveTo(px+12,py+30+o);ctx.lineTo(px+10,py+36+o);ctx.moveTo(px+26,py+30+o);ctx.lineTo(px+24,py+36+o);ctx.stroke()}return}
+  if(hz==="ice"){ctx.fillStyle="#bde0fe";ctx.fillRect(px,py,TILE,TILE);ctx.strokeStyle="rgba(255,255,255,.8)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px+6,py+30);ctx.lineTo(px+18,py+10);ctx.moveTo(px+22,py+34);ctx.lineTo(px+34,py+16);ctx.stroke();return}
+  if(hz==="heat"){ctx.fillStyle="#e07a2f";ctx.fillRect(px,py,TILE,TILE);const g2=.5+.5*Math.sin(t/12+x+y);ctx.strokeStyle=`rgba(255,230,150,${.3+g2*.4})`;ctx.lineWidth=2;ctx.beginPath();for(let k=0;k<3;k++){const yy=py+10+k*10;ctx.moveTo(px+4,yy);ctx.quadraticCurveTo(px+14,yy-5+g2*3,px+20,yy);ctx.quadraticCurveTo(px+28,yy+5-g2*3,px+36,yy)}ctx.stroke();return}
+  ctx.fillStyle="#d8400f";ctx.fillRect(px,py,TILE,TILE);const g=.5+.5*Math.sin(t/20+x*1.7+y);ctx.fillStyle=`rgba(255,200,60,${.35+g*.4})`;ctx.beginPath();ctx.arc(px+12+hash(x,y)*14,py+14,6+g*3,0,7);ctx.arc(px+26,py+28-hash(y,x)*8,5+g*2,0,7);ctx.fill();return}
+ drawFloor(x,y,th);
+ if(ch==="f"){if(R.reg.key==="front"){ctx.strokeStyle="#1f4f8a";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+40,py+40);ctx.stroke();ctx.fillStyle=(x%2)?"#1f4f8a":"#c0392b";ctx.beginPath();if(x%2){ctx.moveTo(px+12,py+12);ctx.lineTo(px+28,py+28);ctx.lineTo(px+28,py+10)}else{ctx.arc(px+20,py+20,9,-Math.PI*.75,Math.PI*.25)}ctx.fill();return}ctx.strokeStyle="#2a1a10";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+14,py+18);ctx.lineTo(px+22,py+16);ctx.lineTo(px+40,py+40);ctx.stroke();return}
+ if(ch==="m"){ctx.fillStyle=th.mtn;ctx.beginPath();ctx.moveTo(px-2,py+TILE);ctx.lineTo(px+20,py-6);ctx.lineTo(px+42,py+TILE);ctx.fill();ctx.fillStyle=th.cap;ctx.beginPath();ctx.moveTo(px+13,py+6);ctx.lineTo(px+20,py-6);ctx.lineTo(px+27,py+6);ctx.fill();return}
+ if(ch==="t"){drawDeco(px,py,th);return}
+ if(ch==="G"){drawPerson(px+20,py+22,R.reg.guide,1,0);if(!R.guideDone){const b=Math.sin(t/8)*3;ctx.fillStyle="#ffd166";ctx.beginPath();ctx.arc(px+20,py-8+b,10,0,7);ctx.fill();ctx.fillStyle="#2a1a12";ctx.font="bold 16px Verdana";ctx.textAlign="center";ctx.fillText("!",px+20,py-2+b)}return}
+ if(ch==="S"){ctx.fillStyle="#2b2f3a";ctx.fillRect(px+4,py+8,32,30);ctx.fillStyle="#1b1e26";ctx.fillRect(px+4,py+32,32,6);const g=.6+.4*Math.sin(t/12);ctx.fillStyle=R.stationDone?"#2fd47a":`rgba(80,220,255,${g})`;ctx.fillRect(px+8,py+12,24,16);ctx.fillStyle="#0b0b0b";ctx.font="bold 12px Verdana";ctx.textAlign="center";ctx.fillText(R.stationDone?"✓":"LAB",px+20,py+24);if(!R.stationDone){ctx.fillStyle="#ffd166";ctx.font="bold 16px Verdana";ctx.fillText("?",px+20,py+4+Math.sin(t/8)*3)}return}
+ if(ch==="C"||ch==="c"){ctx.fillStyle="#7a4a1e";ctx.fillRect(px+7,py+16,26,18);ctx.fillStyle=ch==="C"?"#9b5e28":"#3a2410";ctx.fillRect(px+7,py+(ch==="C"?10:6),26,ch==="C"?8:6);ctx.fillStyle="#ffd166";ctx.fillRect(px+18,py+16,4,6);if(ch==="C"){ctx.fillStyle=`rgba(255,209,102,${.3+.3*Math.sin(t/10)})`;ctx.beginPath();ctx.arc(px+20,py+20,20,0,7);ctx.fill()}return}
+ if(ch===">"){if(R.gateOpen){ctx.fillStyle=`rgba(47,212,122,${.4+.3*Math.sin(t/8)})`;ctx.fillRect(px,py,TILE,TILE);ctx.fillStyle="#fff";ctx.font="bold 22px Verdana";ctx.textAlign="center";ctx.fillText("➜",px+20,py+28)}else{ctx.fillStyle="#3a0d0d";ctx.fillRect(px,py,TILE,TILE);for(let i=0;i<4;i++){ctx.fillStyle=`rgba(255,60,60,${.5+.4*Math.sin(t/6+i)})`;ctx.fillRect(px+4+i*9,py,4,TILE)}ctx.font="16px Verdana";ctx.textAlign="center";ctx.fillText("🔒",px+20,py+26)}return}
+}
+function drawDeco(px,py,th){
+ const c=th.decoC;
+ if(th.deco==="spike"||th.deco==="obsidian"){ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(px+8,py+38);ctx.lineTo(px+16,py+4);ctx.lineTo(px+24,py+38);ctx.fill();ctx.beginPath();ctx.moveTo(px+20,py+38);ctx.lineTo(px+28,py+14);ctx.lineTo(px+34,py+38);ctx.fill();if(th.deco==="obsidian"){ctx.fillStyle="#7a2cff";ctx.fillRect(px+15,py+12,2,14)}}
+ else if(th.deco==="tree"||th.deco==="pine"){ctx.fillStyle="#5a3a1e";ctx.fillRect(px+17,py+26,6,12);ctx.fillStyle=c;if(th.deco==="pine"){ctx.beginPath();ctx.moveTo(px+6,py+30);ctx.lineTo(px+20,py+2);ctx.lineTo(px+34,py+30);ctx.fill()}else{ctx.beginPath();ctx.arc(px+20,py+18,14,0,7);ctx.fill()}}
+ else if(th.deco==="palm"){ctx.strokeStyle="#7a5a2e";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(px+18,py+38);ctx.quadraticCurveTo(px+14,py+20,px+22,py+10);ctx.stroke();ctx.strokeStyle=c;ctx.lineWidth=5;ctx.beginPath();[[-14,4],[14,4],[-10,-8],[10,-8]].forEach(([a,b])=>{ctx.moveTo(px+22,py+10);ctx.quadraticCurveTo(px+22+a/2,py+10+b-6,px+22+a,py+10+b+6)});ctx.stroke()}
+ else{ctx.fillStyle=c;ctx.beginPath();ctx.ellipse(px+20,py+26,15,11,0,0,7);ctx.fill();ctx.fillStyle="rgba(255,255,255,.15)";ctx.beginPath();ctx.ellipse(px+15,py+22,6,4,0,0,7);ctx.fill()}
+}
+function drawPerson(x,y,c,dir,anim,isP){
+ const leg=Math.sin(anim)*4;
+ ctx.fillStyle="rgba(0,0,0,.3)";ctx.beginPath();ctx.ellipse(x,y+16,12,4,0,0,7);ctx.fill();
+ ctx.fillStyle="#2a2a3a";ctx.fillRect(x-7,y+6+(isP?leg*.5:0),5,10);ctx.fillRect(x+2,y+6-(isP?leg*.5:0),5,10);
+ ctx.fillStyle=c.coat;ctx.fillRect(x-10,y-8,20,17);ctx.fillStyle=c.shirt;ctx.fillRect(x-3,y-8,6,12);
+ ctx.fillStyle=c.skin;ctx.beginPath();ctx.arc(x,y-15,8,0,7);ctx.fill();
+ ctx.fillStyle=c.hair;ctx.fillRect(x-8,y-24,16,6);
+ if(isP){ctx.fillStyle="#7a4a1e";ctx.fillRect(x-12,y-24,24,4);ctx.fillRect(x-7,y-30,14,7)}
+ ctx.fillStyle="#111";ctx.fillRect(x-4+dir*2,y-16,2,3);ctx.fillRect(x+2+dir*2,y-16,2,3);
+}
+function drawEnemy(e,t){
+ const b=Math.sin(e.ph)*3,x=e.x,y=e.y+b;
+ ctx.fillStyle="rgba(0,0,0,.3)";ctx.beginPath();ctx.ellipse(e.x,e.y+15,13,4,0,0,7);ctx.fill();
+ ctx.fillStyle=shade(e.color,-45);
+ if(e.k%3===0){ctx.beginPath();ctx.moveTo(x-12,y-8);ctx.lineTo(x-6,y-22);ctx.lineTo(x,y-10);ctx.lineTo(x+6,y-22);ctx.lineTo(x+12,y-8);ctx.fill()}
+ else if(e.k%3===1){ctx.fillRect(x-12,y-20,4,12);ctx.fillRect(x+8,y-20,4,12)}
+ else{ctx.beginPath();ctx.arc(x-7,y-12,5,0,7);ctx.arc(x+7,y-13,5,0,7);ctx.fill()}
+ ctx.fillStyle=e.color;ctx.beginPath();ctx.ellipse(x,y,15,13,0,0,7);ctx.fill();
+ const ang=Math.atan2(P.y-e.y,P.x-e.x),ox=Math.cos(ang)*2,oy=Math.sin(ang)*2;
+ ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(x-5,y-2,4,0,7);ctx.arc(x+5,y-2,4,0,7);ctx.fill();
+ ctx.fillStyle="#111";ctx.beginPath();ctx.arc(x-5+ox,y-2+oy,2,0,7);ctx.arc(x+5+ox,y-2+oy,2,0,7);ctx.fill();
+}
+function drawBoss(t){
+ const bo=R.boss,b=Math.sin(t/14)*4,x=bo.x,y=bo.y+b;
+ const g=ctx.createRadialGradient(x,y,10,x,y,75);g.addColorStop(0,"rgba(160,170,255,.45)");g.addColorStop(1,"rgba(60,60,140,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,75,0,7);ctx.fill();
+ if(Math.floor(t/6)%11===0){ctx.strokeStyle="#ffd166";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x-20,y+18);ctx.lineTo(x-28,y+36);ctx.lineTo(x-16,y+36);ctx.lineTo(x-24,y+56);ctx.stroke()}
+ ctx.fillStyle="#4a4e69";ctx.beginPath();ctx.arc(x-18,y+4,18,0,7);ctx.arc(x+18,y+4,18,0,7);ctx.arc(x,y-8,22,0,7);ctx.arc(x-30,y+14,12,0,7);ctx.arc(x+30,y+14,12,0,7);ctx.fill();
+ ctx.fillStyle="#ffd166";ctx.beginPath();ctx.moveTo(x-18,y-26);ctx.lineTo(x-14,y-44);ctx.lineTo(x-5,y-32);ctx.lineTo(x,y-48);ctx.lineTo(x+5,y-32);ctx.lineTo(x+14,y-44);ctx.lineTo(x+18,y-26);ctx.fill();
+ ctx.fillStyle="#fff6a8";ctx.beginPath();ctx.arc(x-10,y-2,6,0,7);ctx.arc(x+10,y-2,6,0,7);ctx.fill();ctx.fillStyle="#111";ctx.beginPath();ctx.arc(x-9,y-1,3,0,7);ctx.arc(x+9,y-1,3,0,7);ctx.fill();
+ ctx.fillStyle="#fff";ctx.font="bold 13px Verdana";ctx.textAlign="center";ctx.fillText("THE STORM TYRANT",x,y+52);
+}
+const PLAYER_C={coat:"#1f9e8f",shirt:"#ffd166",skin:"#e2a878",hair:"#4a2a12"};
+function draw(){
+ const t=frame,th=R?R.reg.theme:ROOMS[0].theme;
+ ctx.clearRect(0,0,cv.width,cv.height);
+ if(!R){ctx.fillStyle="#120b08";ctx.fillRect(0,0,cv.width,cv.height);return}
+ for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)drawTile(R.grid[y][x],x,y,t,th);
+ for(const e of R.enemies)drawEnemy(e,t);
+ if(R.boss)drawBoss(t);
+ if(!(S.inv>0&&Math.floor(t/4)%2))drawPerson(P.x,P.y,PLAYER_C,P.dir,P.anim,true);
+ const vg=ctx.createRadialGradient(480,280,200,480,280,600);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,.45)");ctx.fillStyle=vg;ctx.fillRect(0,0,cv.width,cv.height);
+}
+let last=performance.now();
+function loop(now){const dt=Math.min(3,(now-last)/16.67);last=now;update(dt);draw();requestAnimationFrame(loop)}
+
+/* ================= TITLE ================= */
+function title(){
+ const sv=loadSave();
+ showPanel(`<div class="center"><div class="logo">STORM QUEST</div><div class="subt">FURY OF THE STORM TYRANT</div><div class="teks">TEKS 8.10A · Sun, Water & Air · Weather & Climate · STAAR Review Adventure</div>
+ <div class="row" style="justify-content:center;gap:4px">${ROOMS.slice(0,5).map(r=>crystalSVG(r.crystal,34)).join("")}</div>
+ <p style="max-width:640px;margin:10px auto;font-size:17px">The <b>Storm Tyrant</b> has stolen the 5 Sky Crystals and is throwing Earth’s weather out of control! Explore 5 regions, learn from the scientists, run lab simulations, and battle monsters with <b>STAAR-level questions</b> to win back each crystal. Then face the Tyrant in the eye of his storm.</p>
+ <div style="margin:12px 0"><input type="text" id="nm" maxlength="24" placeholder="Type your first & last name" value="${sv?esc(sv.name):""}"></div>
+ <div class="row" style="justify-content:center"><button class="btn" id="st">▶ New Game</button>${sv?`<button class="btn alt" id="ct">⏩ Continue (Region ${sv.room+1})</button>`:""}</div>
+ <div class="howto"><div><b>🕹️ Move:</b> Arrow keys / WASD (or on-screen arrows)</div><div><b>🧑‍🔬 Learn:</b> walk into guides & lab stations</div><div><b>👾 Battle:</b> walk into monsters, answer to attack</div><div><b>📝 Record:</b> write down each Mission Code</div></div></div>`,()=>{
+  const go=cont=>{const n=$("#nm").value.trim();if(!n){$("#nm").focus();$("#nm").classList.add("shake");setTimeout(()=>$("#nm").classList.remove("shake"),400);return}
+   S.name=n;sfx("gate");
+   if(cont&&sv){Object.assign(S,{xp:sv.xp,lvl:sv.lvl,maxhp:sv.maxhp,hp:sv.maxhp,correct:sv.correct,attempts:sv.attempts,missed:sv.missed||[],codes:sv.codes||[],best:sv.best||0,elapsedBefore:sv.elapsed||0});S.start=Date.now();closePanel();loadRoom(sv.room)}
+   else{S.start=Date.now();closePanel();loadRoom(0);setTimeout(()=>{if(!S.paused)openHelp()},300)}};
+  $("#st").onclick=()=>go(false);if(sv)$("#ct").onclick=()=>go(true);
+  $("#nm").addEventListener("keydown",e=>{if(e.key==="Enter")go(!!sv&&false)});
+ });
+}
+updateHUD();requestAnimationFrame(loop);title();
+</script>
+</body>
+</html>
